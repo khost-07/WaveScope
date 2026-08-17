@@ -12,7 +12,7 @@ export const DiagnosticInspector: React.FC<DiagnosticInspectorProps> = ({ diagno
   return (
     <div className="border border-[#E2E5E9] bg-white p-5 space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#E2E5E9] pb-2 flex-wrap gap-2">
+      <div className="flex items-center justify-between border-b border-[#E2E5E9] pb-2 flex-wrap gap-2 mb-1">
         <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] flex items-center gap-1.5">
           <IconRule size={15} />
           <span>Deterministic Hypothesis Scoring (Layer 2)</span>
@@ -43,15 +43,15 @@ export const DiagnosticInspector: React.FC<DiagnosticInspectorProps> = ({ diagno
       {/* Primary Diagnosis Callout */}
       <div className="p-3.5 bg-[#F8F9FA] border border-[#E2E5E9]">
         <div className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mb-1">Primary Classified Hypothesis</div>
-        <div className="text-[16px] font-bold text-black">{diagnosis.primary_diagnosis}</div>
-        <div className="font-mono text-[11px] text-[#3B4045] mt-1">
+        <div className="text-[16px] font-bold text-black my-1">{diagnosis.primary_diagnosis}</div>
+        <div className="font-mono text-[11px] text-[#3B4045] mt-1.5">
           Severity: <strong className="text-black">{diagnosis.severity}</strong> &bull; Evaluated: {new Date(diagnosis.evaluated_at).toLocaleTimeString()}
         </div>
       </div>
 
       {/* Hypothesis Score Bars */}
       <div className="space-y-2.5">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] mb-1">Evaluated Competing Hypotheses Distribution</div>
+        <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] mb-2">Evaluated Competing Hypotheses Distribution</div>
         {Object.entries(diagnosis.hypothesis_scores).map(([name, score]) => {
           const isWinner = name === diagnosis.primary_diagnosis;
           const maxScore = Math.max(...Object.values(diagnosis.hypothesis_scores), 100);
@@ -78,7 +78,7 @@ export const DiagnosticInspector: React.FC<DiagnosticInspectorProps> = ({ diagno
 
       {/* Physical Evidence Bullets */}
       <div className="space-y-2 pt-1">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045]">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] mb-1">
           Diagnostic Evidence Base ({diagnosis.evidence.length} Points)
         </div>
         <div className="p-3 bg-[#F8F9FA] border border-[#E2E5E9] space-y-1.5 font-mono text-[11px] text-[#3B4045]">

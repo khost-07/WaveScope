@@ -52,7 +52,7 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
             style={{ borderTop: '3px solid #0F1113' }}
             onClick={() => onChangeFilter('ALL')}
           >
-            <div className="telemetry-cell-label flex items-center justify-between">
+            <div className="telemetry-cell-label flex items-center justify-between mb-1">
               <span>{isEasyMode ? 'TOTAL DEVICES' : 'TOTAL CLIENTS'}</span>
               <IconRouter size={15} className="text-[#6B7280]" />
             </div>
@@ -71,7 +71,7 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
             style={{ borderTop: '3px solid #16A34A' }}
             onClick={() => onChangeFilter('HEALTHY')}
           >
-            <div className="telemetry-cell-label flex items-center justify-between text-[#16A34A]">
+            <div className="telemetry-cell-label flex items-center justify-between text-[#16A34A] mb-1">
               <span className="flex items-center gap-1.5">
                 <IconCheckBox size={14} />
                 {isEasyMode ? 'GREAT' : 'HEALTHY'}
@@ -92,7 +92,7 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
             style={{ borderTop: '3px solid #D97706' }}
             onClick={() => onChangeFilter('ATTENTION')}
           >
-            <div className="telemetry-cell-label flex items-center justify-between text-[#D97706]">
+            <div className="telemetry-cell-label flex items-center justify-between text-[#D97706] mb-1">
               <span className="flex items-center gap-1.5">
                 <IconAlertTriangle size={14} />
                 {isEasyMode ? 'CAN IMPROVE' : 'ATTENTION'}
@@ -113,7 +113,7 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
             style={{ borderTop: '3px solid #DC2626' }}
             onClick={() => onChangeFilter('CRITICAL')}
           >
-            <div className="telemetry-cell-label flex items-center justify-between text-[#DC2626]">
+            <div className="telemetry-cell-label flex items-center justify-between text-[#DC2626] mb-1">
               <span className="flex items-center gap-1.5">
                 <IconAlertCircle size={14} />
                 {isEasyMode ? 'NEEDS ATTENTION' : 'CRITICAL'}
@@ -149,7 +149,7 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
             )}
 
             <div>
-              <div className="text-[15px] font-bold text-black">
+              <div className="text-[15px] font-bold text-black mb-0.5">
                 {singleDeviceStatus === 'HEALTHY'
                   ? `Your Wi-Fi connection on ${singleDeviceHostname} is working great.`
                   : isEasyMode
@@ -158,7 +158,7 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
                   ? `1 issue detected: ${singleDeviceDiagnosis}`
                   : '1 potential issue detected on your active connection.'}
               </div>
-              <div className="font-mono text-[11px] text-[#6B7280] mt-0.5">
+              <div className="font-mono text-[11px] text-[#6B7280]">
                 {isEasyMode
                   ? `Device: ${singleDeviceHostname} • Wi-Fi Health Check Active`
                   : `Host: ${singleDeviceHostname} • Evaluated by Layer 2 deterministic engine`}
@@ -182,7 +182,7 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
             <IconRouter size={20} className="text-black" />
           </div>
           <div>
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap mb-0.5">
               <span className="text-[15px] font-bold text-black">{ap.ssid}</span>
               {!isEasyMode && (
                 <>

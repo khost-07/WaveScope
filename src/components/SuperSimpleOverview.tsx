@@ -23,10 +23,10 @@ export const SuperSimpleOverview: React.FC<SuperSimpleOverviewProps> = ({
   if (isLoading) {
     return (
       <div className="p-8 border border-[#E2E5E9] bg-white text-center space-y-3">
-        <div className="inline-block animate-spin text-black">
+        <div className="inline-block animate-spin text-black mb-1">
           <IconRefresh size={32} />
         </div>
-        <h3 className="text-[16px] font-bold text-black">Translating telemetry into plain English...</h3>
+        <h3 className="text-[16px] font-bold text-black mb-1">Translating telemetry into plain English...</h3>
         <p className="font-mono text-[11px] text-[#6B7280]">Running live prompt via gemini-3.1-flash-lite</p>
       </div>
     );
@@ -35,11 +35,11 @@ export const SuperSimpleOverview: React.FC<SuperSimpleOverviewProps> = ({
   if (error) {
     return (
       <div className="p-6 border border-[#DC2626] bg-white space-y-3">
-        <div className="flex items-center gap-2 text-[#DC2626]">
+        <div className="flex items-center gap-2 text-[#DC2626] mb-1">
           <IconAlertCircle size={22} />
           <h3 className="text-[15px] font-bold">Could not load AI explanation</h3>
         </div>
-        <p className="font-mono text-[12px] text-[#3B4045]">{error}</p>
+        <p className="font-mono text-[12px] text-[#3B4045] mb-2">{error}</p>
         <div className="flex gap-3 pt-2">
           {onRefresh && (
             <button type="button" className="btn-instrument-primary" onClick={onRefresh}>
@@ -97,7 +97,7 @@ export const SuperSimpleOverview: React.FC<SuperSimpleOverviewProps> = ({
           </div>
         </div>
 
-        <h2 className="text-[19px] font-bold text-black leading-snug">
+        <h2 className="text-[19px] font-bold text-black leading-snug mt-1.5">
           {simple?.headline || diagnosis.primary_diagnosis}
         </h2>
       </div>
@@ -106,7 +106,7 @@ export const SuperSimpleOverview: React.FC<SuperSimpleOverviewProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Card 1: What is happening */}
         <div className="p-4 border border-[#E2E5E9] bg-white space-y-2">
-          <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#3B4045]">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#3B4045] mb-1">
             <IconSparkles size={15} className="text-black" />
             <span>What is happening?</span>
           </div>
@@ -117,7 +117,7 @@ export const SuperSimpleOverview: React.FC<SuperSimpleOverviewProps> = ({
 
         {/* Card 2: Why it matters */}
         <div className="p-4 border border-[#E2E5E9] bg-white space-y-2">
-          <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#3B4045]">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#3B4045] mb-1">
             <IconAlertTriangle size={15} className="text-black" />
             <span>Why does this matter?</span>
           </div>
@@ -129,7 +129,7 @@ export const SuperSimpleOverview: React.FC<SuperSimpleOverviewProps> = ({
 
       {/* Step-by-Step Fix Checklist */}
       <div className="p-5 border border-[#E2E5E9] bg-white space-y-3">
-        <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[#3B4045] border-b border-[#E2E5E9] pb-2">
+        <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[#3B4045] border-b border-[#E2E5E9] pb-2 mb-1">
           <IconZap size={15} className="text-black" />
           <span>How to solve this issue</span>
         </div>

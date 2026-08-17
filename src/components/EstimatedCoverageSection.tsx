@@ -16,7 +16,7 @@ export const EstimatedCoverageSection: React.FC<EstimatedCoverageSectionProps> =
   return (
     <div className="border border-[#E2E5E9] bg-white p-5 space-y-3.5">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#E2E5E9] pb-2 flex-wrap gap-2">
+      <div className="flex items-center justify-between border-b border-[#E2E5E9] pb-2 flex-wrap gap-2 mb-1">
         <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] flex items-center gap-1.5">
           <IconSignal size={15} />
           <span>Inferred Coverage & Dead-Zone Map</span>
@@ -27,12 +27,12 @@ export const EstimatedCoverageSection: React.FC<EstimatedCoverageSectionProps> =
       </div>
 
       {/* Description & Physical Environment */}
-      <div className="text-[13px] text-[#3B4045] font-sans space-y-1">
-        <p>
+      <div className="text-[13px] text-[#3B4045] font-sans space-y-1.5 my-2">
+        <p className="leading-relaxed">
           <strong className="text-black">{selectedHostname}</strong>: {zoneDescription}
         </p>
         {environmentNote && (
-          <p className="font-mono text-[11px] text-[#6B7280]">
+          <p className="font-mono text-[11px] text-[#6B7280] mt-1">
             Physical Location: <strong className="text-black">{environmentNote}</strong>
           </p>
         )}
@@ -84,7 +84,7 @@ export const EstimatedCoverageSection: React.FC<EstimatedCoverageSectionProps> =
         </div>
 
         {/* Zone Labels */}
-        <div className="flex justify-between font-mono text-[10px] text-[#6B7280]">
+        <div className="flex justify-between font-mono text-[10px] text-[#6B7280] mt-1.5">
           <span className="text-[#16A34A] font-bold">STRONG LINE-OF-SIGHT (&lt; 5m)</span>
           <span className="text-[#D97706] font-bold">SECONDARY PERIMETER (5–12m)</span>
           <span className="text-[#DC2626] font-bold">ATTENUATED DEAD ZONE (&gt; 12m)</span>

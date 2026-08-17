@@ -76,18 +76,18 @@ ${report.actionablePlan.map((p, i) => `${i + 1}. [${p.priority}] ${p.action} —
         <div className="modal-body space-y-5">
           {isLoading && (
             <div className="p-8 text-center space-y-2">
-              <div className="inline-block animate-spin text-black">
+              <div className="inline-block animate-spin text-black mb-1">
                 <IconRefresh size={32} />
               </div>
-              <h3 className="text-[16px] font-bold text-black">Probing Subnet & Synthesizing AI Audit...</h3>
+              <h3 className="text-[16px] font-bold text-black mb-1">Probing Subnet & Synthesizing AI Audit...</h3>
               <p className="font-mono text-[12px] text-[#6B7280]">Auditing router latency and classifying device fleet.</p>
             </div>
           )}
 
           {error && !isLoading && (
             <div className="p-5 border border-[#DC2626] bg-white space-y-3">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-[#DC2626]">Audit Sweep Error</div>
-              <p className="font-mono text-[12px] text-[#3B4045]">{error}</p>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-[#DC2626] mb-1">Audit Sweep Error</div>
+              <p className="font-mono text-[12px] text-[#3B4045] mb-2">{error}</p>
               <button type="button" className="btn-instrument-primary" onClick={onRescan}>
                 Retry Network Scan
               </button>
@@ -124,30 +124,30 @@ ${report.actionablePlan.map((p, i) => `${i + 1}. [${p.priority}] ${p.action} —
               </div>
 
               {/* Executive Summary */}
-              <div className="p-4 border border-[#E2E5E9] bg-[#F8F9FA] space-y-1">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045]">Executive Summary</div>
+              <div className="p-4 border border-[#E2E5E9] bg-[#F8F9FA] space-y-1.5">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] mb-1">Executive Summary</div>
                 <p className="text-[13px] text-black leading-relaxed">{report.executiveSummary}</p>
               </div>
 
               {/* Router Health & Verdicts */}
               <div className="border border-[#E2E5E9] bg-white p-4 space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] border-b border-[#E2E5E9] pb-2">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] border-b border-[#E2E5E9] pb-2 mb-2">
                   Router & Wi-Fi Gateway Audit ({scanResult.router.ssid})
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-[12px]">
                   <div className="p-3 bg-[#F8F9FA] border border-[#E2E5E9]">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mb-1">Channel Congestion</div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mb-1.5">Channel Congestion</div>
                     <div className="text-black font-semibold">{report.routerAssessment.channelCongestionVerdict}</div>
                   </div>
 
                   <div className="p-3 bg-[#F8F9FA] border border-[#E2E5E9]">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mb-1">Band Efficiency</div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mb-1.5">Band Efficiency</div>
                     <div className="text-black font-semibold">{report.routerAssessment.bandEfficiencyVerdict}</div>
                   </div>
 
                   <div className="p-3 bg-[#F8F9FA] border border-[#E2E5E9]">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mb-1">Gateway Responsiveness</div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mb-1.5">Gateway Responsiveness</div>
                     <div className="text-black font-semibold">{report.routerAssessment.gatewayLatencyVerdict}</div>
                   </div>
                 </div>
@@ -155,7 +155,7 @@ ${report.actionablePlan.map((p, i) => `${i + 1}. [${p.priority}] ${p.action} —
 
               {/* Discovered Device Fleet Table */}
               <div className="border border-[#E2E5E9] bg-white p-4 space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] flex items-center justify-between border-b border-[#E2E5E9] pb-2">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] flex items-center justify-between border-b border-[#E2E5E9] pb-2 mb-2">
                   <span>Discovered Fleet Inventory ({scanResult.devices.length} Endpoints)</span>
                   <span className="font-mono text-[11px] text-[#6B7280]">Subnet: {scanResult.subnet}</span>
                 </div>
@@ -190,7 +190,7 @@ ${report.actionablePlan.map((p, i) => `${i + 1}. [${p.priority}] ${p.action} —
 
               {/* Actionable Plan */}
               <div className="border border-[#E2E5E9] bg-white p-4 space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] flex items-center justify-between border-b border-[#E2E5E9] pb-2">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] flex items-center justify-between border-b border-[#E2E5E9] pb-2 mb-2">
                   <div className="flex items-center gap-1.5">
                     <IconZap size={14} className="text-black" />
                     <span>Prioritized Network Optimization Plan</span>
@@ -203,7 +203,7 @@ ${report.actionablePlan.map((p, i) => `${i + 1}. [${p.priority}] ${p.action} —
                 <div className="space-y-2">
                   {report.actionablePlan.map((plan, idx) => (
                     <div key={idx} className="p-3 bg-[#F8F9FA] border border-[#E2E5E9] flex flex-col gap-1">
-                      <div className="flex items-center justify-between flex-wrap gap-1">
+                      <div className="flex items-center justify-between flex-wrap gap-1 mb-0.5">
                         <div className="text-[13px] font-semibold text-black flex items-center gap-2">
                           <span className="font-mono text-[11px] font-bold text-[#6B7280]">#{idx + 1}</span>
                           <span>{plan.action}</span>

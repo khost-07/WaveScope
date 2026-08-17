@@ -56,20 +56,20 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
               size="small"
             />
           </div>
-          <div className="text-[12px] text-[#3B4045] font-sans font-medium">
+          <div className="text-[12px] text-[#3B4045] font-sans font-medium mt-1">
             {easyData.shortVerdict}
           </div>
         </div>
       ) : (
         /* TECHNICAL MODE CARD */
-        <>
+        <div>
           {/* Top Row: Device Name & Status Badge with Trend Arrow */}
           <div className="flex items-start justify-between gap-2 mb-1.5">
             <div className="min-w-0">
-              <div className="text-[14px] text-black font-bold leading-tight truncate">
+              <div className="text-[14px] text-black font-bold leading-tight truncate mb-0.5">
                 {device.hostname}
               </div>
-              <div className="font-mono text-[#6B7280] text-[11px] mt-0.5 truncate">
+              <div className="font-mono text-[#6B7280] text-[11px] truncate">
                 {device.vendor} &bull; {device.macAddress}
               </div>
             </div>
@@ -100,7 +100,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
           </div>
 
           {/* Diagnosis summary prose with trend qualifier if present */}
-          <div className="text-[12px] text-[#3B4045] line-clamp-2 mt-1 leading-snug">
+          <div className="text-[12px] text-[#3B4045] line-clamp-2 mt-2 leading-snug">
             {diagnosis.primary_diagnosis}
             {trendDirection && trendDirection !== 'STABLE' && (
               <span className="font-mono text-[11px] text-[#6B7280] ml-1">
@@ -108,7 +108,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
               </span>
             )}
           </div>
-        </>
+        </div>
       )}
     </div>
   );

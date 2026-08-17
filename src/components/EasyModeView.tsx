@@ -41,10 +41,10 @@ export const EasyModeView: React.FC<EasyModeViewProps> = ({
       {/* Device Name Header */}
       <div className="border-b border-[#E2E5E9] pb-4 flex items-center justify-between flex-wrap gap-3">
         <div>
-          <span className="text-[11px] font-mono uppercase tracking-wider text-[#6B7280] font-bold">
+          <span className="text-[11px] font-mono uppercase tracking-wider text-[#6B7280] font-bold block mb-1">
             Selected Device
           </span>
-          <h1 className="text-[24px] font-bold text-black tracking-tight mt-0.5">
+          <h1 className="text-[24px] font-bold text-black tracking-tight">
             {device.hostname}
           </h1>
         </div>
@@ -60,21 +60,21 @@ export const EasyModeView: React.FC<EasyModeViewProps> = ({
           borderLeftColor: level === 'GREAT' ? '#16A34A' : level === 'ATTENTION' ? '#D97706' : '#DC2626'
         }}
       >
-        <span className="text-[11px] font-mono uppercase tracking-wider font-bold text-[#6B7280]">
+        <span className="text-[11px] font-mono uppercase tracking-wider font-bold text-[#6B7280] block mb-1">
           Diagnosis Summary
         </span>
 
-        <h2 className="text-[22px] font-bold text-black leading-snug">
+        <h2 className="text-[22px] font-bold text-black leading-snug mb-2">
           {headline}
         </h2>
 
-        <p className="text-[15px] text-[#3B4045] leading-relaxed font-sans">
+        <p className="text-[15px] text-[#3B4045] leading-relaxed font-sans mb-1">
           {explanation}
         </p>
 
         {/* Peer or Trend Context Note in Plain Sentences */}
         {peerOrTrendNote && (
-          <div className="p-3.5 bg-white border border-[#E2E5E9] text-[13px] text-black font-medium leading-relaxed">
+          <div className="p-3.5 bg-white border border-[#E2E5E9] text-[13px] text-black font-medium leading-relaxed mt-2">
             💡 {peerOrTrendNote}
           </div>
         )}
@@ -82,7 +82,7 @@ export const EasyModeView: React.FC<EasyModeViewProps> = ({
 
       {/* Clear Next Action */}
       <div className="p-6 border border-[#E2E5E9] bg-white space-y-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mb-1">
           <div className="w-6 h-6 bg-black text-white font-bold text-[12px] flex items-center justify-center">
             ✓
           </div>

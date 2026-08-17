@@ -88,7 +88,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
   return (
     <div className="bg-white border border-[#E2E5E9] p-6 space-y-5">
       {/* Breadcrumb & Navigation Path */}
-      <div className="flex items-center font-mono text-[11px] text-[#6B7280] uppercase tracking-wider">
+      <div className="flex items-center font-mono text-[11px] text-[#6B7280] uppercase tracking-wider mb-1">
         <span className="cursor-pointer hover:text-black transition-colors">Client Fleet</span>
         <IconChevronRight size={14} className="mx-1 text-[#6B7280]" />
         <span className="text-black font-bold">{device.hostname}</span>
@@ -97,8 +97,8 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
       {/* Page Header */}
       <div className="flex flex-wrap items-end justify-between border-b border-[#E2E5E9] pb-4 gap-4">
         <div>
-          <h1 className="text-[22px] font-bold text-black tracking-tight">{device.hostname}</h1>
-          <p className="font-mono text-[12px] text-[#6B7280] mt-0.5">
+          <h1 className="text-[22px] font-bold text-black tracking-tight mb-1">{device.hostname}</h1>
+          <p className="font-mono text-[12px] text-[#6B7280]">
             MAC: <strong className="text-black">{device.macAddress}</strong> &bull; IP: <strong className="text-black">{device.ipAddress}</strong> &bull; Vendor: {device.vendor}
           </p>
         </div>
@@ -118,7 +118,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
 
       {/* Section 1: Canonical Raw Telemetry 4-Box Grid with Inline Sparkline */}
       <div>
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-2.5">
           <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] flex items-center gap-1.5">
             <IconSignal size={15} />
             <span>Raw Telemetry</span>
@@ -196,7 +196,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
 
       {/* Section 2: Layer 2 Diagnostic Result Banner */}
       <div
-        className="border border-[#E2E5E9] p-4.5 bg-white"
+        className="border border-[#E2E5E9] p-5 bg-white"
         style={{
           borderLeftWidth: '4px',
           borderLeftColor: status === 'CRITICAL' ? '#DC2626' : status === 'ATTENTION' ? '#D97706' : '#16A34A'
@@ -234,22 +234,22 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
         </div>
 
         <h2
-          className="text-[18px] font-bold mb-2 flex items-center gap-2 flex-wrap"
+          className="text-[18px] font-bold my-2 flex items-center gap-2 flex-wrap"
           style={{
             color: status === 'CRITICAL' ? '#DC2626' : status === 'ATTENTION' ? '#D97706' : '#16A34A'
           }}
         >
           <span>{diagnosis.primary_diagnosis}</span>
           {trend?.hasEnoughData && trend.direction !== 'STABLE' && (
-            <span className="font-mono text-[12px] text-[#6B7280] font-normal">
+            <span className="font-mono text-[12px] text-[#6B7280] font-normal ml-1">
               {trend.qualifier}
             </span>
           )}
         </h2>
 
         {/* Confidence Meter Bar */}
-        <div className="space-y-1.5 pt-2 border-t border-[#E2E5E9]">
-          <div className="flex items-center justify-between text-[11px] font-mono">
+        <div className="space-y-1.5 pt-3 border-t border-[#E2E5E9]">
+          <div className="flex items-center justify-between text-[11px] font-mono mb-1">
             <span className="text-[#6B7280] uppercase font-bold">Engine Scoring Confidence:</span>
             <strong className="text-black">{effectiveConfidence}%</strong>
           </div>
@@ -356,7 +356,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
 
             {/* Parameter Tuner */}
             <div className="border border-[#E2E5E9] bg-white p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-[#E2E5E9] pb-2">
+              <div className="flex items-center justify-between border-b border-[#E2E5E9] pb-2 mb-2">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045]">
                   Interactive RF Parameter Tuner
                 </span>
@@ -367,7 +367,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label className="font-mono text-[12px] text-[#3B4045] block mb-1">
+                  <label className="font-mono text-[12px] text-[#3B4045] block mb-1.5">
                     RSSI: <strong className="text-black">{device.telemetry.rssi_dBm} dBm</strong>
                   </label>
                   <input
@@ -377,7 +377,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
                     value={device.telemetry.rssi_dBm}
                     onChange={(e) => handleTweakField('rssi_dBm', parseInt(e.target.value, 10))}
                   />
-                  <div className="flex justify-between font-mono text-[10px] text-[#6B7280] mt-1">
+                  <div className="flex justify-between font-mono text-[10px] text-[#6B7280] mt-1.5">
                     <span>-90 dBm (Weak)</span>
                     <span>-60 dBm (Nominal)</span>
                     <span>-30 dBm (Strong)</span>
@@ -385,7 +385,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
                 </div>
 
                 <div>
-                  <label className="font-mono text-[12px] text-[#3B4045] block mb-1">
+                  <label className="font-mono text-[12px] text-[#3B4045] block mb-1.5">
                     Noise Floor: <strong className="text-black">{device.telemetry.noiseFloor_dBm} dBm</strong>
                   </label>
                   <input
@@ -395,7 +395,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
                     value={device.telemetry.noiseFloor_dBm}
                     onChange={(e) => handleTweakField('noiseFloor_dBm', parseInt(e.target.value, 10))}
                   />
-                  <div className="flex justify-between font-mono text-[10px] text-[#6B7280] mt-1">
+                  <div className="flex justify-between font-mono text-[10px] text-[#6B7280] mt-1.5">
                     <span>-95 dBm (Clean)</span>
                     <span>-70 dBm (Noisy)</span>
                     <span>-45 dBm (Jammed)</span>
@@ -403,7 +403,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
                 </div>
 
                 <div>
-                  <label className="font-mono text-[12px] text-[#3B4045] block mb-1">
+                  <label className="font-mono text-[12px] text-[#3B4045] block mb-1.5">
                     Retry Rate: <strong className="text-black">{device.telemetry.retryRatePct}%</strong>
                   </label>
                   <input
@@ -416,7 +416,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
                 </div>
 
                 <div>
-                  <label className="font-mono text-[12px] text-[#3B4045] block mb-1">
+                  <label className="font-mono text-[12px] text-[#3B4045] block mb-1.5">
                     Channel Width: <strong className="text-black">{device.telemetry.channelWidthMHz} MHz</strong>
                   </label>
                   <div className="flex gap-2 mt-1">

@@ -550,7 +550,7 @@ export function App() {
           {/* SECTION 2: HIGH-DENSITY PRIMARY DEVICE TABLE */}
           {activeNav === 'OVERVIEW' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-1">
                 <h2 className="text-[18px] font-bold text-black">
                   {isEasyMode ? 'All Devices Overview' : 'Fleet Telemetry & RF Matrix'}
                 </h2>
@@ -573,11 +573,11 @@ export function App() {
           {/* SECTION 3: DIAGNOSTIC RULES SPECIFICATION */}
           {activeNav === 'RULES' && (
             <div className="border border-[#E2E5E9] bg-white p-6 space-y-4">
-              <div className="border-b border-[#E2E5E9] pb-3">
-                <h2 className="text-[20px] font-bold text-black">
+              <div className="border-b border-[#E2E5E9] pb-3 mb-2">
+                <h2 className="text-[20px] font-bold text-black mb-1">
                   {isEasyMode ? 'How WaveScope Checks Your Wi-Fi' : 'Layer 2 Deterministic Rule Engine'}
                 </h2>
-                <p className="text-[14px] text-[#3B4045] mt-1">
+                <p className="text-[14px] text-[#3B4045] leading-relaxed">
                   {isEasyMode
                     ? 'WaveScope evaluates your wireless connection using physical tests without relying on slow internet queries:'
                     : 'WaveScope evaluates four competing physical RF hypotheses using local mathematical point thresholds without LLM dependence:'}
@@ -586,10 +586,10 @@ export function App() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 border border-[#E2E5E9] bg-[#F8F9FA] space-y-1">
-                  <div className="text-[12px] font-bold text-black uppercase tracking-wider">
+                  <div className="text-[12px] font-bold text-black uppercase tracking-wider mb-1">
                     {isEasyMode ? '1. Distance & Obstacles (Too Far)' : '1. Weak / Attenuated Signal'}
                   </div>
-                  <p className="text-[13px] text-[#3B4045]">
+                  <p className="text-[13px] text-[#3B4045] leading-relaxed">
                     {isEasyMode
                       ? 'Detects if your device is too far away from the router or separated by thick walls and metal.'
                       : 'Triggered when RSSI ≤ -75 dBm, SNR ≤ 15 dB, or Retries ≥ 15%. Confirms high physical path loss.'}
@@ -597,10 +597,10 @@ export function App() {
                 </div>
 
                 <div className="p-4 border border-[#E2E5E9] bg-[#F8F9FA] space-y-1">
-                  <div className="text-[12px] font-bold text-black uppercase tracking-wider">
+                  <div className="text-[12px] font-bold text-black uppercase tracking-wider mb-1">
                     {isEasyMode ? '2. Nearby Interference (Crowded Airwaves)' : '2. Possible RF Interference'}
                   </div>
-                  <p className="text-[13px] text-[#3B4045]">
+                  <p className="text-[13px] text-[#3B4045] leading-relaxed">
                     {isEasyMode
                       ? 'Detects if microwaves, neighbors, or electronics are crowding the wireless channel.'
                       : 'Triggered when RSSI ≥ -65 dBm but SNR ≤ 12 dB or Noise Floor ≥ -70 dBm. Indicates heavy jamming.'}
@@ -608,10 +608,10 @@ export function App() {
                 </div>
 
                 <div className="p-4 border border-[#E2E5E9] bg-[#F8F9FA] space-y-1">
-                  <div className="text-[12px] font-bold text-black uppercase tracking-wider">
+                  <div className="text-[12px] font-bold text-black uppercase tracking-wider mb-1">
                     {isEasyMode ? '3. Device Capability (Older Hardware)' : '3. Hardware / Capability Limited'}
                   </div>
-                  <p className="text-[13px] text-[#3B4045]">
+                  <p className="text-[13px] text-[#3B4045] leading-relaxed">
                     {isEasyMode
                       ? 'Detects if the device is older and naturally cannot reach top modern Wi-Fi speeds.'
                       : 'Triggered when device standard is 802.11n/legacy, 20MHz width, or 1x1 SISO while RF link is stable.'}
@@ -619,10 +619,10 @@ export function App() {
                 </div>
 
                 <div className="p-4 border border-[#E2E5E9] bg-[#F8F9FA] space-y-1">
-                  <div className="text-[12px] font-bold text-black uppercase tracking-wider">
+                  <div className="text-[12px] font-bold text-black uppercase tracking-wider mb-1">
                     {isEasyMode ? '4. Setting Adjustment (Slow Band)' : '4. Potential Band Selection Issue'}
                   </div>
-                  <p className="text-[13px] text-[#3B4045]">
+                  <p className="text-[13px] text-[#3B4045] leading-relaxed">
                     {isEasyMode
                       ? 'Detects if your fast device accidentally connected to a slow 2.4 GHz channel instead of 5 GHz.'
                       : 'Triggered when a dual-band/tri-band device is associated on congested 2.4GHz despite strong signal.'}
