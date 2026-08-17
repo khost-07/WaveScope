@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ClientDevice, StructuredDiagnosis } from '../layer1_data/types';
 import { IconCheckBox, IconAlertTriangle, IconAlertCircle } from './SvgIcons';
+import { mapToEasyMode } from '../layer2_engine/easyModeMapper';
+import { FriendlyVisualIndicator } from './FriendlyVisualIndicator';
 
 interface DeviceCardProps {
   device: ClientDevice;
@@ -9,6 +11,7 @@ interface DeviceCardProps {
   onSelect: (device: ClientDevice) => void;
   trendSymbol?: string;
   trendDirection?: 'IMPROVING' | 'STABLE' | 'DEGRADING';
+  isEasyMode?: boolean;
 }
 
 export const DeviceCard: React.FC<DeviceCardProps> = ({
@@ -17,9 +20,15 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
   isSelected,
   onSelect,
   trendSymbol,
-  trendDirection
+  trendDirection,
+  isEasyMode = false
 }) => {
   const status = diagnosis.status;
+
+  const easyData = useMemo(() => {
+    if (!isEasyMode) return null;
+    return mapToEasyMode(device, diagnosis);
+  }, [isEasyMode, device, diagnosis]);
 
   return (
     <div
@@ -34,51 +43,73 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
       }}
       onClick={() => onSelect(device)}
     >
-      {/* Top Row: Device Name & Status Badge with Trend Arrow */}
-      <div className="flex items-start justify-between gap-2 mb-1.5">
-        <div className="min-w-0">
-          <div className="text-[14px] text-black font-bold leading-tight truncate">
-            {device.hostname}
+      {isEasyMode && easyData ? (
+        /* EASY MODE CARD */
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[14px] text-black font-bold truncate">
+              {device.hostname}
+            </div>
+            <FriendlyVisualIndicator
+              level={easyData.level}
+              iconType={easyData.iconType}
+              size="small"
+            />
           </div>
-          <div className="font-mono text-[#6B7280] text-[11px] mt-0.5 truncate">
-            {device.vendor} &bull; {device.macAddress}
+          <div className="text-[12px] text-[#3B4045] font-sans font-medium">
+            {easyData.shortVerdict}
           </div>
         </div>
+      ) : (
+        /* TECHNICAL MODE CARD */
+        <>
+          {/* Top Row: Device Name & Status Badge with Trend Arrow */}
+          <div className="flex items-start justify-between gap-2 mb-1.5">
+            <div className="min-w-0">
+              <div className="text-[14px] text-black font-bold leading-tight truncate">
+                {device.hostname}
+              </div>
+              <div className="font-mono text-[#6B7280] text-[11px] mt-0.5 truncate">
+                {device.vendor} &bull; {device.macAddress}
+              </div>
+            </div>
 
-        <div className="flex items-center gap-1 flex-shrink-0">
-          {status === 'HEALTHY' && (
-            <span className="badge-status badge-status-healthy text-[9px] py-0.5 px-1.5 flex items-center gap-1">
-              <IconCheckBox size={11} />
-              HEALTHY
-              {trendSymbol && <span className="font-bold ml-0.5">{trendSymbol}</span>}
-            </span>
-          )}
-          {status === 'ATTENTION' && (
-            <span className="badge-status badge-status-attention text-[9px] py-0.5 px-1.5 flex items-center gap-1">
-              <IconAlertTriangle size={11} />
-              ATTN
-              {trendSymbol && <span className="font-bold ml-0.5">{trendSymbol}</span>}
-            </span>
-          )}
-          {status === 'CRITICAL' && (
-            <span className="badge-status badge-status-critical text-[9px] py-0.5 px-1.5 flex items-center gap-1">
-              <IconAlertCircle size={11} />
-              CRIT
-              {trendSymbol && <span className="font-bold ml-0.5">{trendSymbol}</span>}
-            </span>
-          )}
-        </div>
-      </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {status === 'HEALTHY' && (
+                <span className="badge-status badge-status-healthy text-[9px] py-0.5 px-1.5 flex items-center gap-1">
+                  <IconCheckBox size={11} />
+                  HEALTHY
+                  {trendSymbol && <span className="font-bold ml-0.5">{trendSymbol}</span>}
+                </span>
+              )}
+              {status === 'ATTENTION' && (
+                <span className="badge-status badge-status-attention text-[9px] py-0.5 px-1.5 flex items-center gap-1">
+                  <IconAlertTriangle size={11} />
+                  ATTN
+                  {trendSymbol && <span className="font-bold ml-0.5">{trendSymbol}</span>}
+                </span>
+              )}
+              {status === 'CRITICAL' && (
+                <span className="badge-status badge-status-critical text-[9px] py-0.5 px-1.5 flex items-center gap-1">
+                  <IconAlertCircle size={11} />
+                  CRIT
+                  {trendSymbol && <span className="font-bold ml-0.5">{trendSymbol}</span>}
+                </span>
+              )}
+            </div>
+          </div>
 
-      {/* Diagnosis summary prose with trend qualifier if present */}
-      <div className="text-[12px] text-[#3B4045] line-clamp-2 mt-1 leading-snug">
-        {diagnosis.primary_diagnosis}
-        {trendDirection && trendDirection !== 'STABLE' && (
-          <span className="font-mono text-[11px] text-[#6B7280] ml-1">
-            ({trendDirection.toLowerCase()})
-          </span>
-        )}
-      </div>
+          {/* Diagnosis summary prose with trend qualifier if present */}
+          <div className="text-[12px] text-[#3B4045] line-clamp-2 mt-1 leading-snug">
+            {diagnosis.primary_diagnosis}
+            {trendDirection && trendDirection !== 'STABLE' && (
+              <span className="font-mono text-[11px] text-[#6B7280] ml-1">
+                ({trendDirection.toLowerCase()})
+              </span>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };

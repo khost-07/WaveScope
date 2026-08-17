@@ -19,6 +19,7 @@ interface NetworkOverviewBarProps {
   singleDeviceStatus?: DiagnosticStatus;
   singleDeviceHostname?: string;
   singleDeviceDiagnosis?: string;
+  isEasyMode?: boolean;
 }
 
 export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
@@ -32,7 +33,8 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
   onOpenNetworkAudit,
   singleDeviceStatus = 'HEALTHY',
   singleDeviceHostname = 'Connected Wi-Fi Interface',
-  singleDeviceDiagnosis
+  singleDeviceDiagnosis,
+  isEasyMode = false
 }) => {
   return (
     <div className="flex flex-col gap-3.5 mb-4">
@@ -51,12 +53,12 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
             onClick={() => onChangeFilter('ALL')}
           >
             <div className="telemetry-cell-label flex items-center justify-between">
-              <span>TOTAL CLIENTS</span>
+              <span>{isEasyMode ? 'TOTAL DEVICES' : 'TOTAL CLIENTS'}</span>
               <IconRouter size={15} className="text-[#6B7280]" />
             </div>
             <div className="telemetry-cell-value-group">
               <span className="telemetry-cell-value text-black">{stats.total}</span>
-              <span className="telemetry-cell-unit">nodes</span>
+              <span className="telemetry-cell-unit">{isEasyMode ? 'devices' : 'nodes'}</span>
             </div>
           </button>
 
@@ -72,12 +74,12 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
             <div className="telemetry-cell-label flex items-center justify-between text-[#16A34A]">
               <span className="flex items-center gap-1.5">
                 <IconCheckBox size={14} />
-                HEALTHY
+                {isEasyMode ? 'GREAT' : 'HEALTHY'}
               </span>
             </div>
             <div className="telemetry-cell-value-group">
               <span className="telemetry-cell-value text-[#16A34A]">{stats.healthy}</span>
-              <span className="telemetry-cell-unit">nominal</span>
+              <span className="telemetry-cell-unit">{isEasyMode ? 'optimal' : 'nominal'}</span>
             </div>
           </button>
 
@@ -93,12 +95,12 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
             <div className="telemetry-cell-label flex items-center justify-between text-[#D97706]">
               <span className="flex items-center gap-1.5">
                 <IconAlertTriangle size={14} />
-                ATTENTION
+                {isEasyMode ? 'CAN IMPROVE' : 'ATTENTION'}
               </span>
             </div>
             <div className="telemetry-cell-value-group">
               <span className="telemetry-cell-value text-[#D97706]">{stats.attention}</span>
-              <span className="telemetry-cell-unit">degraded</span>
+              <span className="telemetry-cell-unit">{isEasyMode ? 'fair' : 'degraded'}</span>
             </div>
           </button>
 
@@ -114,12 +116,12 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
             <div className="telemetry-cell-label flex items-center justify-between text-[#DC2626]">
               <span className="flex items-center gap-1.5">
                 <IconAlertCircle size={14} />
-                CRITICAL
+                {isEasyMode ? 'NEEDS ATTENTION' : 'CRITICAL'}
               </span>
             </div>
             <div className="telemetry-cell-value-group">
               <span className="telemetry-cell-value text-[#DC2626]">{stats.critical}</span>
-              <span className="telemetry-cell-unit">alert</span>
+              <span className="telemetry-cell-unit">{isEasyMode ? 'action needed' : 'alert'}</span>
             </div>
           </button>
         </div>
@@ -130,32 +132,36 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
             {singleDeviceStatus === 'HEALTHY' && (
               <div className="badge-status badge-status-healthy text-[11px] py-1 px-2.5 flex items-center gap-1.5">
                 <IconCheckBox size={14} />
-                <span>HEALTHY LINK</span>
+                <span>{isEasyMode ? 'GREAT CONNECTION' : 'HEALTHY LINK'}</span>
               </div>
             )}
             {singleDeviceStatus === 'ATTENTION' && (
               <div className="badge-status badge-status-attention text-[11px] py-1 px-2.5 flex items-center gap-1.5">
                 <IconAlertTriangle size={14} />
-                <span>ATTENTION REQUIRED</span>
+                <span>{isEasyMode ? 'COULD BE BETTER' : 'ATTENTION REQUIRED'}</span>
               </div>
             )}
             {singleDeviceStatus === 'CRITICAL' && (
               <div className="badge-status badge-status-critical text-[11px] py-1 px-2.5 flex items-center gap-1.5">
                 <IconAlertCircle size={14} />
-                <span>CRITICAL LINK</span>
+                <span>{isEasyMode ? 'NEEDS ATTENTION' : 'CRITICAL LINK'}</span>
               </div>
             )}
 
             <div>
               <div className="text-[15px] font-bold text-black">
                 {singleDeviceStatus === 'HEALTHY'
-                  ? 'Your active Wi-Fi connection is operating nominally.'
+                  ? `Your Wi-Fi connection on ${singleDeviceHostname} is working great.`
+                  : isEasyMode
+                  ? `An issue was found on your ${singleDeviceHostname} connection.`
                   : singleDeviceDiagnosis
                   ? `1 issue detected: ${singleDeviceDiagnosis}`
                   : '1 potential issue detected on your active connection.'}
               </div>
               <div className="font-mono text-[11px] text-[#6B7280] mt-0.5">
-                Host: <strong className="text-black">{singleDeviceHostname}</strong> &bull; Evaluated by Layer 2 deterministic engine
+                {isEasyMode
+                  ? `Device: ${singleDeviceHostname} • Wi-Fi Health Check Active`
+                  : `Host: ${singleDeviceHostname} • Evaluated by Layer 2 deterministic engine`}
               </div>
             </div>
           </div>
@@ -163,14 +169,14 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
           <div className="flex items-center gap-2 font-mono text-[11px]">
             <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F8F9FA] border border-[#E2E5E9] text-black font-semibold">
               <span className="w-2 h-2 bg-[#16A34A] inline-block animate-pulse-fast"></span>
-              LIVE PROBE ACTIVE
+              {isEasyMode ? 'LIVE WI-FI ACTIVE' : 'LIVE PROBE ACTIVE'}
             </span>
           </div>
         </div>
       )}
 
       {/* AP Header & Actions Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white border border-[#E2E5E5]">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white border border-[#E2E5E9]">
         <div className="flex items-center gap-3">
           <div className="p-2 border border-[#E2E5E9] bg-[#F8F9FA] flex items-center justify-center">
             <IconRouter size={20} className="text-black" />
@@ -178,14 +184,34 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[15px] font-bold text-black">{ap.ssid}</span>
-              <span className="badge-status font-mono text-[10px]">{ap.maxStandard}</span>
-              <span className="badge-status font-mono text-[10px]">Tri-Band (2.4 / 5 / 6 GHz)</span>
+              {!isEasyMode && (
+                <>
+                  <span className="badge-status font-mono text-[10px]">{ap.maxStandard}</span>
+                  <span className="badge-status font-mono text-[10px]">Tri-Band (2.4 / 5 / 6 GHz)</span>
+                </>
+              )}
+              {isEasyMode && (
+                <span className="badge-status font-mono text-[10px] text-[#16A34A] border-[#16A34A]">
+                  Home Network
+                </span>
+              )}
             </div>
             <div className="text-[11px] font-mono text-[#6B7280] mt-0.5">
-              {ap.apModel} &bull; Channel Utilization:{' '}
-              <span className="font-bold" style={{ color: ap.channelUtilizationPct >= 70 ? '#DC2626' : '#16A34A' }}>
-                {ap.channelUtilizationPct}%
-              </span>
+              {isEasyMode ? (
+                <span>
+                  Router Status:{' '}
+                  <strong className="text-black">
+                    {ap.channelUtilizationPct < 50 ? 'Smooth & Fast' : 'Busy Airwaves'}
+                  </strong>
+                </span>
+              ) : (
+                <span>
+                  {ap.apModel} &bull; Channel Utilization:{' '}
+                  <strong style={{ color: ap.channelUtilizationPct >= 70 ? '#DC2626' : '#16A34A' }}>
+                    {ap.channelUtilizationPct}%
+                  </strong>
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -197,7 +223,7 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
             onClick={onOpenNetworkAudit}
           >
             <IconRadar size={15} />
-            <span>Whole-Network AI Audit</span>
+            <span>{isEasyMode ? 'Check Entire Wi-Fi' : 'Whole-Network AI Audit'}</span>
           </button>
         )}
       </div>
@@ -206,7 +232,7 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
       {isSimulation && onSelectScenario && (
         <div className="flex items-center gap-2 p-2 bg-[#F8F9FA] border border-[#E2E5E9] overflow-x-auto">
           <span className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] whitespace-nowrap px-1">
-            PRESET SCENARIOS:
+            {isEasyMode ? 'TEST SITUATIONS:' : 'PRESET SCENARIOS:'}
           </span>
           <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
             <button
@@ -216,7 +242,7 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
               }`}
               onClick={() => onSelectScenario('A')}
             >
-              <strong>A</strong>: Fast 5GHz
+              <strong>A</strong>: {isEasyMode ? 'Great Wi-Fi' : 'Fast 5GHz'}
             </button>
             <button
               type="button"
@@ -225,7 +251,7 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
               }`}
               onClick={() => onSelectScenario('B')}
             >
-              <strong>B</strong>: Weak Signal (-76 dBm)
+              <strong>B</strong>: {isEasyMode ? 'Too Far' : 'Weak Signal (-76 dBm)'}
             </button>
             <button
               type="button"
@@ -234,7 +260,7 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
               }`}
               onClick={() => onSelectScenario('C')}
             >
-              <strong>C</strong>: RF Noise / Jammed
+              <strong>C</strong>: {isEasyMode ? 'Interference' : 'RF Noise / Jammed'}
             </button>
             <button
               type="button"
@@ -243,7 +269,7 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
               }`}
               onClick={() => onSelectScenario('D')}
             >
-              <strong>D</strong>: Legacy IoT
+              <strong>D</strong>: {isEasyMode ? 'Older Device' : 'Legacy IoT'}
             </button>
             <button
               type="button"
@@ -252,7 +278,7 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
               }`}
               onClick={() => onSelectScenario('E')}
             >
-              <strong>E</strong>: Wrong Band
+              <strong>E</strong>: {isEasyMode ? 'Setting Tweak' : 'Wrong Band'}
             </button>
           </div>
         </div>

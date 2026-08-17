@@ -9,6 +9,7 @@ interface DeviceListPaneProps {
   selectedDeviceId: string | null;
   onSelectDevice: (device: ClientDevice) => void;
   trends?: Record<string, { symbol: string; direction: 'IMPROVING' | 'STABLE' | 'DEGRADING' }>;
+  isEasyMode?: boolean;
 }
 
 export const DeviceListPane: React.FC<DeviceListPaneProps> = ({
@@ -16,7 +17,8 @@ export const DeviceListPane: React.FC<DeviceListPaneProps> = ({
   diagnoses,
   selectedDeviceId,
   onSelectDevice,
-  trends
+  trends,
+  isEasyMode = false
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [quickFilter, setQuickFilter] = useState<'ALL' | 'DEGRADED' | 'HEALTHY'>('ALL');
@@ -52,7 +54,7 @@ export const DeviceListPane: React.FC<DeviceListPaneProps> = ({
           <input
             type="text"
             className="w-full bg-white border border-[#E2E5E9] py-1.5 pl-8 pr-7 font-mono text-[12px] text-black placeholder-[#6B7280] outline-none focus:border-black transition-colors"
-            placeholder="Search MAC, IP, vendor, or issue..."
+            placeholder={isEasyMode ? 'Search your devices...' : 'Search MAC, IP, vendor, or issue...'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -89,7 +91,7 @@ export const DeviceListPane: React.FC<DeviceListPaneProps> = ({
             }`}
             onClick={() => setQuickFilter('DEGRADED')}
           >
-            ISSUES ({devices.filter(d => diagnoses[d.id]?.status !== 'HEALTHY').length})
+            {isEasyMode ? 'ATTENTION' : 'ISSUES'} ({devices.filter(d => diagnoses[d.id]?.status !== 'HEALTHY').length})
           </button>
           <button
             type="button"
@@ -100,7 +102,7 @@ export const DeviceListPane: React.FC<DeviceListPaneProps> = ({
             }`}
             onClick={() => setQuickFilter('HEALTHY')}
           >
-            HEALTHY ({devices.filter(d => diagnoses[d.id]?.status === 'HEALTHY').length})
+            {isEasyMode ? 'GOOD' : 'HEALTHY'} ({devices.filter(d => diagnoses[d.id]?.status === 'HEALTHY').length})
           </button>
         </div>
       </div>
@@ -132,20 +134,21 @@ export const DeviceListPane: React.FC<DeviceListPaneProps> = ({
                 onSelect={onSelectDevice}
                 trendSymbol={devTrend?.symbol}
                 trendDirection={devTrend?.direction}
+                isEasyMode={isEasyMode}
               />
             );
           })
         ) : (
           <div className="p-8 text-center text-[#6B7280] text-[13px] font-mono">
-            No matching client endpoints found.
+            {isEasyMode ? 'No matching devices found.' : 'No matching client endpoints found.'}
           </div>
         )}
       </div>
 
       {/* Footer Info */}
       <div className="p-2.5 border-t border-[#E2E5E9] bg-[#F8F9FA] font-mono text-[11px] text-[#6B7280] flex justify-between">
-        <span>Endpoints: <strong className="text-black">{devices.length}</strong></span>
-        <span>Engine: <strong className="text-black">L2 Rule System</strong></span>
+        <span>{isEasyMode ? 'Devices:' : 'Endpoints:'} <strong className="text-black">{devices.length}</strong></span>
+        {!isEasyMode && <span>Engine: <strong className="text-black">L2 Rule System</strong></span>}
       </div>
     </div>
   );

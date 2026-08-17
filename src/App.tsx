@@ -12,6 +12,7 @@ import { NetworkScanResult, NetworkAuditReport } from './layer1_data/networkScan
 import { NetworkOverviewBar } from './components/NetworkOverviewBar';
 import { DeviceListPane } from './components/DeviceListPane';
 import { DeviceDetailHub } from './components/DeviceDetailHub';
+import { EasyModeView } from './components/EasyModeView';
 import { ClientTable } from './components/ClientTable';
 import { ApiKeySetupScreen } from './components/ApiKeySetupScreen';
 import { NetworkReportModal } from './components/NetworkReportModal';
@@ -24,6 +25,7 @@ type NavSection = 'OVERVIEW' | 'CLIENTS' | 'RULES';
 
 export function App() {
   const [mode, setMode] = useState<DataSourceMode>('SIMULATION');
+  const [isEasyMode, setIsEasyMode] = useState<boolean>(false);
   const [activeNav, setActiveNav] = useState<NavSection>('CLIENTS');
   const [simulatedDevices, setSimulatedDevices] = useState<ClientDevice[]>(SIMULATION_SCENARIOS);
   const [devices, setDevices] = useState<ClientDevice[]>(SIMULATION_SCENARIOS);
@@ -187,12 +189,12 @@ export function App() {
     }
   }, [apiKey]);
 
-  // Trigger explanation automatically when selected device changes
+  // Trigger explanation automatically when selected device changes (only in Technical Mode)
   useEffect(() => {
-    if (selectedDevice && selectedDiagnosis && !explanations[selectedDevice.id] && hasCompletedSetup && apiKey) {
+    if (selectedDevice && selectedDiagnosis && !explanations[selectedDevice.id] && hasCompletedSetup && apiKey && !isEasyMode) {
       triggerExplanationForDevice(selectedDevice, selectedDiagnosis);
     }
-  }, [selectedDeviceId, selectedDevice, selectedDiagnosis, explanations, hasCompletedSetup, apiKey, triggerExplanationForDevice]);
+  }, [selectedDeviceId, selectedDevice, selectedDiagnosis, explanations, hasCompletedSetup, apiKey, isEasyMode, triggerExplanationForDevice]);
 
   // Handle saving API key
   const handleSaveApiKey = (newKey: string, persist: boolean) => {
@@ -240,7 +242,7 @@ export function App() {
   const handleSelectDevice = (device: ClientDevice) => {
     setSelectedDeviceId(device.id);
     const diag = diagnoses[device.id] || runDiagnosticEngine(device);
-    if (!explanations[device.id] && apiKey) {
+    if (!explanations[device.id] && apiKey && !isEasyMode) {
       triggerExplanationForDevice(device, diag);
     }
   };
@@ -260,22 +262,22 @@ export function App() {
   // Menu items for StaggeredMenu
   const menuItems = useMemo<StaggeredMenuItem[]>(() => [
     {
-      label: 'Fleet Clients',
+      label: isEasyMode ? 'Device List' : 'Fleet Clients',
       ariaLabel: 'View connected client fleet workspace',
       onClick: () => setActiveNav('CLIENTS')
     },
     {
-      label: 'Telemetry Matrix',
+      label: isEasyMode ? 'Overview Table' : 'Telemetry Matrix',
       ariaLabel: 'Open telemetry and RF matrix table',
       onClick: () => setActiveNav('OVERVIEW')
     },
     {
-      label: 'Diagnostic Rules',
+      label: isEasyMode ? 'How It Works' : 'Diagnostic Rules',
       ariaLabel: 'Inspect Layer 2 deterministic rules specification',
       onClick: () => setActiveNav('RULES')
     },
     {
-      label: 'Network Audit',
+      label: isEasyMode ? 'Check Entire Wi-Fi' : 'Network Audit',
       ariaLabel: 'Execute whole network AI security and RF audit',
       onClick: () => handleRunNetworkAudit()
     },
@@ -284,14 +286,15 @@ export function App() {
       ariaLabel: 'Configure Google Gemini API key',
       onClick: () => setShowKeyModal(true)
     }
-  ], [handleRunNetworkAudit]);
+  ], [isEasyMode, handleRunNetworkAudit]);
 
   const socialItems = useMemo<StaggeredMenuSocialItem[]>(() => [
+    { label: isEasyMode ? 'Switch to Expert Mode' : 'Switch to Easy Mode', link: '#toggle-mode', onClick: () => setIsEasyMode(!isEasyMode) },
     { label: 'GitHub Repo', link: 'https://github.com/khost-07/WaveScope' },
     { label: 'Google AI Studio', link: 'https://aistudio.google.com/app/apikey' },
     { label: 'Simulation Fleet', link: '#simulation', onClick: () => setMode('SIMULATION') },
     { label: 'Live WLAN Probe', link: '#real', onClick: () => setMode('REAL') }
-  ], []);
+  ], [isEasyMode]);
 
   if (!hasCompletedSetup) {
     return <ApiKeySetupScreen initialKey={apiKey} onSaveKey={handleSaveApiKey} />;
@@ -313,7 +316,31 @@ export function App() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Mode Switcher */}
+          {/* Top-Level Easy Mode / Expert Mode Toggle */}
+          <div className="flex border border-[#0F1113] h-8 text-[11px] font-mono font-semibold">
+            <button
+              type="button"
+              className={`px-3 flex items-center gap-1.5 transition-all ${
+                !isEasyMode ? 'bg-[#0F1113] text-white' : 'text-black hover:bg-[#F8F9FA]'
+              }`}
+              onClick={() => setIsEasyMode(false)}
+              title="Switch to detailed technical telemetry view"
+            >
+              <span>EXPERT</span>
+            </button>
+            <button
+              type="button"
+              className={`px-3 flex items-center gap-1.5 border-l border-[#0F1113] transition-all ${
+                isEasyMode ? 'bg-[#16A34A] text-white border-[#16A34A]' : 'text-black hover:bg-[#F8F9FA]'
+              }`}
+              onClick={() => setIsEasyMode(true)}
+              title="Switch to friendly, jargon-free summary mode"
+            >
+              <span>✨ EASY MODE</span>
+            </button>
+          </div>
+
+          {/* Data Source Mode Switcher (Simulation vs Live Data) */}
           <div className="flex border border-[#0F1113] h-8 text-[11px] font-mono font-semibold">
             <button
               type="button"
@@ -341,7 +368,7 @@ export function App() {
             onClick={handleRunNetworkAudit}
           >
             <IconRadar size={15} />
-            <span>Whole Network Audit</span>
+            <span>{isEasyMode ? 'Check Entire Wi-Fi' : 'Whole Network Audit'}</span>
           </button>
 
           <button
@@ -378,8 +405,12 @@ export function App() {
         {/* Stitch SideNavBar */}
         <aside className="fixed left-0 top-12 bottom-0 w-60 border-r border-[#E2E5E9] bg-white flex flex-col z-30 hidden md:flex">
           <div className="p-4 border-b border-[#E2E5E9]">
-            <div className="text-[14px] font-bold text-black">WaveScope Inspector</div>
-            <div className="text-[11px] font-mono text-[#6B7280] mt-0.5 truncate">{provenance.sourceIdentifier}</div>
+            <div className="text-[14px] font-bold text-black">
+              {isEasyMode ? 'Wi-Fi Health Monitor' : 'WaveScope Inspector'}
+            </div>
+            <div className="text-[11px] font-mono text-[#6B7280] mt-0.5 truncate">
+              {isEasyMode ? 'Home Network Scanner' : provenance.sourceIdentifier}
+            </div>
           </div>
 
           <nav className="flex-1 p-2 space-y-1">
@@ -393,7 +424,7 @@ export function App() {
               onClick={() => setActiveNav('CLIENTS')}
             >
               <IconRouter size={16} />
-              <span>Fleet Clients</span>
+              <span>{isEasyMode ? 'My Devices' : 'Fleet Clients'}</span>
               <span className="ml-auto font-mono text-[10px] px-1.5 py-0.5 border border-[#E2E5E9] bg-white">{devices.length}</span>
             </button>
 
@@ -407,7 +438,7 @@ export function App() {
               onClick={() => setActiveNav('OVERVIEW')}
             >
               <IconDashboard size={16} />
-              <span>Telemetry Matrix</span>
+              <span>{isEasyMode ? 'All Devices List' : 'Telemetry Matrix'}</span>
             </button>
 
             <button
@@ -420,13 +451,13 @@ export function App() {
               onClick={() => setActiveNav('RULES')}
             >
               <IconRule size={16} />
-              <span>Diagnostic Rules</span>
+              <span>{isEasyMode ? 'How It Works' : 'Diagnostic Rules'}</span>
             </button>
           </nav>
 
           <div className="p-3 border-t border-[#E2E5E9] space-y-1 text-[11px] font-mono text-[#6B7280] bg-[#F8F9FA]">
+            <div>Mode: <strong className="text-black">{isEasyMode ? 'Easy Mode (Friendly)' : 'Expert (Physical RF)'}</strong></div>
             <div>Engine: <strong className="text-black">L2 Rule System</strong></div>
-            <div>Model: <strong className="text-black">gemini-3.1-flash-lite</strong></div>
           </div>
         </aside>
 
@@ -463,6 +494,7 @@ export function App() {
             singleDeviceStatus={selectedDiagnosis?.status || 'HEALTHY'}
             singleDeviceHostname={selectedDevice?.hostname || 'Host Wi-Fi Interface'}
             singleDeviceDiagnosis={selectedDiagnosis?.primary_diagnosis}
+            isEasyMode={isEasyMode}
           />
 
           {/* SECTION 1: CONNECTED CLIENTS WORKSPACE (MASTER-DETAIL) */}
@@ -476,28 +508,39 @@ export function App() {
                   selectedDeviceId={selectedDeviceId}
                   onSelectDevice={handleSelectDevice}
                   trends={trends}
+                  isEasyMode={isEasyMode}
                 />
               </div>
 
-              {/* Right Column: Device Detail Intelligence Hub */}
+              {/* Right Column: Device Detail Intelligence Hub OR Easy Mode View */}
               <div className="lg:col-span-8 w-full">
                 {selectedDevice && selectedDiagnosis ? (
-                  <DeviceDetailHub
-                    device={selectedDevice}
-                    allDevices={devices}
-                    diagnosis={selectedDiagnosis}
-                    diagnoses={diagnoses}
-                    explanation={explanations[selectedDevice.id] || null}
-                    isLoading={isLlmLoading}
-                    error={llmErrors[selectedDevice.id]}
-                    onUpdateDeviceTelemetry={handleUpdateDeviceTelemetry}
-                    onTriggerExplanation={() => triggerExplanationForDevice(selectedDevice, selectedDiagnosis)}
-                    onOpenKeyModal={() => setShowKeyModal(true)}
-                    trend={trends[selectedDevice.id]}
-                  />
+                  isEasyMode ? (
+                    <EasyModeView
+                      device={selectedDevice}
+                      allDevices={devices}
+                      diagnosis={selectedDiagnosis}
+                      diagnoses={diagnoses}
+                      trend={trends[selectedDevice.id]}
+                    />
+                  ) : (
+                    <DeviceDetailHub
+                      device={selectedDevice}
+                      allDevices={devices}
+                      diagnosis={selectedDiagnosis}
+                      diagnoses={diagnoses}
+                      explanation={explanations[selectedDevice.id] || null}
+                      isLoading={isLlmLoading}
+                      error={llmErrors[selectedDevice.id]}
+                      onUpdateDeviceTelemetry={handleUpdateDeviceTelemetry}
+                      onTriggerExplanation={() => triggerExplanationForDevice(selectedDevice, selectedDiagnosis)}
+                      onOpenKeyModal={() => setShowKeyModal(true)}
+                      trend={trends[selectedDevice.id]}
+                    />
+                  )
                 ) : (
                   <div className="p-12 border border-[#E2E5E9] bg-white text-center text-[#6B7280]">
-                    Select a client from the list to inspect root cause.
+                    {isEasyMode ? 'Select a device to view its Wi-Fi status.' : 'Select a client from the list to inspect root cause.'}
                   </div>
                 )}
               </div>
@@ -508,9 +551,11 @@ export function App() {
           {activeNav === 'OVERVIEW' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-[18px] font-bold text-black">Fleet Telemetry &amp; RF Matrix</h2>
+                <h2 className="text-[18px] font-bold text-black">
+                  {isEasyMode ? 'All Devices Overview' : 'Fleet Telemetry & RF Matrix'}
+                </h2>
                 <span className="text-[12px] font-mono text-[#6B7280]">
-                  Showing {visibleDevices.length} of {devices.length} endpoints
+                  Showing {visibleDevices.length} of {devices.length} {isEasyMode ? 'devices' : 'endpoints'}
                 </span>
               </div>
               <ClientTable
@@ -529,38 +574,58 @@ export function App() {
           {activeNav === 'RULES' && (
             <div className="border border-[#E2E5E9] bg-white p-6 space-y-4">
               <div className="border-b border-[#E2E5E9] pb-3">
-                <h2 className="text-[20px] font-bold text-black">Layer 2 Deterministic Rule Engine</h2>
+                <h2 className="text-[20px] font-bold text-black">
+                  {isEasyMode ? 'How WaveScope Checks Your Wi-Fi' : 'Layer 2 Deterministic Rule Engine'}
+                </h2>
                 <p className="text-[14px] text-[#3B4045] mt-1">
-                  WaveScope evaluates four competing physical RF hypotheses using local mathematical point thresholds without LLM dependence:
+                  {isEasyMode
+                    ? 'WaveScope evaluates your wireless connection using physical tests without relying on slow internet queries:'
+                    : 'WaveScope evaluates four competing physical RF hypotheses using local mathematical point thresholds without LLM dependence:'}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 border border-[#E2E5E9] bg-[#F8F9FA] space-y-1">
-                  <div className="text-[12px] font-bold text-black uppercase tracking-wider">1. Weak / Attenuated Signal</div>
+                  <div className="text-[12px] font-bold text-black uppercase tracking-wider">
+                    {isEasyMode ? '1. Distance & Obstacles (Too Far)' : '1. Weak / Attenuated Signal'}
+                  </div>
                   <p className="text-[13px] text-[#3B4045]">
-                    Triggered when RSSI &le; -75 dBm, SNR &le; 15 dB, or Retries &ge; 15%. Confirms high physical path loss or excessive obstacle attenuation.
+                    {isEasyMode
+                      ? 'Detects if your device is too far away from the router or separated by thick walls and metal.'
+                      : 'Triggered when RSSI ≤ -75 dBm, SNR ≤ 15 dB, or Retries ≥ 15%. Confirms high physical path loss.'}
                   </p>
                 </div>
 
                 <div className="p-4 border border-[#E2E5E9] bg-[#F8F9FA] space-y-1">
-                  <div className="text-[12px] font-bold text-black uppercase tracking-wider">2. Possible RF Interference</div>
+                  <div className="text-[12px] font-bold text-black uppercase tracking-wider">
+                    {isEasyMode ? '2. Nearby Interference (Crowded Airwaves)' : '2. Possible RF Interference'}
+                  </div>
                   <p className="text-[13px] text-[#3B4045]">
-                    Triggered when RSSI &ge; -65 dBm but SNR &le; 12 dB or Noise Floor &ge; -70 dBm. Indicates heavy co-channel / non-Wi-Fi jamming.
+                    {isEasyMode
+                      ? 'Detects if microwaves, neighbors, or electronics are crowding the wireless channel.'
+                      : 'Triggered when RSSI ≥ -65 dBm but SNR ≤ 12 dB or Noise Floor ≥ -70 dBm. Indicates heavy jamming.'}
                   </p>
                 </div>
 
                 <div className="p-4 border border-[#E2E5E9] bg-[#F8F9FA] space-y-1">
-                  <div className="text-[12px] font-bold text-black uppercase tracking-wider">3. Hardware / Capability Limited</div>
+                  <div className="text-[12px] font-bold text-black uppercase tracking-wider">
+                    {isEasyMode ? '3. Device Capability (Older Hardware)' : '3. Hardware / Capability Limited'}
+                  </div>
                   <p className="text-[13px] text-[#3B4045]">
-                    Triggered when device standard is 802.11n/legacy, 20MHz width, or 1x1 SISO while RF link is stable (SNR &ge; 25 dB).
+                    {isEasyMode
+                      ? 'Detects if the device is older and naturally cannot reach top modern Wi-Fi speeds.'
+                      : 'Triggered when device standard is 802.11n/legacy, 20MHz width, or 1x1 SISO while RF link is stable.'}
                   </p>
                 </div>
 
                 <div className="p-4 border border-[#E2E5E9] bg-[#F8F9FA] space-y-1">
-                  <div className="text-[12px] font-bold text-black uppercase tracking-wider">4. Potential Band Selection Issue</div>
+                  <div className="text-[12px] font-bold text-black uppercase tracking-wider">
+                    {isEasyMode ? '4. Setting Adjustment (Slow Band)' : '4. Potential Band Selection Issue'}
+                  </div>
                   <p className="text-[13px] text-[#3B4045]">
-                    Triggered when a dual-band/tri-band device is associated on congested 2.4GHz despite strong signal (RSSI &ge; -60 dBm).
+                    {isEasyMode
+                      ? 'Detects if your fast device accidentally connected to a slow 2.4 GHz channel instead of 5 GHz.'
+                      : 'Triggered when a dual-band/tri-band device is associated on congested 2.4GHz despite strong signal.'}
                   </p>
                 </div>
               </div>
