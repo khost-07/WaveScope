@@ -1,25 +1,26 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { ClientDevice, DataSourceMode, StructuredDiagnosis, DataProvenance } from './layer1_data/types';
-import { SIMULATION_SCENARIOS } from './layer1_data/simulationDataset';
+import { ClientDevice, DataSourceMode, StructuredDiagnosis, DataProvenance, DiagnosticStatus } from './layer1_data/types';
+import { SIMULATION_SCENARIOS, SIMULATED_AP } from './layer1_data/simulationDataset';
 import { loadDevices } from './layer1_data/dataService';
 import { runDiagnosticEngine } from './layer2_engine/engine';
 import { generateExplanation } from './layer3_llm/llmService';
 import { LLMExplanationResponse } from './layer3_llm/types';
-import { HeaderInstrument } from './components/HeaderInstrument';
-import { UIMode } from './components/ViewModeToggle';
-import { SimpleDeviceList } from './components/SimpleDeviceList';
-import { SimpleDetailView } from './components/SimpleDetailView';
+import { NetworkOverviewBar } from './components/NetworkOverviewBar';
+import { DeviceListPane } from './components/DeviceListPane';
+import { DeviceDetailHub } from './components/DeviceDetailHub';
 import { ClientTable } from './components/ClientTable';
-import { ClientDetail } from './components/ClientDetail';
 import { ApiKeySetupScreen } from './components/ApiKeySetupScreen';
+import { IconKey } from './components/SvgIcons';
 
 const STORAGE_KEY = 'wavescope_gemini_api_key';
 
 export function App() {
-  const [uiMode, setUiMode] = useState<UIMode>('SIMPLE');
   const [mode, setMode] = useState<DataSourceMode>('SIMULATION');
+  const [viewLayout, setViewLayout] = useState<'WORKSPACE' | 'TABLE'>('WORKSPACE');
   const [simulatedDevices, setSimulatedDevices] = useState<ClientDevice[]>(SIMULATION_SCENARIOS);
   const [devices, setDevices] = useState<ClientDevice[]>(SIMULATION_SCENARIOS);
+  const [activeFilter, setActiveFilter] = useState<'ALL' | DiagnosticStatus>('ALL');
+  
   const [provenance, setProvenance] = useState<DataProvenance>({
     mode: 'SIMULATION',
     sourceIdentifier: 'Controlled RF Simulation Dataset (Scenarios A–E)',
@@ -27,6 +28,7 @@ export function App() {
     lastUpdated: Date.now(),
     isDeterministic: true
   });
+  
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>('device-scenario-a');
   
   // API Key State & Storage
@@ -69,10 +71,16 @@ export function App() {
     return { total: devices.length, healthy, attention, critical };
   }, [devices, diagnoses]);
 
+  // Filtered devices by active filter
+  const visibleDevices = useMemo(() => {
+    if (activeFilter === 'ALL') return devices;
+    return devices.filter(d => diagnoses[d.id]?.status === activeFilter);
+  }, [devices, diagnoses, activeFilter]);
+
   // Selected device object & diagnosis
   const selectedDevice = useMemo(() => {
-    return devices.find(d => d.id === selectedDeviceId) || devices[0] || null;
-  }, [devices, selectedDeviceId]);
+    return devices.find(d => d.id === selectedDeviceId) || visibleDevices[0] || devices[0] || null;
+  }, [devices, visibleDevices, selectedDeviceId]);
 
   const selectedDiagnosis = useMemo(() => {
     if (!selectedDevice) return null;
@@ -85,7 +93,7 @@ export function App() {
     if (!activeKey || !activeKey.trim()) {
       setLlmErrors(prev => ({
         ...prev,
-        [device.id]: 'No API key configured. Please enter your Gemini API key.'
+        [device.id]: 'No Gemini API key configured. Please enter your API key.'
       }));
       return;
     }
@@ -205,6 +213,9 @@ export function App() {
     }
   };
 
+  // Active AP
+  const activeAp = selectedDevice?.apCapabilities || SIMULATED_AP;
+
   // IF NO API KEY IS CONFIGURED YET -> SHOW ONBOARDING / SETUP SCREEN FIRST
   if (!hasCompletedSetup || !apiKey) {
     return (
@@ -217,15 +228,85 @@ export function App() {
 
   return (
     <div className="app-container">
-      <HeaderInstrument
-        mode={mode}
-        onModeChange={setMode}
-        uiMode={uiMode}
-        onChangeUiMode={setUiMode}
-        provenance={provenance}
-        stats={stats}
-        onOpenSettings={() => setShowKeyModal(true)}
-      />
+      {/* Top Navbar */}
+      <header className="app-navbar">
+        <div className="nav-left">
+          <div className="nav-brand-box">
+            <span className="nav-brand-logo">WS</span>
+            <div>
+              <div className="nav-brand-title">WaveScope</div>
+              <div className="nav-brand-sub">Wi-Fi Band & Root-Cause Diagnostic Tool</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="nav-center">
+          <div className="nav-segmented-toggle">
+            <button
+              type="button"
+              className={`nav-seg-btn ${viewLayout === 'WORKSPACE' ? 'active' : ''}`}
+              onClick={() => setViewLayout('WORKSPACE')}
+            >
+              Interactive Workspace
+            </button>
+            <button
+              type="button"
+              className={`nav-seg-btn ${viewLayout === 'TABLE' ? 'active' : ''}`}
+              onClick={() => setViewLayout('TABLE')}
+            >
+              Spreadsheet View
+            </button>
+          </div>
+        </div>
+
+        <div className="nav-right">
+          {/* Data Mode Selector */}
+          <div className="data-source-pill-group">
+            <button
+              type="button"
+              className={`source-pill ${mode === 'SIMULATION' ? 'active' : ''}`}
+              onClick={() => setMode('SIMULATION')}
+            >
+              Simulation Mode
+            </button>
+            <button
+              type="button"
+              className={`source-pill ${mode === 'REAL' ? 'active' : ''}`}
+              onClick={() => setMode('REAL')}
+            >
+              Real Wi-Fi
+            </button>
+          </div>
+
+          {/* Settings / API Key */}
+          <button
+            type="button"
+            className="nav-btn-icon"
+            onClick={() => setShowKeyModal(true)}
+            title="Google Gemini API Configuration"
+          >
+            <IconKey size={14} />
+            <span className="mono" style={{ fontSize: '11.5px' }}>API Key</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Sub Header: Provenance & Status */}
+      <div className="app-sub-header">
+        <div className="provenance-chip">
+          <span className="prov-dot" />
+          <span className="prov-label mono">DATA PROVENANCE:</span>
+          <span className="prov-val mono">{provenance.sourceIdentifier}</span>
+          {provenance.adapterName && (
+            <span className="prov-sub mono">({provenance.adapterName})</span>
+          )}
+        </div>
+
+        <div className="model-active-badge mono">
+          <span>AI Engine: <strong>gemini-3.1-flash-lite</strong></span>
+          <span className="live-dot" />
+        </div>
+      </div>
 
       {/* Real Mode Error / Setup helper if offline */}
       {mode === 'REAL' && realError && (
@@ -245,142 +326,78 @@ export function App() {
         </div>
       )}
 
-      {/* VIEW 1: USER-FRIENDLY SIMPLE MODE */}
-      {uiMode === 'SIMPLE' && (
-        <main className="simple-layout">
-          {/* Left Column: Device Cards */}
-          <section className="simple-left-pane">
-            <div className="pane-header-simple">
-              <div>
-                <h2 className="pane-title-simple">Connected Wi-Fi Devices</h2>
-                <p className="pane-desc-simple">Click any device below to see what's happening and how to fix issues.</p>
-              </div>
-            </div>
+      {/* Main Container */}
+      <main className="app-main-body">
+        {/* Network Health & Preset Bar */}
+        <NetworkOverviewBar
+          ap={activeAp}
+          stats={stats}
+          activeFilter={activeFilter}
+          onChangeFilter={setActiveFilter}
+          selectedScenarioId={selectedDevice?.scenarioId}
+          onSelectScenario={handleQuickScenario}
+          isSimulation={mode === 'SIMULATION'}
+        />
 
-            <div className="simple-cards-scroll">
-              <SimpleDeviceList
-                devices={devices}
-                diagnoses={diagnoses}
-                selectedDeviceId={selectedDeviceId}
-                onSelectDevice={handleSelectDevice}
-                onSelectScenario={handleQuickScenario}
-                isSimulation={mode === 'SIMULATION'}
-              />
-            </div>
-          </section>
-
-          {/* Right Column: Simple Detail & Actionable Steps */}
-          <section className="simple-right-pane">
-            {selectedDevice && selectedDiagnosis ? (
-              <SimpleDetailView
-                device={selectedDevice}
-                diagnosis={selectedDiagnosis}
-                explanation={explanations[selectedDevice.id] || null}
-                isLoading={isLlmLoading}
-                error={llmErrors[selectedDevice.id]}
-                onSwitchToNerdMode={() => setUiMode('NERD')}
-                onRefreshExplanation={() => triggerExplanationForDevice(selectedDevice, selectedDiagnosis)}
-                onOpenKeyModal={() => setShowKeyModal(true)}
-              />
-            ) : (
-              <div className="empty-state-card">
-                <h3>No Device Selected</h3>
-                <p>Select a device from the left to inspect its connection health.</p>
-              </div>
-            )}
-          </section>
-        </main>
-      )}
-
-      {/* VIEW 2: NERD MODE (PRECISION RF INSTRUMENT) */}
-      {uiMode === 'NERD' && (
-        <main className="main-layout nerd-layout">
-          {/* Left Column: Client Overview Table & Test Scenarios */}
-          <section className="panel-left">
-            <div className="panel-header">
-              <div>
-                <span className="panel-title">Active Associated Wi-Fi Clients</span>
-                <span className="mono" style={{ marginLeft: '10px', fontSize: '11px', color: 'var(--text-muted)' }}>
-                  ({devices.length} Endpoints)
-                </span>
-              </div>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <button
-                  type="button"
-                  className="btn-instrument"
-                  onClick={() => setUiMode('SIMPLE')}
-                  title="Switch to Simple View"
-                >
-                  ← Simple View
-                </button>
-              </div>
-            </div>
-
-            {/* Scenario Fast-Switch Strip */}
-            {mode === 'SIMULATION' && (
-              <div className="nerd-scenario-strip">
-                <span className="mono nerd-scenario-label">
-                  TEST SCENARIOS:
-                </span>
-                {(['A', 'B', 'C', 'D', 'E'] as const).map(scId => {
-                  const isCurrent = selectedDevice?.scenarioId === scId;
-                  return (
-                    <button
-                      key={scId}
-                      type="button"
-                      className={`btn-instrument ${isCurrent ? 'primary' : ''}`}
-                      style={{ fontSize: '10px', padding: '3px 8px' }}
-                      onClick={() => handleQuickScenario(scId)}
-                    >
-                      Scenario {scId}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            <div style={{ flex: 1, overflowY: 'auto' }}>
-              <ClientTable
-                devices={devices}
+        {/* VIEW 1: MASTER-DETAIL INTERACTIVE WORKSPACE */}
+        {viewLayout === 'WORKSPACE' && (
+          <div className="workspace-grid">
+            {/* Left Pane: Device List */}
+            <section className="workspace-left">
+              <DeviceListPane
+                devices={visibleDevices}
                 diagnoses={diagnoses}
                 selectedDeviceId={selectedDeviceId}
                 onSelectDevice={handleSelectDevice}
               />
-            </div>
+            </section>
 
-            {/* Architecture Reference Strip */}
-            <div className="nerd-arch-footer">
-              <div className="mono" style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '2px' }}>
-                ARCHITECTURE: 3 ISOLATED LAYERS
-              </div>
-              <div className="mono" style={{ color: 'var(--text-secondary)', fontSize: '10.5px' }}>
-                Layer 1: Raw Telemetry &rarr; Layer 2: Deterministic Rule Engine (No LLM) &rarr; Layer 3: Live Gemini API (Zero Fallback)
-              </div>
-            </div>
-          </section>
+            {/* Right Pane: Device Detail Intelligence Hub */}
+            <section className="workspace-right">
+              {selectedDevice && selectedDiagnosis ? (
+                <DeviceDetailHub
+                  device={selectedDevice}
+                  diagnosis={selectedDiagnosis}
+                  explanation={explanations[selectedDevice.id] || null}
+                  isLoading={isLlmLoading}
+                  error={llmErrors[selectedDevice.id]}
+                  onUpdateDeviceTelemetry={handleUpdateDeviceTelemetry}
+                  onTriggerExplanation={() => triggerExplanationForDevice(selectedDevice, selectedDiagnosis)}
+                  onOpenKeyModal={() => setShowKeyModal(true)}
+                />
+              ) : (
+                <div className="empty-workspace-state">
+                  <h3>No Device Selected</h3>
+                  <p>Select a client device from the list on the left to inspect its root-cause diagnosis.</p>
+                </div>
+              )}
+            </section>
+          </div>
+        )}
 
-          {/* Right Column: Technical Diagnostic Inspector & LLM Explanation */}
-          <section className="panel-right">
-            {selectedDevice && selectedDiagnosis ? (
-              <ClientDetail
-                device={selectedDevice}
-                diagnosis={selectedDiagnosis}
-                explanation={explanations[selectedDevice.id] || null}
-                isLlmLoading={isLlmLoading}
-                error={llmErrors[selectedDevice.id]}
-                onUpdateDeviceTelemetry={handleUpdateDeviceTelemetry}
-                onTriggerExplanation={() => triggerExplanationForDevice(selectedDevice, selectedDiagnosis)}
-                onOpenKeyModal={() => setShowKeyModal(true)}
-              />
-            ) : (
-              <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                <div className="mono">NO DEVICE SELECTED</div>
-                <div style={{ fontSize: '12px', marginTop: '6px' }}>Select an associated device from the overview table to inspect.</div>
-              </div>
-            )}
-          </section>
-        </main>
-      )}
+        {/* VIEW 2: HIGH-DENSITY SPREADSHEET TABLE VIEW */}
+        {viewLayout === 'TABLE' && (
+          <div className="table-view-container">
+            <div className="table-view-header">
+              <span style={{ fontWeight: 700, fontSize: '14px', textTransform: 'uppercase' }}>
+                All Associated Clients Telemetry Grid
+              </span>
+              <span className="mono" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                Showing {visibleDevices.length} of {devices.length} endpoints
+              </span>
+            </div>
+            <ClientTable
+              devices={visibleDevices}
+              diagnoses={diagnoses}
+              selectedDeviceId={selectedDeviceId}
+              onSelectDevice={(dev) => {
+                handleSelectDevice(dev);
+                setViewLayout('WORKSPACE');
+              }}
+            />
+          </div>
+        )}
+      </main>
 
       {/* API Key Modal for Changing Key while inside app */}
       {showKeyModal && (
@@ -398,7 +415,7 @@ export function App() {
               <input
                 type="password"
                 className="input-instrument mono"
-                style={{ width: '100%', borderRadius: '4px' }}
+                style={{ width: '100%', borderRadius: '6px' }}
                 placeholder="AIzaSy..."
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
