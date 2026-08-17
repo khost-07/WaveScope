@@ -8,13 +8,15 @@ interface DeviceListPaneProps {
   diagnoses: Record<string, StructuredDiagnosis>;
   selectedDeviceId: string | null;
   onSelectDevice: (device: ClientDevice) => void;
+  trends?: Record<string, { symbol: string; direction: 'IMPROVING' | 'STABLE' | 'DEGRADING' }>;
 }
 
 export const DeviceListPane: React.FC<DeviceListPaneProps> = ({
   devices,
   diagnoses,
   selectedDeviceId,
-  onSelectDevice
+  onSelectDevice,
+  trends
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -74,6 +76,8 @@ export const DeviceListPane: React.FC<DeviceListPaneProps> = ({
               evaluated_at: Date.now()
             };
 
+            const devTrend = trends?.[device.id];
+
             return (
               <DeviceCard
                 key={device.id}
@@ -81,6 +85,8 @@ export const DeviceListPane: React.FC<DeviceListPaneProps> = ({
                 diagnosis={diagnosis}
                 isSelected={selectedDeviceId === device.id}
                 onSelect={onSelectDevice}
+                trendSymbol={devTrend?.symbol}
+                trendDirection={devTrend?.direction}
               />
             );
           })

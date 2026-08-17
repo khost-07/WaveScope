@@ -7,13 +7,17 @@ interface DeviceCardProps {
   diagnosis: StructuredDiagnosis;
   isSelected: boolean;
   onSelect: (device: ClientDevice) => void;
+  trendSymbol?: string;
+  trendDirection?: 'IMPROVING' | 'STABLE' | 'DEGRADING';
 }
 
 export const DeviceCard: React.FC<DeviceCardProps> = ({
   device,
   diagnosis,
   isSelected,
-  onSelect
+  onSelect,
+  trendSymbol,
+  trendDirection
 }) => {
   const status = diagnosis.status;
 
@@ -28,7 +32,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
       }}
       onClick={() => onSelect(device)}
     >
-      {/* Top Row: Device Name & Status Badge */}
+      {/* Top Row: Device Name & Status Badge with Trend Arrow */}
       <div className="flex items-start justify-between gap-2 mb-1">
         <div>
           <div className="text-[14px] text-black font-bold leading-tight">
@@ -39,29 +43,39 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
           </div>
         </div>
 
-        {status === 'HEALTHY' && (
-          <span className="badge-status badge-status-healthy text-[9px] py-0.5 px-1.5 flex items-center gap-1 flex-shrink-0">
-            <IconCheckBox size={11} />
-            HEALTHY
-          </span>
-        )}
-        {status === 'ATTENTION' && (
-          <span className="badge-status badge-status-attention text-[9px] py-0.5 px-1.5 flex items-center gap-1 flex-shrink-0">
-            <IconAlertTriangle size={11} />
-            ATTN
-          </span>
-        )}
-        {status === 'CRITICAL' && (
-          <span className="badge-status badge-status-critical text-[9px] py-0.5 px-1.5 flex items-center gap-1 flex-shrink-0">
-            <IconAlertCircle size={11} />
-            CRIT
-          </span>
-        )}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {status === 'HEALTHY' && (
+            <span className="badge-status badge-status-healthy text-[9px] py-0.5 px-1.5 flex items-center gap-1">
+              <IconCheckBox size={11} />
+              HEALTHY
+              {trendSymbol && <span className="font-bold ml-0.5">{trendSymbol}</span>}
+            </span>
+          )}
+          {status === 'ATTENTION' && (
+            <span className="badge-status badge-status-attention text-[9px] py-0.5 px-1.5 flex items-center gap-1">
+              <IconAlertTriangle size={11} />
+              ATTN
+              {trendSymbol && <span className="font-bold ml-0.5">{trendSymbol}</span>}
+            </span>
+          )}
+          {status === 'CRITICAL' && (
+            <span className="badge-status badge-status-critical text-[9px] py-0.5 px-1.5 flex items-center gap-1">
+              <IconAlertCircle size={11} />
+              CRIT
+              {trendSymbol && <span className="font-bold ml-0.5">{trendSymbol}</span>}
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Diagnosis summary prose (No redundant dBm/dB values) */}
+      {/* Diagnosis summary prose with trend qualifier if present */}
       <div className="text-[12px] text-[#444748] line-clamp-2 mt-1">
         {diagnosis.primary_diagnosis}
+        {trendDirection && trendDirection !== 'STABLE' && (
+          <span className="font-mono text-[11px] text-[#747878] ml-1">
+            ({trendDirection.toLowerCase()})
+          </span>
+        )}
       </div>
     </div>
   );

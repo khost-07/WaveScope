@@ -3,6 +3,7 @@ import { ClientDevice, DataSourceMode, StructuredDiagnosis, DataProvenance, Diag
 import { SIMULATION_SCENARIOS, SIMULATED_AP } from './layer1_data/simulationDataset';
 import { loadDevices } from './layer1_data/dataService';
 import { runDiagnosticEngine } from './layer2_engine/engine';
+import { recordDeviceSample, evaluateDeviceTrend } from './layer2_engine/trendEngine';
 import { generateExplanation } from './layer3_llm/llmService';
 import { LLMExplanationResponse } from './layer3_llm/types';
 import { scanLocalNetwork } from './layer1_data/networkScanService';
@@ -59,11 +60,27 @@ export function App() {
   const [isLlmLoading, setIsLlmLoading] = useState<boolean>(false);
   const [realError, setRealError] = useState<string | null>(null);
 
+  // Record samples in trend engine buffer
+  useEffect(() => {
+    for (const d of devices) {
+      recordDeviceSample(d.id, d.telemetry.rssi_dBm, d.telemetry.snr_dB, d.telemetry.retryRatePct);
+    }
+  }, [devices]);
+
   // Compute Layer 2 Diagnoses deterministically for all active devices
   const diagnoses = useMemo(() => {
     const map: Record<string, StructuredDiagnosis> = {};
     for (const d of devices) {
       map[d.id] = runDiagnosticEngine(d);
+    }
+    return map;
+  }, [devices]);
+
+  // Compute device trend analytics
+  const trends = useMemo(() => {
+    const map: Record<string, ReturnType<typeof evaluateDeviceTrend>> = {};
+    for (const d of devices) {
+      map[d.id] = evaluateDeviceTrend(d.id);
     }
     return map;
   }, [devices]);
@@ -388,6 +405,7 @@ export function App() {
                   diagnoses={diagnoses}
                   selectedDeviceId={selectedDeviceId}
                   onSelectDevice={handleSelectDevice}
+                  trends={trends}
                 />
               </div>
 
@@ -396,13 +414,16 @@ export function App() {
                 {selectedDevice && selectedDiagnosis ? (
                   <DeviceDetailHub
                     device={selectedDevice}
+                    allDevices={devices}
                     diagnosis={selectedDiagnosis}
+                    diagnoses={diagnoses}
                     explanation={explanations[selectedDevice.id] || null}
                     isLoading={isLlmLoading}
                     error={llmErrors[selectedDevice.id]}
                     onUpdateDeviceTelemetry={handleUpdateDeviceTelemetry}
                     onTriggerExplanation={() => triggerExplanationForDevice(selectedDevice, selectedDiagnosis)}
                     onOpenKeyModal={() => setShowKeyModal(true)}
+                    trend={trends[selectedDevice.id]}
                   />
                 ) : (
                   <div className="p-12 border border-[#E5E5E5] bg-white text-center text-[#747878]">

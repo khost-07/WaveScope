@@ -1,11 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ClientDevice, StructuredDiagnosis } from '../layer1_data/types';
 import { LLMExplanationResponse } from '../layer3_llm/types';
+import { DeviceTrend } from '../layer2_engine/trendEngine';
+import { evaluatePeerCorroboration } from '../layer2_engine/peerAnalysis';
+import { computeEstimatedCoverage } from '../layer2_engine/deadZoneMapper';
 import { SuperSimpleOverview } from './SuperSimpleOverview';
 import { RFLinkBudgetGauge } from './RFLinkBudgetGauge';
 import { CapabilityMatrix } from './CapabilityMatrix';
 import { DiagnosticInspector } from './DiagnosticInspector';
 import { ExplanationCard } from './ExplanationCard';
+import { PeerComparisonSection } from './PeerComparisonSection';
+import { EstimatedCoverageSection } from './EstimatedCoverageSection';
+import { Sparkline } from './Sparkline';
 import {
   IconChevronRight,
   IconRefresh,
@@ -21,27 +27,43 @@ export type DetailTab = 'OVERVIEW' | 'EVIDENCE' | 'SPECTRUM';
 
 interface DeviceDetailHubProps {
   device: ClientDevice;
+  allDevices?: ClientDevice[];
   diagnosis: StructuredDiagnosis;
+  diagnoses?: Record<string, StructuredDiagnosis>;
   explanation: LLMExplanationResponse | null;
   isLoading: boolean;
   error?: string | null;
   onUpdateDeviceTelemetry?: (updatedDevice: ClientDevice) => void;
   onTriggerExplanation?: () => void;
   onOpenKeyModal?: () => void;
+  trend?: DeviceTrend;
 }
 
 export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
   device,
+  allDevices = [],
   diagnosis,
+  diagnoses = {},
   explanation,
   isLoading,
   error,
   onUpdateDeviceTelemetry,
   onTriggerExplanation,
-  onOpenKeyModal
+  onOpenKeyModal,
+  trend
 }) => {
   const [activeTab, setActiveTab] = useState<DetailTab>('OVERVIEW');
   const { telemetry } = device;
+
+  // Feature 1: Peer comparison evaluation (only when peers exist)
+  const peerResult = useMemo(() => {
+    return evaluatePeerCorroboration(device, allDevices.length > 0 ? allDevices : [device], diagnoses);
+  }, [device, allDevices, diagnoses]);
+
+  // Feature 2: Inferred dead-zone coverage mapping
+  const coverageResult = useMemo(() => {
+    return computeEstimatedCoverage(device, allDevices.length > 0 ? allDevices : [device], diagnoses);
+  }, [device, allDevices, diagnoses]);
 
   const handleTweakField = (field: string, value: any) => {
     if (!onUpdateDeviceTelemetry) return;
@@ -93,12 +115,24 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
         </div>
       </div>
 
-      {/* Section 1: Canonical Raw Telemetry 4-Box Grid (Fix 1: Single source of truth for numbers) */}
+      {/* Section 1: Canonical Raw Telemetry 4-Box Grid with Inline Sparkline (Fix 1 & Feature 3) */}
       <div>
-        <div className="text-[11px] font-bold uppercase tracking-wider text-[#444748] mb-2 flex items-center gap-1.5">
-          <IconSignal size={15} />
-          <span>Raw Telemetry</span>
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-[#444748] flex items-center gap-1.5">
+            <IconSignal size={15} />
+            <span>Raw Telemetry</span>
+          </div>
+
+          {/* Feature 3: Small inline sparkline near Raw Telemetry cards (no extra panel) */}
+          {trend?.hasEnoughData && trend.sparklinePoints.length >= 2 && (
+            <div className="flex items-center gap-2 font-mono text-[11px] text-[#747878]">
+              <span>Signal Drift:</span>
+              <Sparkline points={trend.sparklinePoints} color={trend.color} width={64} height={16} />
+              <span className="font-bold" style={{ color: trend.color }}>{trend.symbol}</span>
+            </div>
+          )}
         </div>
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {/* RSSI */}
           <div className="telemetry-cell">
@@ -159,7 +193,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
         </div>
       </div>
 
-      {/* Section 2: Layer 2 Diagnostic Result Banner (Fix 1: No duplicated raw numbers) */}
+      {/* Section 2: Layer 2 Diagnostic Result Banner (Feature 3: Trend Qualifier) */}
       <div className="border border-[#E5E5E5] bg-white">
         <div
           className="p-4"
@@ -173,48 +207,60 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
               <span>Layer 2 Diagnostic Result</span>
             </div>
 
-            {status === 'HEALTHY' && (
-              <span className="badge-status badge-status-healthy flex items-center gap-1">
-                <IconCheckBox size={11} />
-                HEALTHY LINK
-              </span>
-            )}
-            {status === 'ATTENTION' && (
-              <span className="badge-status badge-status-attention flex items-center gap-1">
-                <IconAlertTriangle size={11} />
-                ATTENTION REQUIRED
-              </span>
-            )}
-            {status === 'CRITICAL' && (
-              <span className="badge-status badge-status-critical flex items-center gap-1">
-                <IconAlertCircle size={11} />
-                HIGH SEVERITY
-              </span>
-            )}
+            <div className="flex items-center gap-1.5">
+              {status === 'HEALTHY' && (
+                <span className="badge-status badge-status-healthy flex items-center gap-1">
+                  <IconCheckBox size={11} />
+                  HEALTHY LINK
+                  {trend?.hasEnoughData && <span className="font-bold ml-0.5">{trend.symbol}</span>}
+                </span>
+              )}
+              {status === 'ATTENTION' && (
+                <span className="badge-status badge-status-attention flex items-center gap-1">
+                  <IconAlertTriangle size={11} />
+                  ATTENTION REQUIRED
+                  {trend?.hasEnoughData && <span className="font-bold ml-0.5">{trend.symbol}</span>}
+                </span>
+              )}
+              {status === 'CRITICAL' && (
+                <span className="badge-status badge-status-critical flex items-center gap-1">
+                  <IconAlertCircle size={11} />
+                  HIGH SEVERITY
+                  {trend?.hasEnoughData && <span className="font-bold ml-0.5">{trend.symbol}</span>}
+                </span>
+              )}
+            </div>
           </div>
 
           <h2
-            className="text-[18px] font-bold mb-2"
+            className="text-[18px] font-bold mb-2 flex items-center gap-2"
             style={{
               color: status === 'CRITICAL' ? '#D32F2F' : status === 'ATTENTION' ? '#F57C00' : '#2E7D32'
             }}
           >
-            {diagnosis.primary_diagnosis}
+            <span>{diagnosis.primary_diagnosis}</span>
+            {trend?.hasEnoughData && trend.direction !== 'STABLE' && (
+              <span className="font-mono text-[13px] text-[#747878] font-normal">
+                {trend.qualifier}
+              </span>
+            )}
           </h2>
 
           <div className="flex flex-wrap items-center justify-between gap-4 text-[12px] font-mono text-[#444748] pt-2 border-t border-[#E5E5E5]/60">
             <div>
               <span className="text-[#747878] uppercase text-[10px] font-bold mr-1.5">ENGINE CONFIDENCE:</span>
-              <strong className="text-black text-[13px]">{diagnosis.confidence}%</strong>
+              <strong className="text-black text-[13px]">
+                {Math.min(99, diagnosis.confidence + (peerResult?.confidenceBoost || 0))}%
+              </strong>
             </div>
             <div className="font-sans text-[12px] text-[#747878]">
-              See Raw Telemetry above for supporting signal data and the Evidence tab for hypothesis breakdown.
+              Supporting signal metrics in <strong>Raw Telemetry</strong>; hypothesis &amp; peer proof in <strong>Evidence</strong>.
             </div>
           </div>
         </div>
       </div>
 
-      {/* Consolidated 3-Tab Controller (Fix 2) */}
+      {/* Consolidated 3-Tab Controller */}
       <div className="flex border-b border-[#E5E5E5] bg-[#FAFAFA] overflow-x-auto">
         <button
           type="button"
@@ -258,7 +304,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
 
       {/* 3 Tab Panels */}
       <div>
-        {/* TAB 1: OVERVIEW (Merged Simple Plain English + Diagnostic AI Deep-Dive) */}
+        {/* TAB 1: OVERVIEW */}
         {activeTab === 'OVERVIEW' && (
           <div className="space-y-6">
             <SuperSimpleOverview
@@ -280,18 +326,28 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
           </div>
         )}
 
-        {/* TAB 2: EVIDENCE (Merged Hypothesis Scores + Capability Cross-Reference) */}
+        {/* TAB 2: EVIDENCE (Feature 1: Peer Comparison Collapsed Accordion Included) */}
         {activeTab === 'EVIDENCE' && (
           <div className="space-y-6">
             <DiagnosticInspector diagnosis={diagnosis} />
+
+            {/* Feature 1: Peer Comparison Section (Collapsed by default, hidden if single device) */}
+            <PeerComparisonSection peerResult={peerResult} />
+
             <CapabilityMatrix deviceCaps={device.capabilities} apCaps={device.apCapabilities} />
           </div>
         )}
 
-        {/* TAB 3: SPECTRUM (Merged RF Link Budget + Parameter Tuner) */}
+        {/* TAB 3: SPECTRUM (Feature 2: Estimated Coverage Chart Included) */}
         {activeTab === 'SPECTRUM' && (
           <div className="space-y-6">
             <RFLinkBudgetGauge telemetry={telemetry} />
+
+            {/* Feature 2: Inferred Dead-Zone Mapping (Estimated Coverage) */}
+            <EstimatedCoverageSection
+              coverageResult={coverageResult}
+              selectedHostname={device.hostname}
+            />
 
             {/* Parameter Tuner */}
             <div className="border border-[#E5E5E5] bg-white p-5 space-y-4">
