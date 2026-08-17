@@ -83,22 +83,23 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
   };
 
   const status = diagnosis.status;
+  const effectiveConfidence = Math.min(99, diagnosis.confidence + (peerResult?.confidenceBoost || 0));
 
   return (
-    <div className="bg-white border border-[#E5E5E5] p-6 space-y-6">
-      {/* Breadcrumb */}
-      <div className="flex items-center font-mono text-[12px] text-[#747878] uppercase tracking-wider">
-        <span className="cursor-pointer hover:text-black">Connected Clients</span>
-        <IconChevronRight size={14} className="mx-1 text-[#747878]" />
+    <div className="bg-white border border-[#E2E5E9] p-6 space-y-5">
+      {/* Breadcrumb & Navigation Path */}
+      <div className="flex items-center font-mono text-[11px] text-[#6B7280] uppercase tracking-wider">
+        <span className="cursor-pointer hover:text-black transition-colors">Client Fleet</span>
+        <IconChevronRight size={14} className="mx-1 text-[#6B7280]" />
         <span className="text-black font-bold">{device.hostname}</span>
       </div>
 
       {/* Page Header */}
-      <div className="flex flex-wrap items-end justify-between border-b border-[#E5E5E5] pb-4 gap-4">
+      <div className="flex flex-wrap items-end justify-between border-b border-[#E2E5E9] pb-4 gap-4">
         <div>
-          <h1 className="text-[24px] font-bold text-black tracking-tight">{device.hostname}</h1>
-          <p className="font-mono text-[12px] text-[#444748] mt-1">
-            MAC: {device.macAddress} | IP: {device.ipAddress} | Vendor: {device.vendor}
+          <h1 className="text-[22px] font-bold text-black tracking-tight">{device.hostname}</h1>
+          <p className="font-mono text-[12px] text-[#6B7280] mt-0.5">
+            MAC: <strong className="text-black">{device.macAddress}</strong> &bull; IP: <strong className="text-black">{device.ipAddress}</strong> &bull; Vendor: {device.vendor}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -115,18 +116,18 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
         </div>
       </div>
 
-      {/* Section 1: Canonical Raw Telemetry 4-Box Grid with Inline Sparkline (Fix 1 & Feature 3) */}
+      {/* Section 1: Canonical Raw Telemetry 4-Box Grid with Inline Sparkline */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-[#444748] flex items-center gap-1.5">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] flex items-center gap-1.5">
             <IconSignal size={15} />
             <span>Raw Telemetry</span>
           </div>
 
-          {/* Feature 3: Small inline sparkline near Raw Telemetry cards (no extra panel) */}
+          {/* Sparkline */}
           {trend?.hasEnoughData && trend.sparklinePoints.length >= 2 && (
-            <div className="flex items-center gap-2 font-mono text-[11px] text-[#747878]">
-              <span>Signal Drift:</span>
+            <div className="flex items-center gap-2 font-mono text-[11px] text-[#6B7280]">
+              <span>Signal Drift ({trend.label}):</span>
               <Sparkline points={trend.sparklinePoints} color={trend.color} width={64} height={16} />
               <span className="font-bold" style={{ color: trend.color }}>{trend.symbol}</span>
             </div>
@@ -141,7 +142,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
               <span
                 className="telemetry-cell-value"
                 style={{
-                  color: telemetry.rssi_dBm <= -75 ? '#D32F2F' : telemetry.rssi_dBm <= -70 ? '#F57C00' : '#2E7D32'
+                  color: telemetry.rssi_dBm <= -75 ? '#DC2626' : telemetry.rssi_dBm <= -70 ? '#D97706' : '#16A34A'
                 }}
               >
                 {telemetry.rssi_dBm}
@@ -157,7 +158,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
               <span
                 className="telemetry-cell-value"
                 style={{
-                  color: telemetry.snr_dB <= 12 ? '#D32F2F' : telemetry.snr_dB <= 20 ? '#F57C00' : '#2E7D32'
+                  color: telemetry.snr_dB <= 12 ? '#DC2626' : telemetry.snr_dB <= 20 ? '#D97706' : '#16A34A'
                 }}
               >
                 {telemetry.snr_dB}
@@ -173,7 +174,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
               <span
                 className="telemetry-cell-value"
                 style={{
-                  color: telemetry.retryRatePct >= 15 ? '#D32F2F' : telemetry.retryRatePct >= 8 ? '#F57C00' : '#2E7D32'
+                  color: telemetry.retryRatePct >= 15 ? '#DC2626' : telemetry.retryRatePct >= 8 ? '#D97706' : '#16A34A'
                 }}
               >
                 {telemetry.retryRatePct.toFixed(1)}
@@ -193,81 +194,85 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
         </div>
       </div>
 
-      {/* Section 2: Layer 2 Diagnostic Result Banner (Feature 3: Trend Qualifier) */}
-      <div className="border border-[#E5E5E5] bg-white">
-        <div
-          className="p-4"
-          style={{
-            backgroundColor: status === 'CRITICAL' ? 'rgba(211, 47, 47, 0.05)' : status === 'ATTENTION' ? 'rgba(245, 124, 0, 0.05)' : 'rgba(46, 125, 50, 0.05)'
-          }}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[#444748] flex items-center gap-1.5">
-              <IconRule size={15} />
-              <span>Layer 2 Diagnostic Result</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              {status === 'HEALTHY' && (
-                <span className="badge-status badge-status-healthy flex items-center gap-1">
-                  <IconCheckBox size={11} />
-                  HEALTHY LINK
-                  {trend?.hasEnoughData && <span className="font-bold ml-0.5">{trend.symbol}</span>}
-                </span>
-              )}
-              {status === 'ATTENTION' && (
-                <span className="badge-status badge-status-attention flex items-center gap-1">
-                  <IconAlertTriangle size={11} />
-                  ATTENTION REQUIRED
-                  {trend?.hasEnoughData && <span className="font-bold ml-0.5">{trend.symbol}</span>}
-                </span>
-              )}
-              {status === 'CRITICAL' && (
-                <span className="badge-status badge-status-critical flex items-center gap-1">
-                  <IconAlertCircle size={11} />
-                  HIGH SEVERITY
-                  {trend?.hasEnoughData && <span className="font-bold ml-0.5">{trend.symbol}</span>}
-                </span>
-              )}
-            </div>
+      {/* Section 2: Layer 2 Diagnostic Result Banner */}
+      <div
+        className="border border-[#E2E5E9] p-4.5 bg-white"
+        style={{
+          borderLeftWidth: '4px',
+          borderLeftColor: status === 'CRITICAL' ? '#DC2626' : status === 'ATTENTION' ? '#D97706' : '#16A34A'
+        }}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] flex items-center gap-1.5">
+            <IconRule size={15} />
+            <span>Layer 2 Diagnostic Engine Verdict</span>
           </div>
 
-          <h2
-            className="text-[18px] font-bold mb-2 flex items-center gap-2"
-            style={{
-              color: status === 'CRITICAL' ? '#D32F2F' : status === 'ATTENTION' ? '#F57C00' : '#2E7D32'
-            }}
-          >
-            <span>{diagnosis.primary_diagnosis}</span>
-            {trend?.hasEnoughData && trend.direction !== 'STABLE' && (
-              <span className="font-mono text-[13px] text-[#747878] font-normal">
-                {trend.qualifier}
+          <div className="flex items-center gap-1.5">
+            {status === 'HEALTHY' && (
+              <span className="badge-status badge-status-healthy flex items-center gap-1">
+                <IconCheckBox size={11} />
+                HEALTHY LINK
+                {trend?.hasEnoughData && <span className="font-bold ml-0.5">{trend.symbol}</span>}
               </span>
             )}
-          </h2>
+            {status === 'ATTENTION' && (
+              <span className="badge-status badge-status-attention flex items-center gap-1">
+                <IconAlertTriangle size={11} />
+                ATTENTION REQUIRED
+                {trend?.hasEnoughData && <span className="font-bold ml-0.5">{trend.symbol}</span>}
+              </span>
+            )}
+            {status === 'CRITICAL' && (
+              <span className="badge-status badge-status-critical flex items-center gap-1">
+                <IconAlertCircle size={11} />
+                HIGH SEVERITY
+                {trend?.hasEnoughData && <span className="font-bold ml-0.5">{trend.symbol}</span>}
+              </span>
+            )}
+          </div>
+        </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-4 text-[12px] font-mono text-[#444748] pt-2 border-t border-[#E5E5E5]/60">
-            <div>
-              <span className="text-[#747878] uppercase text-[10px] font-bold mr-1.5">ENGINE CONFIDENCE:</span>
-              <strong className="text-black text-[13px]">
-                {Math.min(99, diagnosis.confidence + (peerResult?.confidenceBoost || 0))}%
-              </strong>
-            </div>
-            <div className="font-sans text-[12px] text-[#747878]">
-              Supporting signal metrics in <strong>Raw Telemetry</strong>; hypothesis &amp; peer proof in <strong>Evidence</strong>.
-            </div>
+        <h2
+          className="text-[18px] font-bold mb-2 flex items-center gap-2 flex-wrap"
+          style={{
+            color: status === 'CRITICAL' ? '#DC2626' : status === 'ATTENTION' ? '#D97706' : '#16A34A'
+          }}
+        >
+          <span>{diagnosis.primary_diagnosis}</span>
+          {trend?.hasEnoughData && trend.direction !== 'STABLE' && (
+            <span className="font-mono text-[12px] text-[#6B7280] font-normal">
+              {trend.qualifier}
+            </span>
+          )}
+        </h2>
+
+        {/* Confidence Meter Bar */}
+        <div className="space-y-1.5 pt-2 border-t border-[#E2E5E9]">
+          <div className="flex items-center justify-between text-[11px] font-mono">
+            <span className="text-[#6B7280] uppercase font-bold">Engine Scoring Confidence:</span>
+            <strong className="text-black">{effectiveConfidence}%</strong>
+          </div>
+          <div className="hypothesis-bar-track">
+            <div
+              className="hypothesis-bar-fill"
+              style={{
+                width: `${effectiveConfidence}%`,
+                backgroundColor: status === 'CRITICAL' ? '#DC2626' : status === 'ATTENTION' ? '#D97706' : '#16A34A'
+              }}
+            />
           </div>
         </div>
       </div>
 
       {/* Consolidated 3-Tab Controller */}
-      <div className="flex border-b border-[#E5E5E5] bg-[#FAFAFA] overflow-x-auto">
+      <div className="flex border-b border-[#E2E5E9] bg-[#F8F9FA] overflow-x-auto">
         <button
           type="button"
-          className={`px-5 py-3 text-[12px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-colors ${
+          className={`px-5 py-3 text-[12px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-all ${
             activeTab === 'OVERVIEW'
               ? 'border-black bg-white text-black font-bold'
-              : 'border-transparent text-[#444748] hover:bg-white'
+              : 'border-transparent text-[#6B7280] hover:text-black hover:bg-white'
           }`}
           onClick={() => setActiveTab('OVERVIEW')}
         >
@@ -277,10 +282,10 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
 
         <button
           type="button"
-          className={`px-5 py-3 text-[12px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-colors ${
+          className={`px-5 py-3 text-[12px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-all ${
             activeTab === 'EVIDENCE'
               ? 'border-black bg-white text-black font-bold'
-              : 'border-transparent text-[#444748] hover:bg-white'
+              : 'border-transparent text-[#6B7280] hover:text-black hover:bg-white'
           }`}
           onClick={() => setActiveTab('EVIDENCE')}
         >
@@ -290,10 +295,10 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
 
         <button
           type="button"
-          className={`px-5 py-3 text-[12px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-colors ${
+          className={`px-5 py-3 text-[12px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-all ${
             activeTab === 'SPECTRUM'
               ? 'border-black bg-white text-black font-bold'
-              : 'border-transparent text-[#444748] hover:bg-white'
+              : 'border-transparent text-[#6B7280] hover:text-black hover:bg-white'
           }`}
           onClick={() => setActiveTab('SPECTRUM')}
         >
@@ -306,7 +311,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
       <div>
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'OVERVIEW' && (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <SuperSimpleOverview
               diagnosis={diagnosis}
               explanation={explanation}
@@ -326,43 +331,43 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
           </div>
         )}
 
-        {/* TAB 2: EVIDENCE (Feature 1: Peer Comparison Collapsed Accordion Included) */}
+        {/* TAB 2: EVIDENCE */}
         {activeTab === 'EVIDENCE' && (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <DiagnosticInspector diagnosis={diagnosis} />
 
-            {/* Feature 1: Peer Comparison Section (Collapsed by default, hidden if single device) */}
+            {/* Feature 1: Peer Comparison Section */}
             <PeerComparisonSection peerResult={peerResult} />
 
             <CapabilityMatrix deviceCaps={device.capabilities} apCaps={device.apCapabilities} />
           </div>
         )}
 
-        {/* TAB 3: SPECTRUM (Feature 2: Estimated Coverage Chart Included) */}
+        {/* TAB 3: SPECTRUM */}
         {activeTab === 'SPECTRUM' && (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <RFLinkBudgetGauge telemetry={telemetry} />
 
-            {/* Feature 2: Inferred Dead-Zone Mapping (Estimated Coverage) */}
+            {/* Feature 2: Inferred Dead-Zone Mapping */}
             <EstimatedCoverageSection
               coverageResult={coverageResult}
               selectedHostname={device.hostname}
             />
 
             {/* Parameter Tuner */}
-            <div className="border border-[#E5E5E5] bg-white p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#444748]">
+            <div className="border border-[#E2E5E9] bg-white p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-[#E2E5E9] pb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045]">
                   Interactive RF Parameter Tuner
                 </span>
-                <span className="font-mono text-[11px] text-[#747878]">
-                  Adjust parameters to test Layer 2 scoring engine response in real-time
+                <span className="font-mono text-[11px] text-[#6B7280]">
+                  Live Layer 2 scoring engine simulator
                 </span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label className="font-mono text-[12px] text-[#444748] block mb-1">
+                  <label className="font-mono text-[12px] text-[#3B4045] block mb-1">
                     RSSI: <strong className="text-black">{device.telemetry.rssi_dBm} dBm</strong>
                   </label>
                   <input
@@ -372,7 +377,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
                     value={device.telemetry.rssi_dBm}
                     onChange={(e) => handleTweakField('rssi_dBm', parseInt(e.target.value, 10))}
                   />
-                  <div className="flex justify-between font-mono text-[10px] text-[#747878] mt-1">
+                  <div className="flex justify-between font-mono text-[10px] text-[#6B7280] mt-1">
                     <span>-90 dBm (Weak)</span>
                     <span>-60 dBm (Nominal)</span>
                     <span>-30 dBm (Strong)</span>
@@ -380,7 +385,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
                 </div>
 
                 <div>
-                  <label className="font-mono text-[12px] text-[#444748] block mb-1">
+                  <label className="font-mono text-[12px] text-[#3B4045] block mb-1">
                     Noise Floor: <strong className="text-black">{device.telemetry.noiseFloor_dBm} dBm</strong>
                   </label>
                   <input
@@ -390,7 +395,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
                     value={device.telemetry.noiseFloor_dBm}
                     onChange={(e) => handleTweakField('noiseFloor_dBm', parseInt(e.target.value, 10))}
                   />
-                  <div className="flex justify-between font-mono text-[10px] text-[#747878] mt-1">
+                  <div className="flex justify-between font-mono text-[10px] text-[#6B7280] mt-1">
                     <span>-95 dBm (Clean)</span>
                     <span>-70 dBm (Noisy)</span>
                     <span>-45 dBm (Jammed)</span>
@@ -398,7 +403,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
                 </div>
 
                 <div>
-                  <label className="font-mono text-[12px] text-[#444748] block mb-1">
+                  <label className="font-mono text-[12px] text-[#3B4045] block mb-1">
                     Retry Rate: <strong className="text-black">{device.telemetry.retryRatePct}%</strong>
                   </label>
                   <input
@@ -411,7 +416,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
                 </div>
 
                 <div>
-                  <label className="font-mono text-[12px] text-[#444748] block mb-1">
+                  <label className="font-mono text-[12px] text-[#3B4045] block mb-1">
                     Channel Width: <strong className="text-black">{device.telemetry.channelWidthMHz} MHz</strong>
                   </label>
                   <div className="flex gap-2 mt-1">
@@ -419,7 +424,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
                       <button
                         key={w}
                         type="button"
-                        className={`btn-instrument-secondary text-[11px] py-1 px-3 ${device.telemetry.channelWidthMHz === w ? 'bg-black text-white' : ''}`}
+                        className={`btn-instrument-secondary text-[11px] py-1 px-3 ${device.telemetry.channelWidthMHz === w ? 'bg-black text-white border-black' : ''}`}
                         onClick={() => handleTweakField('channelWidthMHz', w)}
                       >
                         {w} MHz

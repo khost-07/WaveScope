@@ -35,21 +35,24 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
   singleDeviceDiagnosis
 }) => {
   return (
-    <div className="flex flex-col gap-3 mb-6">
+    <div className="flex flex-col gap-3.5 mb-4">
       {/* MODE CONDITIONAL HEADER */}
 
-      {/* 1. SIMULATION MODE: 4-Box Fleet Metric Summary Strip */}
+      {/* 1. SIMULATION MODE: 4-Box Fleet Metric Strip with Color Accent Tops */}
       {isSimulation ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {/* Total Clients */}
           <button
             type="button"
-            className={`telemetry-cell text-left cursor-pointer transition-colors ${activeFilter === 'ALL' ? 'border-black bg-[#FAFAFA]' : 'border-[#E5E5E5] bg-white hover:bg-[#FAFAFA]'}`}
+            className={`telemetry-cell text-left cursor-pointer transition-all ${
+              activeFilter === 'ALL' ? 'border-[#0F1113] bg-[#F8F9FA]' : 'border-[#E2E5E9] bg-white hover:bg-[#F8F9FA]'
+            }`}
+            style={{ borderTop: '3px solid #0F1113' }}
             onClick={() => onChangeFilter('ALL')}
           >
             <div className="telemetry-cell-label flex items-center justify-between">
               <span>TOTAL CLIENTS</span>
-              <IconRouter size={15} className="text-[#747878]" />
+              <IconRouter size={15} className="text-[#6B7280]" />
             </div>
             <div className="telemetry-cell-value-group">
               <span className="telemetry-cell-value text-black">{stats.total}</span>
@@ -60,18 +63,20 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
           {/* Healthy */}
           <button
             type="button"
-            className={`telemetry-cell text-left cursor-pointer transition-colors ${activeFilter === 'HEALTHY' ? 'bg-[#2E7D32]/10' : 'bg-white hover:bg-[#FAFAFA]'}`}
-            style={{ borderColor: activeFilter === 'HEALTHY' ? '#2E7D32' : '#E5E5E5' }}
+            className={`telemetry-cell text-left cursor-pointer transition-all ${
+              activeFilter === 'HEALTHY' ? 'bg-[#16A34A]/10 border-[#16A34A]' : 'border-[#E2E5E9] bg-white hover:bg-[#F8F9FA]'
+            }`}
+            style={{ borderTop: '3px solid #16A34A' }}
             onClick={() => onChangeFilter('HEALTHY')}
           >
-            <div className="telemetry-cell-label flex items-center justify-between text-[#2E7D32]">
+            <div className="telemetry-cell-label flex items-center justify-between text-[#16A34A]">
               <span className="flex items-center gap-1.5">
                 <IconCheckBox size={14} />
                 HEALTHY
               </span>
             </div>
             <div className="telemetry-cell-value-group">
-              <span className="telemetry-cell-value text-[#2E7D32]">{stats.healthy}</span>
+              <span className="telemetry-cell-value text-[#16A34A]">{stats.healthy}</span>
               <span className="telemetry-cell-unit">nominal</span>
             </div>
           </button>
@@ -79,18 +84,20 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
           {/* Attention */}
           <button
             type="button"
-            className={`telemetry-cell text-left cursor-pointer transition-colors ${activeFilter === 'ATTENTION' ? 'bg-[#F57C00]/10' : 'bg-white hover:bg-[#FAFAFA]'}`}
-            style={{ borderColor: activeFilter === 'ATTENTION' ? '#F57C00' : '#E5E5E5' }}
+            className={`telemetry-cell text-left cursor-pointer transition-all ${
+              activeFilter === 'ATTENTION' ? 'bg-[#D97706]/10 border-[#D97706]' : 'border-[#E2E5E9] bg-white hover:bg-[#F8F9FA]'
+            }`}
+            style={{ borderTop: '3px solid #D97706' }}
             onClick={() => onChangeFilter('ATTENTION')}
           >
-            <div className="telemetry-cell-label flex items-center justify-between text-[#F57C00]">
+            <div className="telemetry-cell-label flex items-center justify-between text-[#D97706]">
               <span className="flex items-center gap-1.5">
                 <IconAlertTriangle size={14} />
                 ATTENTION
               </span>
             </div>
             <div className="telemetry-cell-value-group">
-              <span className="telemetry-cell-value text-[#F57C00]">{stats.attention}</span>
+              <span className="telemetry-cell-value text-[#D97706]">{stats.attention}</span>
               <span className="telemetry-cell-unit">degraded</span>
             </div>
           </button>
@@ -98,25 +105,27 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
           {/* Critical */}
           <button
             type="button"
-            className={`telemetry-cell text-left cursor-pointer transition-colors ${activeFilter === 'CRITICAL' ? 'bg-[#D32F2F]/10' : 'bg-white hover:bg-[#FAFAFA]'}`}
-            style={{ borderColor: activeFilter === 'CRITICAL' ? '#D32F2F' : '#E5E5E5' }}
+            className={`telemetry-cell text-left cursor-pointer transition-all ${
+              activeFilter === 'CRITICAL' ? 'bg-[#DC2626]/10 border-[#DC2626]' : 'border-[#E2E5E9] bg-white hover:bg-[#F8F9FA]'
+            }`}
+            style={{ borderTop: '3px solid #DC2626' }}
             onClick={() => onChangeFilter('CRITICAL')}
           >
-            <div className="telemetry-cell-label flex items-center justify-between text-[#D32F2F]">
+            <div className="telemetry-cell-label flex items-center justify-between text-[#DC2626]">
               <span className="flex items-center gap-1.5">
                 <IconAlertCircle size={14} />
                 CRITICAL
               </span>
             </div>
             <div className="telemetry-cell-value-group">
-              <span className="telemetry-cell-value text-[#D32F2F]">{stats.critical}</span>
+              <span className="telemetry-cell-value text-[#DC2626]">{stats.critical}</span>
               <span className="telemetry-cell-unit">alert</span>
             </div>
           </button>
         </div>
       ) : (
         /* 2. LIVE DATA MODE (Real Mode): Single proportionate active connection health summary */
-        <div className="border border-[#E5E5E5] bg-white p-4 flex flex-wrap items-center justify-between gap-4">
+        <div className="border border-[#E2E5E9] bg-white p-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
             {singleDeviceStatus === 'HEALTHY' && (
               <div className="badge-status badge-status-healthy text-[11px] py-1 px-2.5 flex items-center gap-1.5">
@@ -140,20 +149,20 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
             <div>
               <div className="text-[15px] font-bold text-black">
                 {singleDeviceStatus === 'HEALTHY'
-                  ? 'Your active Wi-Fi connection is healthy.'
+                  ? 'Your active Wi-Fi connection is operating nominally.'
                   : singleDeviceDiagnosis
                   ? `1 issue detected: ${singleDeviceDiagnosis}`
                   : '1 potential issue detected on your active connection.'}
               </div>
-              <div className="font-mono text-[11px] text-[#747878] mt-0.5">
-                Live host: <strong>{singleDeviceHostname}</strong> &bull; Link evaluated by Layer 2 deterministic engine
+              <div className="font-mono text-[11px] text-[#6B7280] mt-0.5">
+                Host: <strong className="text-black">{singleDeviceHostname}</strong> &bull; Evaluated by Layer 2 deterministic engine
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2 font-mono text-[11px]">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#FAFAFA] border border-[#E5E5E5] text-black font-semibold">
-              <span className="w-2 h-2 bg-[#2E7D32] inline-block"></span>
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F8F9FA] border border-[#E2E5E9] text-black font-semibold">
+              <span className="w-2 h-2 bg-[#16A34A] inline-block animate-pulse-fast"></span>
               LIVE PROBE ACTIVE
             </span>
           </div>
@@ -161,19 +170,22 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
       )}
 
       {/* AP Header & Actions Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white border border-[#E5E5E5]">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white border border-[#E2E5E5]">
         <div className="flex items-center gap-3">
-          <div className="p-2 border border-[#E5E5E5] bg-[#FAFAFA]">
+          <div className="p-2 border border-[#E2E5E9] bg-[#F8F9FA] flex items-center justify-center">
             <IconRouter size={20} className="text-black" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[15px] font-bold text-black">{ap.ssid}</span>
               <span className="badge-status font-mono text-[10px]">{ap.maxStandard}</span>
-              <span className="badge-status font-mono text-[10px]">Tri-Band (2.4/5/6 GHz)</span>
+              <span className="badge-status font-mono text-[10px]">Tri-Band (2.4 / 5 / 6 GHz)</span>
             </div>
-            <div className="text-[11px] font-mono text-[#747878] mt-0.5">
-              {ap.apModel} &bull; Channel Load: <span className="font-bold" style={{ color: ap.channelUtilizationPct >= 70 ? '#D32F2F' : '#2E7D32' }}>{ap.channelUtilizationPct}%</span>
+            <div className="text-[11px] font-mono text-[#6B7280] mt-0.5">
+              {ap.apModel} &bull; Channel Utilization:{' '}
+              <span className="font-bold" style={{ color: ap.channelUtilizationPct >= 70 ? '#DC2626' : '#16A34A' }}>
+                {ap.channelUtilizationPct}%
+              </span>
             </div>
           </div>
         </div>
@@ -185,49 +197,59 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
             onClick={onOpenNetworkAudit}
           >
             <IconRadar size={15} />
-            <span>Scan Whole Network & AI Audit</span>
+            <span>Whole-Network AI Audit</span>
           </button>
         )}
       </div>
 
-      {/* Simulation Scenario Switcher Strip */}
+      {/* Simulation Scenario Switcher Deck */}
       {isSimulation && onSelectScenario && (
-        <div className="flex items-center gap-2 p-2 bg-[#FAFAFA] border border-[#E5E5E5] overflow-x-auto">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#747878] whitespace-nowrap px-1">
-            TEST SCENARIOS:
+        <div className="flex items-center gap-2 p-2 bg-[#F8F9FA] border border-[#E2E5E9] overflow-x-auto">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] whitespace-nowrap px-1">
+            PRESET SCENARIOS:
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
             <button
               type="button"
-              className={`btn-instrument-secondary font-mono text-[11px] py-1 px-2.5 ${selectedScenarioId === 'A' ? 'bg-black text-white' : ''}`}
+              className={`btn-instrument-secondary font-mono text-[11px] py-1 px-2.5 transition-all ${
+                selectedScenarioId === 'A' ? 'bg-black text-white border-black' : ''
+              }`}
               onClick={() => onSelectScenario('A')}
             >
               <strong>A</strong>: Fast 5GHz
             </button>
             <button
               type="button"
-              className={`btn-instrument-secondary font-mono text-[11px] py-1 px-2.5 ${selectedScenarioId === 'B' ? 'bg-black text-white' : ''}`}
+              className={`btn-instrument-secondary font-mono text-[11px] py-1 px-2.5 transition-all ${
+                selectedScenarioId === 'B' ? 'bg-black text-white border-black' : ''
+              }`}
               onClick={() => onSelectScenario('B')}
             >
               <strong>B</strong>: Weak Signal (-76 dBm)
             </button>
             <button
               type="button"
-              className={`btn-instrument-secondary font-mono text-[11px] py-1 px-2.5 ${selectedScenarioId === 'C' ? 'bg-black text-white' : ''}`}
+              className={`btn-instrument-secondary font-mono text-[11px] py-1 px-2.5 transition-all ${
+                selectedScenarioId === 'C' ? 'bg-black text-white border-black' : ''
+              }`}
               onClick={() => onSelectScenario('C')}
             >
-              <strong>C</strong>: RF Interference
+              <strong>C</strong>: RF Noise / Jammed
             </button>
             <button
               type="button"
-              className={`btn-instrument-secondary font-mono text-[11px] py-1 px-2.5 ${selectedScenarioId === 'D' ? 'bg-black text-white' : ''}`}
+              className={`btn-instrument-secondary font-mono text-[11px] py-1 px-2.5 transition-all ${
+                selectedScenarioId === 'D' ? 'bg-black text-white border-black' : ''
+              }`}
               onClick={() => onSelectScenario('D')}
             >
               <strong>D</strong>: Legacy IoT
             </button>
             <button
               type="button"
-              className={`btn-instrument-secondary font-mono text-[11px] py-1 px-2.5 ${selectedScenarioId === 'E' ? 'bg-black text-white' : ''}`}
+              className={`btn-instrument-secondary font-mono text-[11px] py-1 px-2.5 transition-all ${
+                selectedScenarioId === 'E' ? 'bg-black text-white border-black' : ''
+              }`}
               onClick={() => onSelectScenario('E')}
             >
               <strong>E</strong>: Wrong Band

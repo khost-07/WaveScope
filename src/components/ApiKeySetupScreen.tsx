@@ -27,24 +27,24 @@ export const ApiKeySetupScreen: React.FC<ApiKeySetupScreenProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-[#F9F9F9] grid-bg flex items-center justify-center p-6 z-50">
-      <div className="bg-white border border-black max-w-lg w-full p-8 space-y-6">
+    <div className="fixed inset-0 bg-[#F4F5F7] flex items-center justify-center p-6 z-50">
+      <div className="bg-white border border-[#0F1113] max-w-lg w-full p-8 space-y-6 shadow-xl">
         {/* Brand Header */}
-        <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-4">
+        <div className="flex items-center justify-between border-b border-[#E2E5E9] pb-4">
           <div className="flex items-center gap-3">
             <IconRadar size={28} className="text-black" />
             <div>
               <h1 className="text-[22px] font-bold text-black tracking-tight">WaveScope</h1>
-              <p className="font-mono text-[11px] text-[#747878]">Precision RF Wi-Fi Diagnostic Instrument</p>
+              <p className="font-mono text-[11px] text-[#6B7280]">Precision RF Wi-Fi Diagnostic Instrument</p>
             </div>
           </div>
-          <span className="badge-status font-mono text-[10px]">Instrument Setup</span>
+          <span className="badge-status font-mono text-[10px]">Setup Configuration</span>
         </div>
 
         {/* Intro */}
         <div className="space-y-2">
           <h2 className="text-[17px] font-bold text-black">Connect Google Gemini AI Engine</h2>
-          <p className="text-[14px] text-[#444748] leading-relaxed">
+          <p className="text-[14px] text-[#3B4045] leading-relaxed">
             WaveScope runs Layer 2 deterministic RF scoring locally, then connects directly to{' '}
             <strong className="text-black">gemini-3.1-flash-lite</strong> for live root-cause explanations and whole-network audits.
           </p>
@@ -53,7 +53,7 @@ export const ApiKeySetupScreen: React.FC<ApiKeySetupScreenProps> = ({
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[#444748]">
+            <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[#3B4045]">
               <label htmlFor="gemini-key">Gemini API Key</label>
               <button
                 type="button"
@@ -67,7 +67,7 @@ export const ApiKeySetupScreen: React.FC<ApiKeySetupScreenProps> = ({
             <input
               id="gemini-key"
               type={showKey ? 'text' : 'password'}
-              className="w-full bg-[#FAFAFA] border border-[#E5E5E5] p-3 font-mono text-[13px] text-black outline-none focus:border-black"
+              className="w-full bg-[#F8F9FA] border border-[#E2E5E9] p-3 font-mono text-[13px] text-black outline-none focus:border-black transition-colors"
               placeholder="AIzaSy..."
               value={keyInput}
               onChange={(e) => {
@@ -78,10 +78,10 @@ export const ApiKeySetupScreen: React.FC<ApiKeySetupScreenProps> = ({
             />
 
             {error && (
-              <div className="font-mono text-[11px] text-[#D32F2F] mt-1">{error}</div>
+              <div className="font-mono text-[11px] text-[#DC2626] mt-1">{error}</div>
             )}
 
-            <div className="font-mono text-[11px] text-[#747878] pt-1">
+            <div className="font-mono text-[11px] text-[#6B7280] pt-1">
               Get a free API key at{' '}
               <a
                 href="https://aistudio.google.com/app/apikey"
@@ -94,7 +94,7 @@ export const ApiKeySetupScreen: React.FC<ApiKeySetupScreenProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-[13px] text-[#444748]">
+          <div className="flex items-center gap-2 text-[13px] text-[#3B4045]">
             <input
               type="checkbox"
               id="remember-key"
@@ -116,7 +116,7 @@ export const ApiKeySetupScreen: React.FC<ApiKeySetupScreenProps> = ({
           </button>
         </form>
 
-        <div className="pt-2 border-t border-[#E5E5E5] font-mono text-[10px] text-[#747878] flex justify-between">
+        <div className="pt-2 border-t border-[#E2E5E9] font-mono text-[10px] text-[#6B7280] flex justify-between">
           <span>Engine: <strong>Deterministic L2 + Gemini 3.1 Flash Lite</strong></span>
           <span>Zero Fallbacks</span>
         </div>

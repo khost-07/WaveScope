@@ -14,39 +14,39 @@ export const EstimatedCoverageSection: React.FC<EstimatedCoverageSectionProps> =
   const { markers, zoneDescription, environmentNote } = coverageResult;
 
   return (
-    <div className="border border-[#E5E5E5] bg-white p-4 space-y-3">
+    <div className="border border-[#E2E5E9] bg-white p-5 space-y-3.5">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-2">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-[#444748] flex items-center gap-1.5">
+      <div className="flex items-center justify-between border-b border-[#E2E5E9] pb-2 flex-wrap gap-2">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] flex items-center gap-1.5">
           <IconSignal size={15} />
-          <span>Estimated Coverage</span>
+          <span>Inferred Coverage & Dead-Zone Map</span>
         </div>
-        <span className="font-mono text-[11px] text-[#747878]">
-          {markers.length} Endpoints Plotted
+        <span className="font-mono text-[11px] text-[#6B7280]">
+          {markers.length} Active Fleet Endpoints Plotted
         </span>
       </div>
 
       {/* Description & Physical Environment */}
-      <div className="text-[12px] text-[#444748] font-sans space-y-1">
+      <div className="text-[13px] text-[#3B4045] font-sans space-y-1">
         <p>
           <strong className="text-black">{selectedHostname}</strong>: {zoneDescription}
         </p>
         {environmentNote && (
-          <p className="font-mono text-[11px] text-[#747878]">
-            Physical Location: {environmentNote}
+          <p className="font-mono text-[11px] text-[#6B7280]">
+            Physical Location: <strong className="text-black">{environmentNote}</strong>
           </p>
         )}
       </div>
 
       {/* Horizontal Gradient Bar */}
-      <div className="space-y-1.5 pt-2">
+      <div className="space-y-2 pt-2">
         <div
-          className="relative h-6 border border-[#E5E5E5]"
-          style={{ background: 'linear-gradient(to right, #E8F5E9 0%, #FFF3E0 55%, #FFEBEE 100%)' }}
+          className="relative h-7 border border-[#CBD0D6]"
+          style={{ background: 'linear-gradient(to right, #DCFCE7 0%, #FEF3C7 55%, #FEE2E2 100%)' }}
         >
           {/* Zone Dividers */}
-          <div className="absolute top-0 bottom-0 left-[35%] w-[1px] bg-black/10"></div>
-          <div className="absolute top-0 bottom-0 left-[75%] w-[1px] bg-black/10"></div>
+          <div className="absolute top-0 bottom-0 left-[35%] w-[1px] bg-black/15"></div>
+          <div className="absolute top-0 bottom-0 left-[75%] w-[1px] bg-black/15"></div>
 
           {/* Device Markers */}
           {markers.map(m => {
@@ -58,22 +58,24 @@ export const EstimatedCoverageSection: React.FC<EstimatedCoverageSectionProps> =
                 style={{
                   left: `${m.positionPercent}%`,
                   transform: 'translateX(-50%)',
-                  zIndex: isTarget ? 20 : 10
+                  zIndex: isTarget ? 30 : 10
                 }}
                 title={`${m.hostname}: ${m.rssi_dBm} dBm (~${m.estimatedDistanceMeters}m) [${m.zone}]`}
               >
                 <div
-                  className={`w-2.5 h-2.5 border transition-transform ${
-                    isTarget ? 'bg-black border-black scale-125 ring-2 ring-black/20' : 'bg-white border-[#747878]'
+                  className={`w-3 h-3 border transition-transform ${
+                    isTarget
+                      ? 'bg-black border-black scale-125 ring-2 ring-black/30'
+                      : 'bg-white border-[#6B7280]'
                   }`}
                   style={{
                     backgroundColor: isTarget
-                      ? '#000000'
+                      ? '#0F1113'
                       : m.status === 'CRITICAL'
-                      ? '#D32F2F'
+                      ? '#DC2626'
                       : m.status === 'ATTENTION'
-                      ? '#F57C00'
-                      : '#2E7D32'
+                      ? '#D97706'
+                      : '#16A34A'
                   }}
                 />
               </div>
@@ -82,10 +84,10 @@ export const EstimatedCoverageSection: React.FC<EstimatedCoverageSectionProps> =
         </div>
 
         {/* Zone Labels */}
-        <div className="flex justify-between font-mono text-[10px] text-[#747878]">
-          <span className="text-[#2E7D32] font-semibold">STRONG (&lt; 5m)</span>
-          <span className="text-[#F57C00] font-semibold">MARGINAL (5–12m)</span>
-          <span className="text-[#D32F2F] font-semibold">WEAK / DEAD ZONE (&gt; 12m)</span>
+        <div className="flex justify-between font-mono text-[10px] text-[#6B7280]">
+          <span className="text-[#16A34A] font-bold">STRONG LINE-OF-SIGHT (&lt; 5m)</span>
+          <span className="text-[#D97706] font-bold">SECONDARY PERIMETER (5–12m)</span>
+          <span className="text-[#DC2626] font-bold">ATTENUATED DEAD ZONE (&gt; 12m)</span>
         </div>
       </div>
     </div>

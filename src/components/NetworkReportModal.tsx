@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NetworkScanResult, NetworkAuditReport } from '../layer1_data/networkScannerTypes';
-import { IconRadar, IconRefresh } from './SvgIcons';
+import { IconRadar, IconRefresh, IconZap } from './SvgIcons';
 
 interface NetworkReportModalProps {
   isOpen: boolean;
@@ -79,15 +79,15 @@ ${report.actionablePlan.map((p, i) => `${i + 1}. [${p.priority}] ${p.action} —
               <div className="inline-block animate-spin text-black">
                 <IconRefresh size={32} />
               </div>
-              <h3 className="text-[17px] font-bold text-black">Scanning Subnet & Running AI Engine...</h3>
-              <p className="font-mono text-[12px] text-[#747878]">Probing router latency and classifying device fleet.</p>
+              <h3 className="text-[16px] font-bold text-black">Probing Subnet & Synthesizing AI Audit...</h3>
+              <p className="font-mono text-[12px] text-[#6B7280]">Auditing router latency and classifying device fleet.</p>
             </div>
           )}
 
           {error && !isLoading && (
-            <div className="p-5 border border-[#D32F2F] bg-white space-y-3">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-[#D32F2F]">Audit Sweep Error</div>
-              <p className="font-mono text-[12px] text-[#444748]">{error}</p>
+            <div className="p-5 border border-[#DC2626] bg-white space-y-3">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-[#DC2626]">Audit Sweep Error</div>
+              <p className="font-mono text-[12px] text-[#3B4045]">{error}</p>
               <button type="button" className="btn-instrument-primary" onClick={onRescan}>
                 Retry Network Scan
               </button>
@@ -107,10 +107,10 @@ ${report.actionablePlan.map((p, i) => `${i + 1}. [${p.priority}] ${p.action} —
                 </div>
 
                 <div className="telemetry-cell">
-                  <span className="telemetry-cell-label">Router Gateway Latency</span>
+                  <span className="telemetry-cell-label">Gateway Latency</span>
                   <div className="telemetry-cell-value-group">
                     <span className="telemetry-cell-value text-black">{scanResult.router.gatewayPingMs}</span>
-                    <span className="telemetry-cell-unit">ms</span>
+                    <span className="telemetry-cell-unit">ms ping</span>
                   </div>
                 </div>
 
@@ -124,61 +124,63 @@ ${report.actionablePlan.map((p, i) => `${i + 1}. [${p.priority}] ${p.action} —
               </div>
 
               {/* Executive Summary */}
-              <div className="p-4 border border-[#E5E5E5] bg-[#FAFAFA] space-y-1">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#444748]">Executive Summary</div>
+              <div className="p-4 border border-[#E2E5E9] bg-[#F8F9FA] space-y-1">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045]">Executive Summary</div>
                 <p className="text-[13px] text-black leading-relaxed">{report.executiveSummary}</p>
               </div>
 
               {/* Router Health & Verdicts */}
-              <div className="border border-[#E5E5E5] bg-white p-4 space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#444748] border-b border-[#E5E5E5] pb-2">
+              <div className="border border-[#E2E5E9] bg-white p-4 space-y-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] border-b border-[#E2E5E9] pb-2">
                   Router & Wi-Fi Gateway Audit ({scanResult.router.ssid})
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-[12px]">
-                  <div className="p-2.5 bg-[#FAFAFA] border border-[#E5E5E5]">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-[#747878] mb-1">Channel Congestion</div>
+                  <div className="p-3 bg-[#F8F9FA] border border-[#E2E5E9]">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mb-1">Channel Congestion</div>
                     <div className="text-black font-semibold">{report.routerAssessment.channelCongestionVerdict}</div>
                   </div>
 
-                  <div className="p-2.5 bg-[#FAFAFA] border border-[#E5E5E5]">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-[#747878] mb-1">Band Efficiency</div>
+                  <div className="p-3 bg-[#F8F9FA] border border-[#E2E5E9]">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mb-1">Band Efficiency</div>
                     <div className="text-black font-semibold">{report.routerAssessment.bandEfficiencyVerdict}</div>
                   </div>
 
-                  <div className="p-2.5 bg-[#FAFAFA] border border-[#E5E5E5]">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-[#747878] mb-1">Gateway Responsiveness</div>
+                  <div className="p-3 bg-[#F8F9FA] border border-[#E2E5E9]">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mb-1">Gateway Responsiveness</div>
                     <div className="text-black font-semibold">{report.routerAssessment.gatewayLatencyVerdict}</div>
                   </div>
                 </div>
               </div>
 
               {/* Discovered Device Fleet Table */}
-              <div className="border border-[#E5E5E5] bg-white p-4 space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#444748] flex items-center justify-between border-b border-[#E5E5E5] pb-2">
+              <div className="border border-[#E2E5E9] bg-white p-4 space-y-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] flex items-center justify-between border-b border-[#E2E5E9] pb-2">
                   <span>Discovered Fleet Inventory ({scanResult.devices.length} Endpoints)</span>
-                  <span className="font-mono text-[11px] text-[#747878]">Subnet: {scanResult.subnet}</span>
+                  <span className="font-mono text-[11px] text-[#6B7280]">Subnet: {scanResult.subnet}</span>
                 </div>
 
-                <div className="border border-[#E5E5E5] overflow-x-auto max-h-56">
+                <div className="border border-[#E2E5E9] overflow-x-auto max-h-56">
                   <table className="instrument-table">
                     <thead>
                       <tr>
-                        <th>Device</th>
-                        <th>Vendor / Category</th>
+                        <th>Host Identifier</th>
                         <th>IP Address</th>
                         <th>MAC Address</th>
+                        <th>Vendor</th>
                         <th style={{ textAlign: 'right' }}>Ping Latency</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {scanResult.devices.map(d => (
-                        <tr key={d.ip}>
-                          <td style={{ fontWeight: 600 }}>{d.hostname}</td>
-                          <td className="font-mono text-[12px] text-[#444748]">{d.vendor} ({d.deviceType})</td>
-                          <td className="font-mono text-[12px]">{d.ip}</td>
-                          <td className="font-mono text-[11px] text-[#747878]">{d.mac}</td>
-                          <td style={{ textAlign: 'right', fontWeight: 600 }}>{d.pingMs} ms</td>
+                      {scanResult.devices.map((dev, idx) => (
+                        <tr key={idx}>
+                          <td className="font-semibold text-black">{dev.hostname}</td>
+                          <td className="font-mono text-[12px]">{dev.ip}</td>
+                          <td className="font-mono text-[12px] text-[#6B7280]">{dev.mac}</td>
+                          <td className="font-mono text-[12px]">{dev.vendor}</td>
+                          <td style={{ textAlign: 'right' }} className="font-mono">
+                            {dev.pingMs} ms
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -187,25 +189,37 @@ ${report.actionablePlan.map((p, i) => `${i + 1}. [${p.priority}] ${p.action} —
               </div>
 
               {/* Actionable Plan */}
-              <div className="border border-[#E5E5E5] bg-white p-4 space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#444748] border-b border-[#E5E5E5] pb-2">
-                  Prioritized Action & Optimization Plan
+              <div className="border border-[#E2E5E9] bg-white p-4 space-y-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] flex items-center justify-between border-b border-[#E2E5E9] pb-2">
+                  <div className="flex items-center gap-1.5">
+                    <IconZap size={14} className="text-black" />
+                    <span>Prioritized Network Optimization Plan</span>
+                  </div>
+                  <span className="font-mono text-[11px] text-[#6B7280]">
+                    {report.actionablePlan.length} Actions
+                  </span>
                 </div>
 
                 <div className="space-y-2">
                   {report.actionablePlan.map((plan, idx) => (
-                    <div key={idx} className="p-3 bg-[#FAFAFA] border border-[#E5E5E5] flex items-start gap-3">
-                      <div className="font-mono text-[11px] font-bold w-6 h-6 flex items-center justify-center bg-black text-white flex-shrink-0">
-                        {idx + 1}
-                      </div>
-                      <div className="flex-1 space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[13px] font-bold text-black">{plan.action}</span>
-                          <span className="badge-status font-mono text-[10px]">
-                            {plan.priority} Priority
-                          </span>
+                    <div key={idx} className="p-3 bg-[#F8F9FA] border border-[#E2E5E9] flex flex-col gap-1">
+                      <div className="flex items-center justify-between flex-wrap gap-1">
+                        <div className="text-[13px] font-semibold text-black flex items-center gap-2">
+                          <span className="font-mono text-[11px] font-bold text-[#6B7280]">#{idx + 1}</span>
+                          <span>{plan.action}</span>
                         </div>
-                        <p className="text-[13px] text-[#444748]">{plan.simpleWhy}</p>
+                        <span
+                          className="badge-status font-mono text-[10px]"
+                          style={{
+                            color: plan.priority === 'High' ? '#DC2626' : plan.priority === 'Medium' ? '#D97706' : '#16A34A',
+                            borderColor: plan.priority === 'High' ? '#DC2626' : plan.priority === 'Medium' ? '#D97706' : '#16A34A'
+                          }}
+                        >
+                          {plan.priority.toUpperCase()} PRIORITY
+                        </span>
+                      </div>
+                      <div className="text-[12px] text-[#3B4045] pl-6 font-mono">
+                        Rationale: {plan.simpleWhy}
                       </div>
                     </div>
                   ))}

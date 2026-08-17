@@ -15,14 +15,14 @@ export const PeerComparisonSection: React.FC<PeerComparisonSectionProps> = ({ pe
   }
 
   return (
-    <div className="border border-[#E5E5E5] bg-white">
+    <div className="border border-[#E2E5E9] bg-white">
       {/* Collapsible Header */}
       <button
         type="button"
-        className="w-full p-3.5 bg-[#FAFAFA] flex items-center justify-between text-left cursor-pointer hover:bg-[#F3F3F4] transition-colors"
+        className="w-full p-4 bg-[#F8F9FA] flex items-center justify-between text-left cursor-pointer hover:bg-[#ECEEF1] transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5 flex-wrap">
           <span
             className="text-[12px] font-bold text-black transform transition-transform duration-150 inline-block"
             style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
@@ -30,33 +30,33 @@ export const PeerComparisonSection: React.FC<PeerComparisonSectionProps> = ({ pe
             <IconChevronRight size={14} />
           </span>
           <span className="text-[11px] font-bold uppercase tracking-wider text-black">
-            Peer Comparison
+            Peer Comparison & Corroboration
           </span>
           <span className="badge-status font-mono text-[9px] py-0.5 px-1.5">
             {peerResult.verdict === 'DEVICE_SPECIFIC'
-              ? 'Device-Specific'
+              ? 'Device-Specific Placement'
               : peerResult.verdict === 'ENVIRONMENTAL_SHARED'
-              ? 'Shared Environmental'
-              : 'Consistent'}
+              ? 'Shared Environmental Noise'
+              : 'Fleet Consistent'}
           </span>
         </div>
 
-        <span className="font-mono text-[11px] text-[#747878]">
-          {isExpanded ? 'Collapse' : 'Expand (2-3 Peers)'}
+        <span className="font-mono text-[11px] text-[#6B7280]">
+          {isExpanded ? 'Collapse' : `Compare (${peerResult.relevantPeers.length} Peers)`}
         </span>
       </button>
 
       {/* Expanded Content Body */}
       {isExpanded && (
-        <div className="p-4 border-t border-[#E5E5E5] space-y-3">
+        <div className="p-4 border-t border-[#E2E5E9] space-y-3">
           {/* Summary Sentence */}
-          <div className="p-2.5 bg-[#FAFAFA] border border-[#E5E5E5] text-[13px] text-black leading-relaxed">
+          <div className="p-3 bg-[#F8F9FA] border border-[#E2E5E9] text-[13px] text-black leading-relaxed font-medium">
             {peerResult.summarySentence}
           </div>
 
           {/* Compact Peer Comparison List */}
           {peerResult.relevantPeers.length > 0 && (
-            <div className="border border-[#E5E5E5] overflow-x-auto">
+            <div className="border border-[#E2E5E9] overflow-x-auto">
               <table className="instrument-table">
                 <thead>
                   <tr>
@@ -72,7 +72,7 @@ export const PeerComparisonSection: React.FC<PeerComparisonSectionProps> = ({ pe
                     <tr key={peer.id}>
                       <td>
                         <strong className="text-black">{peer.hostname}</strong>
-                        <span className="font-mono text-[11px] text-[#747878] ml-2">({peer.vendor})</span>
+                        <span className="font-mono text-[11px] text-[#6B7280] ml-2">({peer.vendor})</span>
                       </td>
                       <td className="font-mono text-[12px]">{peer.band}</td>
                       <td className="font-mono text-[12px]">{peer.standard}</td>

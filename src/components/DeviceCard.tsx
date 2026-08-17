@@ -23,23 +23,25 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
 
   return (
     <div
-      className={`p-3 bg-white border mb-2 cursor-pointer transition-colors ${
-        isSelected ? 'border-black bg-[#FAFAFA]' : 'border-[#E5E5E5] hover:bg-[#FAFAFA]'
+      className={`p-3.5 bg-white border mb-2 cursor-pointer transition-all ${
+        isSelected
+          ? 'border-[#0F1113] bg-[#F8F9FA] shadow-sm'
+          : 'border-[#E2E5E9] hover:border-[#CBD0D6] hover:bg-[#F8F9FA]'
       }`}
       style={{
         borderLeftWidth: isSelected ? '4px' : '1px',
-        borderLeftColor: isSelected ? '#000000' : '#E5E5E5'
+        borderLeftColor: isSelected ? '#0F1113' : '#E2E5E9'
       }}
       onClick={() => onSelect(device)}
     >
       {/* Top Row: Device Name & Status Badge with Trend Arrow */}
-      <div className="flex items-start justify-between gap-2 mb-1">
-        <div>
-          <div className="text-[14px] text-black font-bold leading-tight">
+      <div className="flex items-start justify-between gap-2 mb-1.5">
+        <div className="min-w-0">
+          <div className="text-[14px] text-black font-bold leading-tight truncate">
             {device.hostname}
           </div>
-          <div className="font-mono text-[#747878] text-[11px] mt-0.5">
-            {device.vendor} • {device.macAddress}
+          <div className="font-mono text-[#6B7280] text-[11px] mt-0.5 truncate">
+            {device.vendor} &bull; {device.macAddress}
           </div>
         </div>
 
@@ -69,10 +71,10 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
       </div>
 
       {/* Diagnosis summary prose with trend qualifier if present */}
-      <div className="text-[12px] text-[#444748] line-clamp-2 mt-1">
+      <div className="text-[12px] text-[#3B4045] line-clamp-2 mt-1 leading-snug">
         {diagnosis.primary_diagnosis}
         {trendDirection && trendDirection !== 'STABLE' && (
-          <span className="font-mono text-[11px] text-[#747878] ml-1">
+          <span className="font-mono text-[11px] text-[#6B7280] ml-1">
             ({trendDirection.toLowerCase()})
           </span>
         )}

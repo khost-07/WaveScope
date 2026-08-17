@@ -30,7 +30,7 @@ export function App() {
   
   const [provenance, setProvenance] = useState<DataProvenance>({
     mode: 'SIMULATION',
-    sourceIdentifier: 'Controlled RF Simulation Dataset (Scenarios A–E)',
+    sourceIdentifier: 'Controlled RF Simulation Fleet (8 Endpoints)',
     adapterName: 'Simulated Tri-Band 802.11ax AP Testbed',
     lastUpdated: Date.now(),
     isDeterministic: true
@@ -139,7 +139,7 @@ export function App() {
         setDevices(simulatedDevices);
         setProvenance({
           mode: 'SIMULATION',
-          sourceIdentifier: 'Controlled RF Simulation Dataset (Scenarios A–E)',
+          sourceIdentifier: 'Controlled RF Simulation Fleet (8 Endpoints)',
           adapterName: 'Simulated Tri-Band 802.11ax AP Testbed',
           lastUpdated: Date.now(),
           isDeterministic: true
@@ -263,24 +263,25 @@ export function App() {
   const activeAp = devices[0]?.apCapabilities || SIMULATED_AP;
 
   return (
-    <div className="bg-[#F9F9F9] text-[#1A1C1C] font-['Hanken_Grotesk',sans-serif] min-h-screen flex flex-col antialiased">
+    <div className="bg-[#F4F5F7] text-[#0F1113] font-['Hanken_Grotesk',sans-serif] min-h-screen flex flex-col antialiased">
       {/* Stitch TopNavBar */}
-      <header className="bg-white border-b border-[#E5E5E5] fixed top-0 left-0 right-0 z-50 h-12 flex justify-between items-center px-6">
+      <header className="bg-white border-b border-[#E2E5E9] fixed top-0 left-0 right-0 z-50 h-12 flex justify-between items-center px-6">
         <div className="flex items-center gap-3">
           <IconRadar size={22} className="text-black" />
-          <span className="text-[18px] font-bold text-black tracking-tight">WaveScope</span>
-          <span className="text-[11px] font-mono font-semibold px-2 py-0.5 border border-[#E5E5E5] bg-[#FAFAFA] hidden sm:inline-flex">
+          <span className="text-[17px] font-bold text-black tracking-tight">WaveScope</span>
+          <span className="text-[11px] font-mono font-semibold px-2 py-0.5 border border-[#E2E5E9] bg-[#F8F9FA] hidden sm:inline-flex items-center gap-1.5">
+            <span className="w-2 h-2 bg-[#16A34A] inline-block"></span>
             Node 01-A
           </span>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Mode Switcher */}
-          <div className="flex border border-black h-8 text-[12px] font-mono font-semibold">
+          <div className="flex border border-[#0F1113] h-8 text-[11px] font-mono font-semibold">
             <button
               type="button"
-              className={`px-3 flex items-center justify-center border-r border-black transition-colors ${
-                mode === 'SIMULATION' ? 'bg-black text-white sim-pattern' : 'text-black hover:bg-[#F3F3F4]'
+              className={`px-3 flex items-center justify-center border-r border-[#0F1113] transition-colors ${
+                mode === 'SIMULATION' ? 'bg-[#0F1113] text-white sim-pattern' : 'text-black hover:bg-[#F8F9FA]'
               }`}
               onClick={() => setMode('SIMULATION')}
             >
@@ -289,7 +290,7 @@ export function App() {
             <button
               type="button"
               className={`px-3 flex items-center justify-center transition-colors ${
-                mode === 'REAL' ? 'bg-black text-white' : 'text-black hover:bg-[#F3F3F4]'
+                mode === 'REAL' ? 'bg-[#0F1113] text-white' : 'text-black hover:bg-[#F8F9FA]'
               }`}
               onClick={() => setMode('REAL')}
             >
@@ -321,10 +322,10 @@ export function App() {
       {/* Main Container with Sidebar */}
       <div className="flex pt-12 min-h-screen">
         {/* Stitch SideNavBar */}
-        <aside className="fixed left-0 top-12 bottom-0 w-60 border-r border-[#E5E5E5] bg-white flex flex-col z-40 hidden md:flex">
-          <div className="p-4 border-b border-[#E5E5E5]">
-            <div className="text-[15px] font-semibold text-black">WaveScope Admin</div>
-            <div className="text-[11px] font-mono text-[#747878] mt-0.5 truncate">{provenance.sourceIdentifier}</div>
+        <aside className="fixed left-0 top-12 bottom-0 w-60 border-r border-[#E2E5E9] bg-white flex flex-col z-40 hidden md:flex">
+          <div className="p-4 border-b border-[#E2E5E9]">
+            <div className="text-[14px] font-bold text-black">WaveScope Inspector</div>
+            <div className="text-[11px] font-mono text-[#6B7280] mt-0.5 truncate">{provenance.sourceIdentifier}</div>
           </div>
 
           <nav className="flex-1 p-2 space-y-1">
@@ -332,35 +333,35 @@ export function App() {
               type="button"
               className={`w-full flex items-center gap-3 px-3 py-2 text-left text-[12px] font-semibold uppercase tracking-wider transition-colors ${
                 activeNav === 'CLIENTS'
-                  ? 'bg-[#FAFAFA] text-black border-l-2 border-black font-bold'
-                  : 'text-[#444748] hover:bg-[#FAFAFA]'
+                  ? 'bg-[#F8F9FA] text-black border-l-2 border-black font-bold'
+                  : 'text-[#3B4045] hover:bg-[#F8F9FA]'
               }`}
               onClick={() => setActiveNav('CLIENTS')}
             >
               <IconRouter size={16} />
-              <span>Connected Clients</span>
-              <span className="ml-auto font-mono text-[10px] px-1.5 py-0.5 border border-[#E5E5E5]">{devices.length}</span>
+              <span>Fleet Clients</span>
+              <span className="ml-auto font-mono text-[10px] px-1.5 py-0.5 border border-[#E2E5E9] bg-white">{devices.length}</span>
             </button>
 
             <button
               type="button"
               className={`w-full flex items-center gap-3 px-3 py-2 text-left text-[12px] font-semibold uppercase tracking-wider transition-colors ${
                 activeNav === 'OVERVIEW'
-                  ? 'bg-[#FAFAFA] text-black border-l-2 border-black font-bold'
-                  : 'text-[#444748] hover:bg-[#FAFAFA]'
+                  ? 'bg-[#F8F9FA] text-black border-l-2 border-black font-bold'
+                  : 'text-[#3B4045] hover:bg-[#F8F9FA]'
               }`}
               onClick={() => setActiveNav('OVERVIEW')}
             >
               <IconDashboard size={16} />
-              <span>Overview Table</span>
+              <span>Telemetry Matrix</span>
             </button>
 
             <button
               type="button"
               className={`w-full flex items-center gap-3 px-3 py-2 text-left text-[12px] font-semibold uppercase tracking-wider transition-colors ${
                 activeNav === 'RULES'
-                  ? 'bg-[#FAFAFA] text-black border-l-2 border-black font-bold'
-                  : 'text-[#444748] hover:bg-[#FAFAFA]'
+                  ? 'bg-[#F8F9FA] text-black border-l-2 border-black font-bold'
+                  : 'text-[#3B4045] hover:bg-[#F8F9FA]'
               }`}
               onClick={() => setActiveNav('RULES')}
             >
@@ -369,21 +370,21 @@ export function App() {
             </button>
           </nav>
 
-          <div className="p-3 border-t border-[#E5E5E5] space-y-1 text-[11px] font-mono text-[#747878]">
-            <div>Engine: <strong className="text-black">L2 Deterministic</strong></div>
+          <div className="p-3 border-t border-[#E2E5E9] space-y-1 text-[11px] font-mono text-[#6B7280] bg-[#F8F9FA]">
+            <div>Engine: <strong className="text-black">L2 Rule System</strong></div>
             <div>Model: <strong className="text-black">gemini-3.1-flash-lite</strong></div>
           </div>
         </aside>
 
         {/* Main Content Area */}
-        <main className="md:ml-60 flex-1 p-6 space-y-6 max-w-[1400px] w-full">
+        <main className="md:ml-60 flex-1 p-6 space-y-5 max-w-[1400px] w-full">
           {/* Real Mode Error Alert if daemon not running */}
           {mode === 'REAL' && realError && (
-            <div className="p-4 border border-[#D32F2F] bg-white flex items-center justify-between gap-4">
+            <div className="p-4 border border-[#DC2626] bg-white flex items-center justify-between gap-4">
               <div className="space-y-1">
-                <div className="text-[11px] font-bold text-[#D32F2F] uppercase tracking-wider">REAL WLAN PROBE STATUS</div>
-                <div className="text-[13px] text-[#444748] font-mono">{realError}</div>
-                <div className="text-[11px] text-[#747878] font-mono">Launch probe daemon: <code>node server/wlanScanner.cjs</code></div>
+                <div className="text-[11px] font-bold text-[#DC2626] uppercase tracking-wider">REAL WLAN PROBE STATUS</div>
+                <div className="text-[13px] text-[#3B4045] font-mono">{realError}</div>
+                <div className="text-[11px] text-[#6B7280] font-mono">Launch probe daemon: <code>node server/wlanScanner.cjs</code></div>
               </div>
               <button
                 type="button"
@@ -412,7 +413,7 @@ export function App() {
 
           {/* SECTION 1: CONNECTED CLIENTS WORKSPACE (MASTER-DETAIL) */}
           {activeNav === 'CLIENTS' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
               {/* Left Column: Device List */}
               <div className="lg:col-span-4 w-full">
                 <DeviceListPane
@@ -441,7 +442,7 @@ export function App() {
                     trend={trends[selectedDevice.id]}
                   />
                 ) : (
-                  <div className="p-12 border border-[#E5E5E5] bg-white text-center text-[#747878]">
+                  <div className="p-12 border border-[#E2E5E9] bg-white text-center text-[#6B7280]">
                     Select a client from the list to inspect root cause.
                   </div>
                 )}
@@ -453,8 +454,8 @@ export function App() {
           {activeNav === 'OVERVIEW' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-[18px] font-bold text-black">All Associated Clients Telemetry Matrix</h2>
-                <span className="text-[12px] font-mono text-[#747878]">
+                <h2 className="text-[18px] font-bold text-black">Fleet Telemetry &amp; RF Matrix</h2>
+                <span className="text-[12px] font-mono text-[#6B7280]">
                   Showing {visibleDevices.length} of {devices.length} endpoints
                 </span>
               </div>
@@ -472,39 +473,39 @@ export function App() {
 
           {/* SECTION 3: DIAGNOSTIC RULES SPECIFICATION */}
           {activeNav === 'RULES' && (
-            <div className="border border-[#E5E5E5] bg-white p-6 space-y-4">
-              <div className="border-b border-[#E5E5E5] pb-3">
+            <div className="border border-[#E2E5E9] bg-white p-6 space-y-4">
+              <div className="border-b border-[#E2E5E9] pb-3">
                 <h2 className="text-[20px] font-bold text-black">Layer 2 Deterministic Rule Engine</h2>
-                <p className="text-[14px] text-[#444748] mt-1">
+                <p className="text-[14px] text-[#3B4045] mt-1">
                   WaveScope evaluates four competing physical RF hypotheses using local mathematical point thresholds without LLM dependence:
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 border border-[#E5E5E5] bg-[#FAFAFA] space-y-1">
+                <div className="p-4 border border-[#E2E5E9] bg-[#F8F9FA] space-y-1">
                   <div className="text-[12px] font-bold text-black uppercase tracking-wider">1. Weak / Attenuated Signal</div>
-                  <p className="text-[13px] text-[#444748]">
+                  <p className="text-[13px] text-[#3B4045]">
                     Triggered when RSSI &le; -75 dBm, SNR &le; 15 dB, or Retries &ge; 15%. Confirms high physical path loss or excessive obstacle attenuation.
                   </p>
                 </div>
 
-                <div className="p-4 border border-[#E5E5E5] bg-[#FAFAFA] space-y-1">
+                <div className="p-4 border border-[#E2E5E9] bg-[#F8F9FA] space-y-1">
                   <div className="text-[12px] font-bold text-black uppercase tracking-wider">2. Possible RF Interference</div>
-                  <p className="text-[13px] text-[#444748]">
+                  <p className="text-[13px] text-[#3B4045]">
                     Triggered when RSSI &ge; -65 dBm but SNR &le; 12 dB or Noise Floor &ge; -70 dBm. Indicates heavy co-channel / non-Wi-Fi jamming.
                   </p>
                 </div>
 
-                <div className="p-4 border border-[#E5E5E5] bg-[#FAFAFA] space-y-1">
+                <div className="p-4 border border-[#E2E5E9] bg-[#F8F9FA] space-y-1">
                   <div className="text-[12px] font-bold text-black uppercase tracking-wider">3. Hardware / Capability Limited</div>
-                  <p className="text-[13px] text-[#444748]">
+                  <p className="text-[13px] text-[#3B4045]">
                     Triggered when device standard is 802.11n/legacy, 20MHz width, or 1x1 SISO while RF link is stable (SNR &ge; 25 dB).
                   </p>
                 </div>
 
-                <div className="p-4 border border-[#E5E5E5] bg-[#FAFAFA] space-y-1">
+                <div className="p-4 border border-[#E2E5E9] bg-[#F8F9FA] space-y-1">
                   <div className="text-[12px] font-bold text-black uppercase tracking-wider">4. Potential Band Selection Issue</div>
-                  <p className="text-[13px] text-[#444748]">
+                  <p className="text-[13px] text-[#3B4045]">
                     Triggered when a dual-band/tri-band device is associated on congested 2.4GHz despite strong signal (RSSI &ge; -60 dBm).
                   </p>
                 </div>
@@ -531,20 +532,20 @@ export function App() {
           <div className="modal-instrument max-w-md">
             <div className="modal-header">
               <span className="text-[15px] font-bold text-black">Google Gemini API Configuration</span>
-              <button type="button" className="font-bold text-[#747878] hover:text-black" onClick={() => setShowKeyModal(false)}>
+              <button type="button" className="font-bold text-[#6B7280] hover:text-black" onClick={() => setShowKeyModal(false)}>
                 ✕
               </button>
             </div>
             <div className="modal-body space-y-4">
-              <p className="text-[13px] text-[#444748]">
+              <p className="text-[13px] text-[#3B4045]">
                 Connected Model: <strong className="text-black">gemini-3.1-flash-lite</strong>. Zero fallback cache.
               </p>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-[#444748]">Gemini API Key</label>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045]">Gemini API Key</label>
                 <input
                   type="password"
-                  className="w-full bg-[#FAFAFA] border border-[#E5E5E5] p-2.5 font-mono text-[13px] text-black outline-none focus:border-black"
+                  className="w-full bg-[#F8F9FA] border border-[#E2E5E9] p-2.5 font-mono text-[13px] text-black outline-none focus:border-black transition-colors"
                   placeholder="AIzaSy..."
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
@@ -552,10 +553,10 @@ export function App() {
                 />
               </div>
 
-              <div className="flex justify-between pt-2 border-t border-[#E5E5E5]">
+              <div className="flex justify-between pt-2 border-t border-[#E2E5E9]">
                 <button
                   type="button"
-                  className="btn-instrument-secondary text-[#D32F2F] border-[#D32F2F] text-[11px]"
+                  className="btn-instrument-secondary text-[#DC2626] border-[#DC2626] text-[11px]"
                   onClick={handleClearApiKey}
                 >
                   Clear Key & Log Out

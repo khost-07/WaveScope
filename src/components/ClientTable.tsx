@@ -17,7 +17,7 @@ export const ClientTable: React.FC<ClientTableProps> = ({
   onSelectDevice
 }) => {
   return (
-    <div className="border border-[#E5E5E5] bg-white overflow-x-auto">
+    <div className="border border-[#E2E5E9] bg-white overflow-x-auto">
       <table className="instrument-table">
         <thead>
           <tr>
@@ -48,31 +48,31 @@ export const ClientTable: React.FC<ClientTableProps> = ({
               >
                 <td>
                   {status === 'HEALTHY' && (
-                    <div className="badge-status badge-status-healthy">
-                      <IconCheckBox size={12} />
+                    <div className="badge-status badge-status-healthy text-[9px]">
+                      <IconCheckBox size={11} />
                       <span>HEALTHY</span>
                     </div>
                   )}
                   {status === 'ATTENTION' && (
-                    <div className="badge-status badge-status-attention">
-                      <IconAlertTriangle size={12} />
+                    <div className="badge-status badge-status-attention text-[9px]">
+                      <IconAlertTriangle size={11} />
                       <span>ATTENTION</span>
                     </div>
                   )}
                   {status === 'CRITICAL' && (
-                    <div className="badge-status badge-status-critical">
-                      <IconAlertCircle size={12} />
+                    <div className="badge-status badge-status-critical text-[9px]">
+                      <IconAlertCircle size={11} />
                       <span>CRITICAL</span>
                     </div>
                   )}
                 </td>
                 <td>
-                  <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{device.hostname}</div>
-                  <div className="font-mono text-[11px] text-[#747878]">
+                  <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>{device.hostname}</div>
+                  <div className="font-mono text-[11px] text-[#6B7280]">
                     {device.macAddress} {device.scenarioId ? `• [SCENARIO ${device.scenarioId}]` : ''}
                   </div>
                 </td>
-                <td className="font-mono text-[12px] text-[#444748]">
+                <td className="font-mono text-[12px] text-[#3B4045]">
                   {device.vendor} ({device.deviceType})
                 </td>
                 <td>
@@ -81,7 +81,8 @@ export const ClientTable: React.FC<ClientTableProps> = ({
                 <td
                   style={{
                     textAlign: 'right',
-                    fontWeight: 600,
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-mono)',
                     color: telemetry.rssi_dBm <= -75 ? 'var(--status-critical)' : telemetry.rssi_dBm <= -70 ? 'var(--status-attention)' : 'var(--text-main)'
                   }}
                 >
@@ -90,19 +91,21 @@ export const ClientTable: React.FC<ClientTableProps> = ({
                 <td
                   style={{
                     textAlign: 'right',
-                    fontWeight: 600,
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-mono)',
                     color: telemetry.snr_dB <= 12 ? 'var(--status-critical)' : telemetry.snr_dB <= 20 ? 'var(--status-attention)' : 'var(--text-main)'
                   }}
                 >
                   {telemetry.snr_dB} dB
                 </td>
-                <td style={{ textAlign: 'right' }}>
+                <td style={{ textAlign: 'right' }} className="font-mono">
                   {telemetry.txLinkRate_Mbps} Mbps
                 </td>
                 <td
                   style={{
                     textAlign: 'right',
-                    fontWeight: 600,
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-mono)',
                     color: telemetry.retryRatePct >= 15 ? 'var(--status-critical)' : telemetry.retryRatePct >= 8 ? 'var(--status-attention)' : 'var(--text-main)'
                   }}
                 >
@@ -111,7 +114,7 @@ export const ClientTable: React.FC<ClientTableProps> = ({
                 <td style={{ textAlign: 'center' }}>
                   <button
                     type="button"
-                    className="btn-instrument-secondary text-[11px] py-0.5 px-2"
+                    className="btn-instrument-secondary text-[10px] py-1 px-2.5"
                     onClick={(e) => {
                       e.stopPropagation();
                       onSelectDevice(device);
