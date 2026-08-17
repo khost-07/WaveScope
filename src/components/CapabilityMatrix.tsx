@@ -1,5 +1,6 @@
 import React from 'react';
 import { DeviceCapabilities, APCapabilities } from '../layer1_data/types';
+import { IconCpu } from './SvgIcons';
 
 interface CapabilityMatrixProps {
   deviceCaps: DeviceCapabilities;
@@ -8,16 +9,16 @@ interface CapabilityMatrixProps {
 
 export const CapabilityMatrix: React.FC<CapabilityMatrixProps> = ({ deviceCaps, apCaps }) => {
   return (
-    <div className="border border-border-subtle bg-surface p-4 space-y-3">
-      <div className="flex items-center justify-between border-b border-border-subtle pb-2">
-        <h3 className="font-label-caps text-secondary flex items-center">
-          <span className="material-symbols-outlined mr-1.5 text-[16px]">compare_arrows</span>
-          Capability Cross-Reference
-        </h3>
-        <span className="font-data-sm text-muted">AP: {apCaps.ssid} ({apCaps.apModel})</span>
+    <div className="border border-[#E5E5E5] bg-white p-4 space-y-3">
+      <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-2">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-[#444748] flex items-center gap-1.5">
+          <IconCpu size={15} />
+          <span>Capability Cross-Reference</span>
+        </div>
+        <span className="font-mono text-[11px] text-[#747878]">AP: {apCaps.ssid} ({apCaps.apModel})</span>
       </div>
 
-      <div className="border border-border-subtle overflow-x-auto">
+      <div className="border border-[#E5E5E5] overflow-x-auto">
         <table className="instrument-table">
           <thead>
             <tr>
@@ -32,7 +33,7 @@ export const CapabilityMatrix: React.FC<CapabilityMatrixProps> = ({ deviceCaps, 
               <td style={{ textAlign: 'right' }}>{deviceCaps.maxStandard}</td>
               <td style={{ textAlign: 'right' }}>{apCaps.maxStandard}</td>
             </tr>
-            <tr className="bg-surface-offset">
+            <tr className="bg-[#FAFAFA]">
               <td style={{ fontWeight: 600 }}>Spatial Streams (MIMO)</td>
               <td style={{ textAlign: 'right' }}>{deviceCaps.mimoStreams}</td>
               <td style={{ textAlign: 'right' }}>4x4</td>
@@ -42,14 +43,14 @@ export const CapabilityMatrix: React.FC<CapabilityMatrixProps> = ({ deviceCaps, 
               <td
                 style={{
                   textAlign: 'right',
-                  color: deviceCaps.maxChannelWidthMHz < apCaps.maxChannelWidthMHz ? 'var(--status-attention)' : 'inherit'
+                  color: deviceCaps.maxChannelWidthMHz < apCaps.maxChannelWidthMHz ? '#F57C00' : 'inherit'
                 }}
               >
                 {deviceCaps.maxChannelWidthMHz} MHz
               </td>
               <td style={{ textAlign: 'right' }}>{apCaps.maxChannelWidthMHz} MHz</td>
             </tr>
-            <tr className="bg-surface-offset">
+            <tr className="bg-[#FAFAFA]">
               <td style={{ fontWeight: 600 }}>Supported Bands</td>
               <td style={{ textAlign: 'right' }}>{deviceCaps.supportedBands.join(', ')}</td>
               <td style={{ textAlign: 'right' }}>{apCaps.enabledBands.join(', ')}</td>
@@ -59,7 +60,7 @@ export const CapabilityMatrix: React.FC<CapabilityMatrixProps> = ({ deviceCaps, 
               <td style={{ textAlign: 'right' }}>{deviceCaps.maxTheoreticalPhyMbps} Mbps</td>
               <td style={{ textAlign: 'right' }}>4804 Mbps</td>
             </tr>
-            <tr className="bg-surface-offset">
+            <tr className="bg-[#FAFAFA]">
               <td style={{ fontWeight: 600 }}>6GHz (Wi-Fi 6E/7) Capable</td>
               <td style={{ textAlign: 'right' }}>{deviceCaps.supports6GHz ? 'Yes' : 'No'}</td>
               <td style={{ textAlign: 'right' }}>{apCaps.supports6GHz ? 'Yes' : 'No'}</td>

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { ClientDevice, StructuredDiagnosis } from '../layer1_data/types';
 import { DeviceCard } from './DeviceCard';
+import { IconSearch } from './SvgIcons';
 
 interface DeviceListPaneProps {
   devices: ClientDevice[];
@@ -33,24 +34,22 @@ export const DeviceListPane: React.FC<DeviceListPaneProps> = ({
   }, [devices, diagnoses, searchQuery]);
 
   return (
-    <div className="bg-surface border border-border-subtle flex flex-col h-full">
+    <div className="bg-white border border-[#E5E5E5] flex flex-col h-full">
       {/* Search Header */}
-      <div className="p-3 border-b border-border-subtle bg-surface-offset">
-        <div className="relative">
+      <div className="p-3 border-b border-[#E5E5E5] bg-[#FAFAFA]">
+        <div className="relative flex items-center">
+          <IconSearch size={15} className="absolute left-2.5 text-[#747878]" />
           <input
             type="text"
-            className="w-full bg-surface border border-border-subtle p-2 pl-8 font-data-sm text-primary placeholder-muted outline-none focus:border-primary"
+            className="w-full bg-white border border-[#E5E5E5] py-1.5 pl-8 pr-7 font-mono text-[12px] text-black placeholder-[#747878] outline-none focus:border-black"
             placeholder="Search MAC, IP, vendor, or issue..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <span className="material-symbols-outlined absolute left-2 top-2 text-[16px] text-muted">
-            search
-          </span>
           {searchQuery && (
             <button
               type="button"
-              className="absolute right-2 top-2 text-muted hover:text-primary font-bold"
+              className="absolute right-2 text-[#747878] hover:text-black font-bold text-[14px]"
               onClick={() => setSearchQuery('')}
             >
               ×
@@ -86,16 +85,16 @@ export const DeviceListPane: React.FC<DeviceListPaneProps> = ({
             );
           })
         ) : (
-          <div className="p-6 text-center text-muted font-body-md text-[13px]">
+          <div className="p-6 text-center text-[#747878] text-[13px]">
             No matching client devices found.
           </div>
         )}
       </div>
 
       {/* Footer Info */}
-      <div className="p-2.5 border-t border-border-subtle bg-surface-offset font-data-sm text-[11px] text-muted flex justify-between">
-        <span>Clients: <strong>{devices.length}</strong></span>
-        <span>Engine: <strong>L2 Deterministic</strong></span>
+      <div className="p-2.5 border-t border-[#E5E5E5] bg-[#FAFAFA] font-mono text-[11px] text-[#747878] flex justify-between">
+        <span>Clients: <strong className="text-black">{devices.length}</strong></span>
+        <span>Engine: <strong className="text-black">L2 Deterministic</strong></span>
       </div>
     </div>
   );

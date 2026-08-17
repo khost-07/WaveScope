@@ -1,6 +1,7 @@
 import React from 'react';
 import { ClientDevice, StructuredDiagnosis } from '../layer1_data/types';
 import { BandBadge } from './StatusBadge';
+import { IconCheckBox, IconAlertTriangle, IconAlertCircle } from './SvgIcons';
 
 interface ClientTableProps {
   devices: ClientDevice[];
@@ -16,7 +17,7 @@ export const ClientTable: React.FC<ClientTableProps> = ({
   onSelectDevice
 }) => {
   return (
-    <div className="border border-border-subtle bg-surface overflow-x-auto">
+    <div className="border border-[#E5E5E5] bg-white overflow-x-auto">
       <table className="instrument-table">
         <thead>
           <tr>
@@ -48,30 +49,30 @@ export const ClientTable: React.FC<ClientTableProps> = ({
                 <td>
                   {status === 'HEALTHY' && (
                     <div className="badge-status badge-status-healthy">
-                      <span className="material-symbols-outlined text-[12px]">check_box</span>
+                      <IconCheckBox size={12} />
                       <span>HEALTHY</span>
                     </div>
                   )}
                   {status === 'ATTENTION' && (
                     <div className="badge-status badge-status-attention">
-                      <span className="material-symbols-outlined text-[12px]">warning</span>
+                      <IconAlertTriangle size={12} />
                       <span>ATTENTION</span>
                     </div>
                   )}
                   {status === 'CRITICAL' && (
                     <div className="badge-status badge-status-critical">
-                      <span className="material-symbols-outlined text-[12px]">error</span>
+                      <IconAlertCircle size={12} />
                       <span>CRITICAL</span>
                     </div>
                   )}
                 </td>
                 <td>
                   <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{device.hostname}</div>
-                  <div className="font-data-sm text-muted">
+                  <div className="font-mono text-[11px] text-[#747878]">
                     {device.macAddress} {device.scenarioId ? `• [SCENARIO ${device.scenarioId}]` : ''}
                   </div>
                 </td>
-                <td className="font-data-sm text-secondary">
+                <td className="font-mono text-[12px] text-[#444748]">
                   {device.vendor} ({device.deviceType})
                 </td>
                 <td>

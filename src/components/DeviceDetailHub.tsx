@@ -6,6 +6,7 @@ import { RFLinkBudgetGauge } from './RFLinkBudgetGauge';
 import { CapabilityMatrix } from './CapabilityMatrix';
 import { DiagnosticInspector } from './DiagnosticInspector';
 import { ExplanationCard } from './ExplanationCard';
+import { IconChevronRight, IconRefresh, IconSignal, IconSparkles, IconSliders, IconCpu, IconRule, IconLightbulb, IconCheckBox, IconAlertTriangle, IconAlertCircle } from './SvgIcons';
 
 export type DetailTab = 'SIMPLE' | 'EXPLANATION' | 'TELEMETRY' | 'CAPABILITIES' | 'SCORES' | 'TUNER';
 
@@ -53,19 +54,19 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
   const status = diagnosis.status;
 
   return (
-    <div className="bg-surface border border-border-subtle p-6 space-y-6">
+    <div className="bg-white border border-[#E5E5E5] p-6 space-y-6">
       {/* Breadcrumb */}
-      <div className="flex items-center font-data-sm text-muted uppercase tracking-wider">
-        <span className="cursor-pointer hover:text-primary">Connected Clients</span>
-        <span className="material-symbols-outlined text-[14px] mx-1.5">chevron_right</span>
-        <span className="text-primary font-bold">{device.hostname}</span>
+      <div className="flex items-center font-mono text-[12px] text-[#747878] uppercase tracking-wider">
+        <span className="cursor-pointer hover:text-black">Connected Clients</span>
+        <IconChevronRight size={14} className="mx-1 text-[#747878]" />
+        <span className="text-black font-bold">{device.hostname}</span>
       </div>
 
       {/* Page Header */}
-      <div className="flex flex-wrap items-end justify-between border-b border-border-subtle pb-4 gap-4">
+      <div className="flex flex-wrap items-end justify-between border-b border-[#E5E5E5] pb-4 gap-4">
         <div>
-          <h1 className="font-headline-lg text-primary">{device.hostname}</h1>
-          <p className="font-data-md text-secondary mt-1">
+          <h1 className="text-[24px] font-bold text-black tracking-tight">{device.hostname}</h1>
+          <p className="font-mono text-[12px] text-[#444748] mt-1">
             MAC: {device.macAddress} | IP: {device.ipAddress} | Vendor: {device.vendor}
           </p>
         </div>
@@ -76,8 +77,8 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
               className="btn-instrument-secondary"
               onClick={onTriggerExplanation}
             >
-              <span className="material-symbols-outlined text-[16px]">refresh</span>
-              Re-Evaluate AI
+              <IconRefresh size={14} />
+              <span>Re-Evaluate AI</span>
             </button>
           )}
         </div>
@@ -85,11 +86,11 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
 
       {/* Section 1: Raw Telemetry 4-Box Grid */}
       <div>
-        <h3 className="font-label-caps text-secondary mb-2 flex items-center">
-          <span className="material-symbols-outlined mr-1.5 text-[16px]">sensors</span>
-          Raw Telemetry
-        </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border-subtle border border-border-subtle">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-[#444748] mb-2 flex items-center gap-1.5">
+          <IconSignal size={15} />
+          <span>Raw Telemetry</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {/* RSSI */}
           <div className="telemetry-cell">
             <span className="telemetry-cell-label">RSSI (Signal)</span>
@@ -97,7 +98,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
               <span
                 className="telemetry-cell-value"
                 style={{
-                  color: telemetry.rssi_dBm <= -75 ? 'var(--status-critical)' : telemetry.rssi_dBm <= -70 ? 'var(--status-attention)' : 'var(--status-healthy)'
+                  color: telemetry.rssi_dBm <= -75 ? '#D32F2F' : telemetry.rssi_dBm <= -70 ? '#F57C00' : '#2E7D32'
                 }}
               >
                 {telemetry.rssi_dBm}
@@ -113,7 +114,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
               <span
                 className="telemetry-cell-value"
                 style={{
-                  color: telemetry.snr_dB <= 12 ? 'var(--status-critical)' : telemetry.snr_dB <= 20 ? 'var(--status-attention)' : 'var(--status-healthy)'
+                  color: telemetry.snr_dB <= 12 ? '#D32F2F' : telemetry.snr_dB <= 20 ? '#F57C00' : '#2E7D32'
                 }}
               >
                 {telemetry.snr_dB}
@@ -129,7 +130,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
               <span
                 className="telemetry-cell-value"
                 style={{
-                  color: telemetry.retryRatePct >= 15 ? 'var(--status-critical)' : telemetry.retryRatePct >= 8 ? 'var(--status-attention)' : 'var(--status-healthy)'
+                  color: telemetry.retryRatePct >= 15 ? '#D32F2F' : telemetry.retryRatePct >= 8 ? '#F57C00' : '#2E7D32'
                 }}
               >
                 {telemetry.retryRatePct.toFixed(1)}
@@ -142,7 +143,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
           <div className="telemetry-cell">
             <span className="telemetry-cell-label">Operating Band</span>
             <div className="telemetry-cell-value-group">
-              <span className="telemetry-cell-value text-primary">{telemetry.band}</span>
+              <span className="telemetry-cell-value text-black">{telemetry.band}</span>
               <span className="telemetry-cell-unit">{telemetry.channelWidthMHz}MHz</span>
             </div>
           </div>
@@ -150,56 +151,56 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
       </div>
 
       {/* Section 2: Stitch Diagnostic Engine Result Card */}
-      <div className="border border-border-subtle bg-surface">
+      <div className="border border-[#E5E5E5] bg-white">
         <div
-          className="p-4 border-b border-border-subtle"
+          className="p-4 border-b border-[#E5E5E5]"
           style={{
-            backgroundColor: status === 'CRITICAL' ? 'var(--status-critical-bg)' : status === 'ATTENTION' ? 'var(--status-attention-bg)' : 'var(--status-healthy-bg)'
+            backgroundColor: status === 'CRITICAL' ? 'rgba(211, 47, 47, 0.05)' : status === 'ATTENTION' ? 'rgba(245, 124, 0, 0.05)' : 'rgba(46, 125, 50, 0.05)'
           }}
         >
           <div className="flex items-center justify-between mb-2">
-            <div className="font-label-caps text-secondary flex items-center">
-              <span className="material-symbols-outlined mr-1.5 text-[16px]">rule</span>
-              Layer 2 Diagnostic Result
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#444748] flex items-center gap-1.5">
+              <IconRule size={15} />
+              <span>Layer 2 Diagnostic Result</span>
             </div>
 
             {status === 'HEALTHY' && (
-              <span className="badge-status badge-status-healthy">
-                <span className="material-symbols-outlined text-[12px]">check_box</span>
+              <span className="badge-status badge-status-healthy flex items-center gap-1">
+                <IconCheckBox size={11} />
                 HEALTHY LINK
               </span>
             )}
             {status === 'ATTENTION' && (
-              <span className="badge-status badge-status-attention">
-                <span className="material-symbols-outlined text-[12px]">warning</span>
+              <span className="badge-status badge-status-attention flex items-center gap-1">
+                <IconAlertTriangle size={11} />
                 ATTENTION REQUIRED
               </span>
             )}
             {status === 'CRITICAL' && (
-              <span className="badge-status badge-status-critical">
-                <span className="material-symbols-outlined text-[12px]">error</span>
+              <span className="badge-status badge-status-critical flex items-center gap-1">
+                <IconAlertCircle size={11} />
                 HIGH SEVERITY
               </span>
             )}
           </div>
 
           <h2
-            className="font-headline-md text-[18px] font-bold mb-3"
+            className="text-[18px] font-bold mb-3"
             style={{
-              color: status === 'CRITICAL' ? 'var(--status-critical)' : status === 'ATTENTION' ? 'var(--status-attention)' : 'var(--status-healthy)'
+              color: status === 'CRITICAL' ? '#D32F2F' : status === 'ATTENTION' ? '#F57C00' : '#2E7D32'
             }}
           >
             {diagnosis.primary_diagnosis}
           </h2>
 
-          <div className="flex flex-wrap gap-6 font-data-sm text-secondary">
+          <div className="flex flex-wrap gap-6 text-[12px] font-mono text-[#444748]">
             <div>
-              <span className="text-muted block text-[10px] font-label-caps mb-0.5">Confidence</span>
-              <span className="font-data-md text-primary font-bold">{diagnosis.confidence}%</span>
+              <span className="text-[#747878] block text-[10px] uppercase font-bold mb-0.5">Confidence</span>
+              <span className="text-[14px] text-black font-bold">{diagnosis.confidence}%</span>
             </div>
             <div>
-              <span className="text-muted block text-[10px] font-label-caps mb-0.5">Physical Evidence</span>
-              <ul className="list-disc list-inside space-y-0.5">
+              <span className="text-[#747878] block text-[10px] uppercase font-bold mb-0.5">Physical Evidence</span>
+              <ul className="list-disc list-inside space-y-0.5 text-[11px]">
                 {diagnosis.evidence.slice(0, 3).map((item, idx) => (
                   <li key={idx}>{item}</li>
                 ))}
@@ -210,83 +211,83 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex border-b border-border-subtle bg-surface-offset">
+      <div className="flex border-b border-[#E5E5E5] bg-[#FAFAFA] overflow-x-auto">
         <button
           type="button"
-          className={`px-4 py-2.5 font-label-caps border-b-2 flex items-center gap-1.5 ${
+          className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${
             activeTab === 'SIMPLE'
-              ? 'border-primary bg-surface text-primary font-bold'
-              : 'border-transparent text-secondary hover:bg-surface'
+              ? 'border-black bg-white text-black font-bold'
+              : 'border-transparent text-[#444748] hover:bg-white'
           }`}
           onClick={() => setActiveTab('SIMPLE')}
         >
-          <span className="material-symbols-outlined text-[16px]">lightbulb</span>
-          Simple Plain English
+          <IconLightbulb size={14} />
+          <span>Simple Plain English</span>
         </button>
 
         <button
           type="button"
-          className={`px-4 py-2.5 font-label-caps border-b-2 flex items-center gap-1.5 ${
+          className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${
             activeTab === 'EXPLANATION'
-              ? 'border-primary bg-surface text-primary font-bold'
-              : 'border-transparent text-secondary hover:bg-surface'
+              ? 'border-black bg-white text-black font-bold'
+              : 'border-transparent text-[#444748] hover:bg-white'
           }`}
           onClick={() => setActiveTab('EXPLANATION')}
         >
-          <span className="material-symbols-outlined text-[16px]">psychology</span>
-          Diagnostic AI Deep-Dive
+          <IconSparkles size={14} />
+          <span>Diagnostic AI Deep-Dive</span>
         </button>
 
         <button
           type="button"
-          className={`px-4 py-2.5 font-label-caps border-b-2 flex items-center gap-1.5 ${
+          className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${
             activeTab === 'TELEMETRY'
-              ? 'border-primary bg-surface text-primary font-bold'
-              : 'border-transparent text-secondary hover:bg-surface'
+              ? 'border-black bg-white text-black font-bold'
+              : 'border-transparent text-[#444748] hover:bg-white'
           }`}
           onClick={() => setActiveTab('TELEMETRY')}
         >
-          <span className="material-symbols-outlined text-[16px]">stacked_bar_chart</span>
-          RF Link Budget
+          <IconSignal size={14} />
+          <span>RF Link Budget</span>
         </button>
 
         <button
           type="button"
-          className={`px-4 py-2.5 font-label-caps border-b-2 flex items-center gap-1.5 ${
+          className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${
             activeTab === 'CAPABILITIES'
-              ? 'border-primary bg-surface text-primary font-bold'
-              : 'border-transparent text-secondary hover:bg-surface'
+              ? 'border-black bg-white text-black font-bold'
+              : 'border-transparent text-[#444748] hover:bg-white'
           }`}
           onClick={() => setActiveTab('CAPABILITIES')}
         >
-          <span className="material-symbols-outlined text-[16px]">compare_arrows</span>
-          Capability Cross-Reference
+          <IconCpu size={14} />
+          <span>Capability Cross-Reference</span>
         </button>
 
         <button
           type="button"
-          className={`px-4 py-2.5 font-label-caps border-b-2 flex items-center gap-1.5 ${
+          className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${
             activeTab === 'SCORES'
-              ? 'border-primary bg-surface text-primary font-bold'
-              : 'border-transparent text-secondary hover:bg-surface'
+              ? 'border-black bg-white text-black font-bold'
+              : 'border-transparent text-[#444748] hover:bg-white'
           }`}
           onClick={() => setActiveTab('SCORES')}
         >
-          <span className="material-symbols-outlined text-[16px]">analytics</span>
-          Hypothesis Scores
+          <IconRule size={14} />
+          <span>Hypothesis Scores</span>
         </button>
 
         <button
           type="button"
-          className={`px-4 py-2.5 font-label-caps border-b-2 flex items-center gap-1.5 ${
+          className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${
             activeTab === 'TUNER'
-              ? 'border-primary bg-surface text-primary font-bold'
-              : 'border-transparent text-secondary hover:bg-surface'
+              ? 'border-black bg-white text-black font-bold'
+              : 'border-transparent text-[#444748] hover:bg-white'
           }`}
           onClick={() => setActiveTab('TUNER')}
         >
-          <span className="material-symbols-outlined text-[16px]">tune</span>
-          Parameter Tuner
+          <IconSliders size={14} />
+          <span>Parameter Tuner</span>
         </button>
       </div>
 
@@ -339,16 +340,16 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
         )}
 
         {activeTab === 'TUNER' && (
-          <div className="border border-border-subtle bg-surface p-4 space-y-4">
-            <div className="flex items-center justify-between border-b border-border-subtle pb-2">
-              <span className="font-label-caps text-secondary">Interactive Telemetry Tuner</span>
-              <span className="font-data-sm text-muted">Sliders recalculate Layer 2 hypothesis scores in real-time</span>
+          <div className="border border-[#E5E5E5] bg-white p-4 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#444748]">Interactive Telemetry Tuner</span>
+              <span className="font-mono text-[11px] text-[#747878]">Sliders recalculate Layer 2 hypothesis scores in real-time</span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="font-data-sm text-secondary block mb-1">
-                  RSSI: <strong className="text-primary">{device.telemetry.rssi_dBm} dBm</strong>
+                <label className="font-mono text-[12px] text-[#444748] block mb-1">
+                  RSSI: <strong className="text-black">{device.telemetry.rssi_dBm} dBm</strong>
                 </label>
                 <input
                   type="range"
@@ -357,7 +358,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
                   value={device.telemetry.rssi_dBm}
                   onChange={(e) => handleTweakField('rssi_dBm', parseInt(e.target.value, 10))}
                 />
-                <div className="flex justify-between font-data-sm text-[10px] text-muted mt-1">
+                <div className="flex justify-between font-mono text-[10px] text-[#747878] mt-1">
                   <span>-90 dBm (Weak)</span>
                   <span>-60 dBm (Nominal)</span>
                   <span>-30 dBm (Strong)</span>
@@ -365,8 +366,8 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
               </div>
 
               <div>
-                <label className="font-data-sm text-secondary block mb-1">
-                  Noise Floor: <strong className="text-primary">{device.telemetry.noiseFloor_dBm} dBm</strong>
+                <label className="font-mono text-[12px] text-[#444748] block mb-1">
+                  Noise Floor: <strong className="text-black">{device.telemetry.noiseFloor_dBm} dBm</strong>
                 </label>
                 <input
                   type="range"
@@ -375,7 +376,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
                   value={device.telemetry.noiseFloor_dBm}
                   onChange={(e) => handleTweakField('noiseFloor_dBm', parseInt(e.target.value, 10))}
                 />
-                <div className="flex justify-between font-data-sm text-[10px] text-muted mt-1">
+                <div className="flex justify-between font-mono text-[10px] text-[#747878] mt-1">
                   <span>-95 dBm (Clean)</span>
                   <span>-70 dBm (Noisy)</span>
                   <span>-45 dBm (Jammed)</span>
@@ -383,8 +384,8 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
               </div>
 
               <div>
-                <label className="font-data-sm text-secondary block mb-1">
-                  Retry Rate: <strong className="text-primary">{device.telemetry.retryRatePct}%</strong>
+                <label className="font-mono text-[12px] text-[#444748] block mb-1">
+                  Retry Rate: <strong className="text-black">{device.telemetry.retryRatePct}%</strong>
                 </label>
                 <input
                   type="range"
@@ -396,15 +397,15 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
               </div>
 
               <div>
-                <label className="font-data-sm text-secondary block mb-1">
-                  Channel Width: <strong className="text-primary">{device.telemetry.channelWidthMHz} MHz</strong>
+                <label className="font-mono text-[12px] text-[#444748] block mb-1">
+                  Channel Width: <strong className="text-black">{device.telemetry.channelWidthMHz} MHz</strong>
                 </label>
                 <div className="flex gap-2 mt-1">
                   {[20, 40, 80, 160].map(w => (
                     <button
                       key={w}
                       type="button"
-                      className={`btn-instrument-secondary text-[11px] py-1 px-3 ${device.telemetry.channelWidthMHz === w ? 'bg-inverse text-white' : ''}`}
+                      className={`btn-instrument-secondary text-[11px] py-1 px-3 ${device.telemetry.channelWidthMHz === w ? 'bg-black text-white' : ''}`}
                       onClick={() => handleTweakField('channelWidthMHz', w)}
                     >
                       {w} MHz

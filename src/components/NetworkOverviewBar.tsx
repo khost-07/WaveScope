@@ -1,5 +1,6 @@
 import React from 'react';
 import { APCapabilities, DiagnosticStatus } from '../layer1_data/types';
+import { IconRouter, IconCheckBox, IconAlertTriangle, IconAlertCircle, IconRadar } from './SvgIcons';
 
 interface NetworkOverviewBarProps {
   ap: APCapabilities;
@@ -30,19 +31,19 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
   return (
     <div className="flex flex-col gap-3 mb-6">
       {/* Stitch 4-Box Metric Summary Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {/* Total Clients */}
         <button
           type="button"
-          className={`telemetry-cell text-left ${activeFilter === 'ALL' ? 'border-primary bg-surface-offset' : ''}`}
+          className={`telemetry-cell text-left cursor-pointer transition-colors ${activeFilter === 'ALL' ? 'border-black bg-[#FAFAFA]' : 'border-[#E5E5E5] bg-white hover:bg-[#FAFAFA]'}`}
           onClick={() => onChangeFilter('ALL')}
         >
           <div className="telemetry-cell-label flex items-center justify-between">
             <span>TOTAL CLIENTS</span>
-            <span className="material-symbols-outlined text-[16px] text-muted">router</span>
+            <IconRouter size={15} className="text-[#747878]" />
           </div>
           <div className="telemetry-cell-value-group">
-            <span className="telemetry-cell-value">{stats.total}</span>
+            <span className="telemetry-cell-value text-black">{stats.total}</span>
             <span className="telemetry-cell-unit">nodes</span>
           </div>
         </button>
@@ -50,18 +51,18 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
         {/* Healthy */}
         <button
           type="button"
-          className={`telemetry-cell text-left ${activeFilter === 'HEALTHY' ? 'border-status-healthy bg-status-healthy-bg' : ''}`}
-          style={{ borderColor: activeFilter === 'HEALTHY' ? 'var(--status-healthy)' : 'var(--border-subtle)' }}
+          className={`telemetry-cell text-left cursor-pointer transition-colors ${activeFilter === 'HEALTHY' ? 'bg-[#2E7D32]/10' : 'bg-white hover:bg-[#FAFAFA]'}`}
+          style={{ borderColor: activeFilter === 'HEALTHY' ? '#2E7D32' : '#E5E5E5' }}
           onClick={() => onChangeFilter('HEALTHY')}
         >
-          <div className="telemetry-cell-label flex items-center justify-between" style={{ color: 'var(--status-healthy)' }}>
-            <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">check_box</span>
+          <div className="telemetry-cell-label flex items-center justify-between text-[#2E7D32]">
+            <span className="flex items-center gap-1.5">
+              <IconCheckBox size={14} />
               HEALTHY
             </span>
           </div>
           <div className="telemetry-cell-value-group">
-            <span className="telemetry-cell-value" style={{ color: 'var(--status-healthy)' }}>{stats.healthy}</span>
+            <span className="telemetry-cell-value text-[#2E7D32]">{stats.healthy}</span>
             <span className="telemetry-cell-unit">nominal</span>
           </div>
         </button>
@@ -69,18 +70,18 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
         {/* Attention */}
         <button
           type="button"
-          className={`telemetry-cell text-left ${activeFilter === 'ATTENTION' ? 'border-status-attention bg-status-attention-bg' : ''}`}
-          style={{ borderColor: activeFilter === 'ATTENTION' ? 'var(--status-attention)' : 'var(--border-subtle)' }}
+          className={`telemetry-cell text-left cursor-pointer transition-colors ${activeFilter === 'ATTENTION' ? 'bg-[#F57C00]/10' : 'bg-white hover:bg-[#FAFAFA]'}`}
+          style={{ borderColor: activeFilter === 'ATTENTION' ? '#F57C00' : '#E5E5E5' }}
           onClick={() => onChangeFilter('ATTENTION')}
         >
-          <div className="telemetry-cell-label flex items-center justify-between" style={{ color: 'var(--status-attention)' }}>
-            <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">warning</span>
+          <div className="telemetry-cell-label flex items-center justify-between text-[#F57C00]">
+            <span className="flex items-center gap-1.5">
+              <IconAlertTriangle size={14} />
               ATTENTION
             </span>
           </div>
           <div className="telemetry-cell-value-group">
-            <span className="telemetry-cell-value" style={{ color: 'var(--status-attention)' }}>{stats.attention}</span>
+            <span className="telemetry-cell-value text-[#F57C00]">{stats.attention}</span>
             <span className="telemetry-cell-unit">degraded</span>
           </div>
         </button>
@@ -88,35 +89,37 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
         {/* Critical */}
         <button
           type="button"
-          className={`telemetry-cell text-left ${activeFilter === 'CRITICAL' ? 'border-status-critical bg-status-critical-bg' : ''}`}
-          style={{ borderColor: activeFilter === 'CRITICAL' ? 'var(--status-critical)' : 'var(--border-subtle)' }}
+          className={`telemetry-cell text-left cursor-pointer transition-colors ${activeFilter === 'CRITICAL' ? 'bg-[#D32F2F]/10' : 'bg-white hover:bg-[#FAFAFA]'}`}
+          style={{ borderColor: activeFilter === 'CRITICAL' ? '#D32F2F' : '#E5E5E5' }}
           onClick={() => onChangeFilter('CRITICAL')}
         >
-          <div className="telemetry-cell-label flex items-center justify-between" style={{ color: 'var(--status-critical)' }}>
-            <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">error</span>
+          <div className="telemetry-cell-label flex items-center justify-between text-[#D32F2F]">
+            <span className="flex items-center gap-1.5">
+              <IconAlertCircle size={14} />
               CRITICAL
             </span>
           </div>
           <div className="telemetry-cell-value-group">
-            <span className="telemetry-cell-value" style={{ color: 'var(--status-critical)' }}>{stats.critical}</span>
+            <span className="telemetry-cell-value text-[#D32F2F]">{stats.critical}</span>
             <span className="telemetry-cell-unit">alert</span>
           </div>
         </button>
       </div>
 
       {/* AP Header & Actions Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-surface border border-border-subtle">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white border border-[#E5E5E5]">
         <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-primary text-[20px]">router</span>
+          <div className="p-2 border border-[#E5E5E5] bg-[#FAFAFA]">
+            <IconRouter size={20} className="text-black" />
+          </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-headline-md text-primary text-[15px]">{ap.ssid}</span>
-              <span className="badge-status font-data-sm">{ap.maxStandard}</span>
-              <span className="badge-status font-data-sm">Tri-Band (2.4/5/6 GHz)</span>
+              <span className="text-[15px] font-bold text-black">{ap.ssid}</span>
+              <span className="badge-status font-mono text-[10px]">{ap.maxStandard}</span>
+              <span className="badge-status font-mono text-[10px]">Tri-Band (2.4/5/6 GHz)</span>
             </div>
-            <div className="font-data-sm text-muted mt-0.5">
-              {ap.apModel} &bull; Channel Load: <span className="font-bold" style={{ color: ap.channelUtilizationPct >= 70 ? 'var(--status-critical)' : 'var(--status-healthy)' }}>{ap.channelUtilizationPct}%</span>
+            <div className="text-[11px] font-mono text-[#747878] mt-0.5">
+              {ap.apModel} &bull; Channel Load: <span className="font-bold" style={{ color: ap.channelUtilizationPct >= 70 ? '#D32F2F' : '#2E7D32' }}>{ap.channelUtilizationPct}%</span>
             </div>
           </div>
         </div>
@@ -127,50 +130,50 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
             className="btn-instrument-primary"
             onClick={onOpenNetworkAudit}
           >
-            <span className="material-symbols-outlined text-[16px]">radar</span>
-            Scan Whole Network & AI Audit
+            <IconRadar size={15} />
+            <span>Scan Whole Network & AI Audit</span>
           </button>
         )}
       </div>
 
       {/* Simulation Scenario Switcher Strip */}
       {isSimulation && onSelectScenario && (
-        <div className="flex items-center gap-2 p-2 bg-surface-offset border border-border-subtle overflow-x-auto">
-          <span className="font-label-caps text-muted whitespace-nowrap px-1">
+        <div className="flex items-center gap-2 p-2 bg-[#FAFAFA] border border-[#E5E5E5] overflow-x-auto">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#747878] whitespace-nowrap px-1">
             TEST SCENARIOS:
           </span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              className={`btn-instrument-secondary font-data-sm text-[11px] py-1 px-2.5 ${selectedScenarioId === 'A' ? 'bg-inverse text-white' : ''}`}
+              className={`btn-instrument-secondary font-mono text-[11px] py-1 px-2.5 ${selectedScenarioId === 'A' ? 'bg-black text-white' : ''}`}
               onClick={() => onSelectScenario('A')}
             >
               <strong>A</strong>: Fast 5GHz
             </button>
             <button
               type="button"
-              className={`btn-instrument-secondary font-data-sm text-[11px] py-1 px-2.5 ${selectedScenarioId === 'B' ? 'bg-inverse text-white' : ''}`}
+              className={`btn-instrument-secondary font-mono text-[11px] py-1 px-2.5 ${selectedScenarioId === 'B' ? 'bg-black text-white' : ''}`}
               onClick={() => onSelectScenario('B')}
             >
               <strong>B</strong>: Weak Signal (-76 dBm)
             </button>
             <button
               type="button"
-              className={`btn-instrument-secondary font-data-sm text-[11px] py-1 px-2.5 ${selectedScenarioId === 'C' ? 'bg-inverse text-white' : ''}`}
+              className={`btn-instrument-secondary font-mono text-[11px] py-1 px-2.5 ${selectedScenarioId === 'C' ? 'bg-black text-white' : ''}`}
               onClick={() => onSelectScenario('C')}
             >
               <strong>C</strong>: RF Interference
             </button>
             <button
               type="button"
-              className={`btn-instrument-secondary font-data-sm text-[11px] py-1 px-2.5 ${selectedScenarioId === 'D' ? 'bg-inverse text-white' : ''}`}
+              className={`btn-instrument-secondary font-mono text-[11px] py-1 px-2.5 ${selectedScenarioId === 'D' ? 'bg-black text-white' : ''}`}
               onClick={() => onSelectScenario('D')}
             >
               <strong>D</strong>: Legacy IoT
             </button>
             <button
               type="button"
-              className={`btn-instrument-secondary font-data-sm text-[11px] py-1 px-2.5 ${selectedScenarioId === 'E' ? 'bg-inverse text-white' : ''}`}
+              className={`btn-instrument-secondary font-mono text-[11px] py-1 px-2.5 ${selectedScenarioId === 'E' ? 'bg-black text-white' : ''}`}
               onClick={() => onSelectScenario('E')}
             >
               <strong>E</strong>: Wrong Band

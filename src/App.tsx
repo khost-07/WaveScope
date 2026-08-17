@@ -14,6 +14,7 @@ import { DeviceDetailHub } from './components/DeviceDetailHub';
 import { ClientTable } from './components/ClientTable';
 import { ApiKeySetupScreen } from './components/ApiKeySetupScreen';
 import { NetworkReportModal } from './components/NetworkReportModal';
+import { IconRadar, IconKey, IconRouter, IconDashboard, IconRule } from './components/SvgIcons';
 
 const STORAGE_KEY = 'wavescope_gemini_api_key';
 
@@ -230,22 +231,24 @@ export function App() {
   const activeAp = devices[0]?.apCapabilities || SIMULATED_AP;
 
   return (
-    <div className="bg-background text-on-background font-body-md min-h-screen flex flex-col antialiased">
+    <div className="bg-[#F9F9F9] text-[#1A1C1C] font-['Hanken_Grotesk',sans-serif] min-h-screen flex flex-col antialiased">
       {/* Stitch TopNavBar */}
-      <header className="bg-surface border-b border-border-subtle fixed top-0 w-full z-50 h-12 flex justify-between items-center px-6">
+      <header className="bg-white border-b border-[#E5E5E5] fixed top-0 left-0 right-0 z-50 h-12 flex justify-between items-center px-6">
         <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-primary text-[22px]">radar</span>
-          <span className="font-headline-md font-bold text-primary tracking-tight">WaveScope</span>
-          <span className="badge-status font-data-sm text-[10px] hidden sm:inline-flex">Instrument Node 01-A</span>
+          <IconRadar size={22} className="text-black" />
+          <span className="text-[18px] font-bold text-black tracking-tight">WaveScope</span>
+          <span className="text-[11px] font-mono font-semibold px-2 py-0.5 border border-[#E5E5E5] bg-[#FAFAFA] hidden sm:inline-flex">
+            Node 01-A
+          </span>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Mode Switcher */}
-          <div className="flex border border-primary h-8 font-data-sm">
+          <div className="flex border border-black h-8 text-[12px] font-mono font-semibold">
             <button
               type="button"
-              className={`px-3 flex items-center justify-center border-r border-primary transition-colors ${
-                mode === 'SIMULATION' ? 'bg-primary text-on-primary sim-pattern font-bold' : 'text-primary hover:bg-surface-offset'
+              className={`px-3 flex items-center justify-center border-r border-black transition-colors ${
+                mode === 'SIMULATION' ? 'bg-black text-white sim-pattern' : 'text-black hover:bg-[#F3F3F4]'
               }`}
               onClick={() => setMode('SIMULATION')}
             >
@@ -254,7 +257,7 @@ export function App() {
             <button
               type="button"
               className={`px-3 flex items-center justify-center transition-colors ${
-                mode === 'REAL' ? 'bg-primary text-on-primary font-bold' : 'text-primary hover:bg-surface-offset'
+                mode === 'REAL' ? 'bg-black text-white' : 'text-black hover:bg-[#F3F3F4]'
               }`}
               onClick={() => setMode('REAL')}
             >
@@ -267,8 +270,8 @@ export function App() {
             className="btn-instrument-primary hidden md:inline-flex"
             onClick={handleRunNetworkAudit}
           >
-            <span className="material-symbols-outlined text-[16px]">radar</span>
-            Whole Network Audit
+            <IconRadar size={15} />
+            <span>Whole Network Audit</span>
           </button>
 
           <button
@@ -277,8 +280,8 @@ export function App() {
             onClick={() => setShowKeyModal(true)}
             title="Configure Gemini API Key"
           >
-            <span className="material-symbols-outlined text-[16px]">key</span>
-            API Key
+            <IconKey size={15} />
+            <span>API Key</span>
           </button>
         </div>
       </header>
@@ -286,69 +289,69 @@ export function App() {
       {/* Main Container with Sidebar */}
       <div className="flex pt-12 min-h-screen">
         {/* Stitch SideNavBar */}
-        <aside className="fixed left-0 top-12 bottom-0 w-64 border-r border-border-subtle bg-surface flex flex-col z-40 hidden md:flex">
-          <div className="p-4 border-b border-border-subtle">
-            <div className="font-headline-md text-primary text-[15px]">WaveScope Admin</div>
-            <div className="font-data-sm text-muted text-[11px] mt-0.5">{provenance.sourceIdentifier}</div>
+        <aside className="fixed left-0 top-12 bottom-0 w-60 border-r border-[#E5E5E5] bg-white flex flex-col z-40 hidden md:flex">
+          <div className="p-4 border-b border-[#E5E5E5]">
+            <div className="text-[15px] font-semibold text-black">WaveScope Admin</div>
+            <div className="text-[11px] font-mono text-[#747878] mt-0.5 truncate">{provenance.sourceIdentifier}</div>
           </div>
 
           <nav className="flex-1 p-2 space-y-1">
             <button
               type="button"
-              className={`w-full flex items-center gap-3 px-3 py-2 text-left font-label-caps transition-colors ${
+              className={`w-full flex items-center gap-3 px-3 py-2 text-left text-[12px] font-semibold uppercase tracking-wider transition-colors ${
                 activeNav === 'CLIENTS'
-                  ? 'bg-surface-offset text-primary border-l-2 border-primary font-bold'
-                  : 'text-secondary hover:bg-surface-offset'
+                  ? 'bg-[#FAFAFA] text-black border-l-2 border-black font-bold'
+                  : 'text-[#444748] hover:bg-[#FAFAFA]'
               }`}
               onClick={() => setActiveNav('CLIENTS')}
             >
-              <span className="material-symbols-outlined text-[18px]">router</span>
+              <IconRouter size={16} />
               <span>Connected Clients</span>
-              <span className="ml-auto badge-status font-data-sm text-[9px]">{devices.length}</span>
+              <span className="ml-auto font-mono text-[10px] px-1.5 py-0.5 border border-[#E5E5E5]">{devices.length}</span>
             </button>
 
             <button
               type="button"
-              className={`w-full flex items-center gap-3 px-3 py-2 text-left font-label-caps transition-colors ${
+              className={`w-full flex items-center gap-3 px-3 py-2 text-left text-[12px] font-semibold uppercase tracking-wider transition-colors ${
                 activeNav === 'OVERVIEW'
-                  ? 'bg-surface-offset text-primary border-l-2 border-primary font-bold'
-                  : 'text-secondary hover:bg-surface-offset'
+                  ? 'bg-[#FAFAFA] text-black border-l-2 border-black font-bold'
+                  : 'text-[#444748] hover:bg-[#FAFAFA]'
               }`}
               onClick={() => setActiveNav('OVERVIEW')}
             >
-              <span className="material-symbols-outlined text-[18px]">dashboard</span>
+              <IconDashboard size={16} />
               <span>Overview Table</span>
             </button>
 
             <button
               type="button"
-              className={`w-full flex items-center gap-3 px-3 py-2 text-left font-label-caps transition-colors ${
+              className={`w-full flex items-center gap-3 px-3 py-2 text-left text-[12px] font-semibold uppercase tracking-wider transition-colors ${
                 activeNav === 'RULES'
-                  ? 'bg-surface-offset text-primary border-l-2 border-primary font-bold'
-                  : 'text-secondary hover:bg-surface-offset'
+                  ? 'bg-[#FAFAFA] text-black border-l-2 border-black font-bold'
+                  : 'text-[#444748] hover:bg-[#FAFAFA]'
               }`}
               onClick={() => setActiveNav('RULES')}
             >
-              <span className="material-symbols-outlined text-[18px]">rule</span>
+              <IconRule size={16} />
               <span>Diagnostic Rules</span>
             </button>
           </nav>
 
-          <div className="p-3 border-t border-border-subtle space-y-1 font-data-sm text-[11px] text-muted">
-            <div>Engine: <strong>L2 Math Scoring</strong></div>
-            <div>AI: <strong>gemini-3.1-flash-lite</strong></div>
+          <div className="p-3 border-t border-[#E5E5E5] space-y-1 text-[11px] font-mono text-[#747878]">
+            <div>Engine: <strong className="text-black">L2 Deterministic</strong></div>
+            <div>Model: <strong className="text-black">gemini-3.1-flash-lite</strong></div>
           </div>
         </aside>
 
         {/* Main Content Area */}
-        <main className="md:ml-64 flex-1 p-6 space-y-6 max-w-6xl">
+        <main className="md:ml-60 flex-1 p-6 space-y-6 max-w-[1400px] w-full">
           {/* Real Mode Error Alert if daemon not running */}
           {mode === 'REAL' && realError && (
-            <div className="p-4 border border-status-critical bg-surface flex items-center justify-between gap-4">
+            <div className="p-4 border border-[#D32F2F] bg-white flex items-center justify-between gap-4">
               <div className="space-y-1">
-                <div className="font-label-caps text-status-critical font-bold">REAL WLAN PROBE STATUS</div>
-                <div className="font-data-sm text-secondary">{realError}</div>
-                <div className="font-data-sm text-muted">Run in terminal: <code>node server/wlanScanner.cjs</code></div>
+                <div className="text-[11px] font-bold text-[#D32F2F] uppercase tracking-wider">REAL WLAN PROBE STATUS</div>
+                <div className="text-[13px] text-[#444748] font-mono">{realError}</div>
+                <div className="text-[11px] text-[#747878] font-mono">Launch probe daemon: <code>node server/wlanScanner.cjs</code></div>
               </div>
               <button
                 type="button"
@@ -374,9 +377,9 @@ export function App() {
 
           {/* SECTION 1: CONNECTED CLIENTS WORKSPACE (MASTER-DETAIL) */}
           {activeNav === 'CLIENTS' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               {/* Left Column: Device List */}
-              <div className="lg:col-span-4">
+              <div className="lg:col-span-4 w-full">
                 <DeviceListPane
                   devices={visibleDevices}
                   diagnoses={diagnoses}
@@ -386,7 +389,7 @@ export function App() {
               </div>
 
               {/* Right Column: Device Detail Intelligence Hub */}
-              <div className="lg:col-span-8">
+              <div className="lg:col-span-8 w-full">
                 {selectedDevice && selectedDiagnosis ? (
                   <DeviceDetailHub
                     device={selectedDevice}
@@ -399,7 +402,7 @@ export function App() {
                     onOpenKeyModal={() => setShowKeyModal(true)}
                   />
                 ) : (
-                  <div className="p-12 border border-border-subtle bg-surface text-center text-muted font-body-md">
+                  <div className="p-12 border border-[#E5E5E5] bg-white text-center text-[#747878]">
                     Select a client from the list to inspect root cause.
                   </div>
                 )}
@@ -411,8 +414,8 @@ export function App() {
           {activeNav === 'OVERVIEW' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="font-headline-md text-primary">All Associated Clients Telemetry Matrix</h2>
-                <span className="font-data-sm text-muted">
+                <h2 className="text-[18px] font-bold text-black">All Associated Clients Telemetry Matrix</h2>
+                <span className="text-[12px] font-mono text-[#747878]">
                   Showing {visibleDevices.length} of {devices.length} endpoints
                 </span>
               </div>
@@ -430,39 +433,39 @@ export function App() {
 
           {/* SECTION 3: DIAGNOSTIC RULES SPECIFICATION */}
           {activeNav === 'RULES' && (
-            <div className="border border-border-subtle bg-surface p-6 space-y-4">
-              <div className="border-b border-border-subtle pb-3">
-                <h2 className="font-headline-lg text-primary">Layer 2 Deterministic Rule Engine</h2>
-                <p className="font-body-md text-secondary mt-1">
+            <div className="border border-[#E5E5E5] bg-white p-6 space-y-4">
+              <div className="border-b border-[#E5E5E5] pb-3">
+                <h2 className="text-[20px] font-bold text-black">Layer 2 Deterministic Rule Engine</h2>
+                <p className="text-[14px] text-[#444748] mt-1">
                   WaveScope evaluates four competing physical RF hypotheses using local mathematical point thresholds without LLM dependence:
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 border border-border-subtle bg-surface-offset space-y-1">
-                  <div className="font-label-caps text-primary font-bold">1. Weak / Attenuated Signal</div>
-                  <p className="font-body-md text-secondary text-[13px]">
+                <div className="p-4 border border-[#E5E5E5] bg-[#FAFAFA] space-y-1">
+                  <div className="text-[12px] font-bold text-black uppercase tracking-wider">1. Weak / Attenuated Signal</div>
+                  <p className="text-[13px] text-[#444748]">
                     Triggered when RSSI &le; -75 dBm, SNR &le; 15 dB, or Retries &ge; 15%. Confirms high physical path loss or excessive obstacle attenuation.
                   </p>
                 </div>
 
-                <div className="p-4 border border-border-subtle bg-surface-offset space-y-1">
-                  <div className="font-label-caps text-primary font-bold">2. Possible RF Interference</div>
-                  <p className="font-body-md text-secondary text-[13px]">
+                <div className="p-4 border border-[#E5E5E5] bg-[#FAFAFA] space-y-1">
+                  <div className="text-[12px] font-bold text-black uppercase tracking-wider">2. Possible RF Interference</div>
+                  <p className="text-[13px] text-[#444748]">
                     Triggered when RSSI &ge; -65 dBm but SNR &le; 12 dB or Noise Floor &ge; -70 dBm. Indicates heavy co-channel / non-Wi-Fi jamming.
                   </p>
                 </div>
 
-                <div className="p-4 border border-border-subtle bg-surface-offset space-y-1">
-                  <div className="font-label-caps text-primary font-bold">3. Hardware / Capability Limited</div>
-                  <p className="font-body-md text-secondary text-[13px]">
+                <div className="p-4 border border-[#E5E5E5] bg-[#FAFAFA] space-y-1">
+                  <div className="text-[12px] font-bold text-black uppercase tracking-wider">3. Hardware / Capability Limited</div>
+                  <p className="text-[13px] text-[#444748]">
                     Triggered when device standard is 802.11n/legacy, 20MHz width, or 1x1 SISO while RF link is stable (SNR &ge; 25 dB).
                   </p>
                 </div>
 
-                <div className="p-4 border border-border-subtle bg-surface-offset space-y-1">
-                  <div className="font-label-caps text-primary font-bold">4. Potential Band Selection Issue</div>
-                  <p className="font-body-md text-secondary text-[13px]">
+                <div className="p-4 border border-[#E5E5E5] bg-[#FAFAFA] space-y-1">
+                  <div className="text-[12px] font-bold text-black uppercase tracking-wider">4. Potential Band Selection Issue</div>
+                  <p className="text-[13px] text-[#444748]">
                     Triggered when a dual-band/tri-band device is associated on congested 2.4GHz despite strong signal (RSSI &ge; -60 dBm).
                   </p>
                 </div>
@@ -488,21 +491,21 @@ export function App() {
         <div className="modal-overlay">
           <div className="modal-instrument max-w-md">
             <div className="modal-header">
-              <span className="font-headline-md text-primary text-[15px]">Google Gemini API Configuration</span>
-              <button type="button" className="font-bold text-muted hover:text-primary" onClick={() => setShowKeyModal(false)}>
+              <span className="text-[15px] font-bold text-black">Google Gemini API Configuration</span>
+              <button type="button" className="font-bold text-[#747878] hover:text-black" onClick={() => setShowKeyModal(false)}>
                 ✕
               </button>
             </div>
             <div className="modal-body space-y-4">
-              <p className="font-body-md text-secondary text-[13px]">
-                Connected Model: <strong>gemini-3.1-flash-lite</strong>. Zero fallback cache.
+              <p className="text-[13px] text-[#444748]">
+                Connected Model: <strong className="text-black">gemini-3.1-flash-lite</strong>. Zero fallback cache.
               </p>
 
               <div className="space-y-1">
-                <label className="font-label-caps text-secondary text-[10px]">Gemini API Key</label>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-[#444748]">Gemini API Key</label>
                 <input
                   type="password"
-                  className="w-full bg-surface-offset border border-border-subtle p-2.5 font-data-md text-primary outline-none focus:border-primary"
+                  className="w-full bg-[#FAFAFA] border border-[#E5E5E5] p-2.5 font-mono text-[13px] text-black outline-none focus:border-black"
                   placeholder="AIzaSy..."
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
@@ -510,10 +513,10 @@ export function App() {
                 />
               </div>
 
-              <div className="flex justify-between pt-2 border-t border-border-subtle">
+              <div className="flex justify-between pt-2 border-t border-[#E5E5E5]">
                 <button
                   type="button"
-                  className="btn-instrument-secondary text-status-critical border-status-critical text-[11px]"
+                  className="btn-instrument-secondary text-[#D32F2F] border-[#D32F2F] text-[11px]"
                   onClick={handleClearApiKey}
                 >
                   Clear Key & Log Out

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { IconRadar } from './SvgIcons';
 
 interface ApiKeySetupScreenProps {
   initialKey?: string;
@@ -26,37 +27,37 @@ export const ApiKeySetupScreen: React.FC<ApiKeySetupScreenProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-background grid-bg flex items-center justify-center p-6 z-50">
-      <div className="bg-surface border border-primary max-w-lg w-full p-8 space-y-6">
+    <div className="fixed inset-0 bg-[#F9F9F9] grid-bg flex items-center justify-center p-6 z-50">
+      <div className="bg-white border border-black max-w-lg w-full p-8 space-y-6">
         {/* Brand Header */}
-        <div className="flex items-center justify-between border-b border-border-subtle pb-4">
+        <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-4">
           <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-primary text-[28px]">radar</span>
+            <IconRadar size={28} className="text-black" />
             <div>
-              <h1 className="font-headline-lg text-primary text-[22px]">WaveScope</h1>
-              <p className="font-data-sm text-muted">Precision RF Wi-Fi Diagnostic Instrument</p>
+              <h1 className="text-[22px] font-bold text-black tracking-tight">WaveScope</h1>
+              <p className="font-mono text-[11px] text-[#747878]">Precision RF Wi-Fi Diagnostic Instrument</p>
             </div>
           </div>
-          <span className="badge-status font-data-sm">Instrument Setup</span>
+          <span className="badge-status font-mono text-[10px]">Instrument Setup</span>
         </div>
 
         {/* Intro */}
         <div className="space-y-2">
-          <h2 className="font-headline-md text-primary text-[17px]">Connect Google Gemini AI Engine</h2>
-          <p className="font-body-md text-secondary leading-relaxed">
+          <h2 className="text-[17px] font-bold text-black">Connect Google Gemini AI Engine</h2>
+          <p className="text-[14px] text-[#444748] leading-relaxed">
             WaveScope runs Layer 2 deterministic RF scoring locally, then connects directly to{' '}
-            <strong className="text-primary">gemini-3.1-flash-lite</strong> for live root-cause explanations and whole-network audits.
+            <strong className="text-black">gemini-3.1-flash-lite</strong> for live root-cause explanations and whole-network audits.
           </p>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between font-label-caps text-secondary text-[10px]">
+            <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[#444748]">
               <label htmlFor="gemini-key">Gemini API Key</label>
               <button
                 type="button"
-                className="text-primary hover:underline"
+                className="text-black hover:underline cursor-pointer"
                 onClick={() => setShowKey(!showKey)}
               >
                 {showKey ? 'Hide Key' : 'Show Key'}
@@ -66,7 +67,7 @@ export const ApiKeySetupScreen: React.FC<ApiKeySetupScreenProps> = ({
             <input
               id="gemini-key"
               type={showKey ? 'text' : 'password'}
-              className="w-full bg-surface-offset border border-border-subtle p-3 font-data-md text-primary outline-none focus:border-primary"
+              className="w-full bg-[#FAFAFA] border border-[#E5E5E5] p-3 font-mono text-[13px] text-black outline-none focus:border-black"
               placeholder="AIzaSy..."
               value={keyInput}
               onChange={(e) => {
@@ -77,23 +78,23 @@ export const ApiKeySetupScreen: React.FC<ApiKeySetupScreenProps> = ({
             />
 
             {error && (
-              <div className="font-data-sm text-status-critical mt-1">{error}</div>
+              <div className="font-mono text-[11px] text-[#D32F2F] mt-1">{error}</div>
             )}
 
-            <div className="font-data-sm text-muted text-[11px] pt-1">
+            <div className="font-mono text-[11px] text-[#747878] pt-1">
               Get a free API key at{' '}
               <a
                 href="https://aistudio.google.com/app/apikey"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary underline font-bold"
+                className="text-black underline font-bold"
               >
                 Google AI Studio &rarr;
               </a>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 font-data-sm text-secondary">
+          <div className="flex items-center gap-2 text-[13px] text-[#444748]">
             <input
               type="checkbox"
               id="remember-key"
@@ -115,7 +116,7 @@ export const ApiKeySetupScreen: React.FC<ApiKeySetupScreenProps> = ({
           </button>
         </form>
 
-        <div className="pt-2 border-t border-border-subtle font-data-sm text-[10px] text-muted flex justify-between">
+        <div className="pt-2 border-t border-[#E5E5E5] font-mono text-[10px] text-[#747878] flex justify-between">
           <span>Engine: <strong>Deterministic L2 + Gemini 3.1 Flash Lite</strong></span>
           <span>Zero Fallbacks</span>
         </div>
