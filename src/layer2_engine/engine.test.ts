@@ -11,20 +11,13 @@ import { runDiagnosticEngine } from './engine';
 import { HYPOTHESES } from './rules';
 import { evaluatePeerCorroboration } from './peerAnalysis';
 import { computeEstimatedCoverage } from './deadZoneMapper';
-import { recordDeviceSample, evaluateDeviceTrend } from './trendEngine';
+import { evaluateDeviceTrend } from './trendEngine';
 
 test('Diagnostic Engine - Scenario A: Healthy nominal performance', () => {
   const scenarioA = SIMULATION_SCENARIOS.find(s => s.scenarioId === 'A');
   assert.ok(scenarioA, 'Scenario A should exist');
 
   const diagnosis = runDiagnosticEngine(scenarioA);
-
-  console.log('\n--- Scenario A Diagnosis ---');
-  console.log('Primary:', diagnosis.primary_diagnosis);
-  console.log('Severity:', diagnosis.severity);
-  console.log('Confidence:', diagnosis.confidence + '%');
-  console.log('Scores:', JSON.stringify(diagnosis.hypothesis_scores));
-  console.log('Evidence:', diagnosis.evidence);
 
   assert.equal(diagnosis.primary_diagnosis, HYPOTHESES.HEALTHY);
   assert.equal(diagnosis.severity, 'Low');
@@ -39,13 +32,6 @@ test('Diagnostic Engine - Scenario B: Weak / Attenuated Signal', () => {
 
   const diagnosis = runDiagnosticEngine(scenarioB);
 
-  console.log('\n--- Scenario B Diagnosis ---');
-  console.log('Primary:', diagnosis.primary_diagnosis);
-  console.log('Severity:', diagnosis.severity);
-  console.log('Confidence:', diagnosis.confidence + '%');
-  console.log('Scores:', JSON.stringify(diagnosis.hypothesis_scores));
-  console.log('Evidence:', diagnosis.evidence);
-
   assert.equal(diagnosis.primary_diagnosis, HYPOTHESES.WEAK_SIGNAL);
   assert.equal(diagnosis.severity, 'High');
   assert.equal(diagnosis.status, 'CRITICAL');
@@ -58,13 +44,6 @@ test('Diagnostic Engine - Scenario C: Possible RF Interference', () => {
   assert.ok(scenarioC, 'Scenario C should exist');
 
   const diagnosis = runDiagnosticEngine(scenarioC);
-
-  console.log('\n--- Scenario C Diagnosis ---');
-  console.log('Primary:', diagnosis.primary_diagnosis);
-  console.log('Severity:', diagnosis.severity);
-  console.log('Confidence:', diagnosis.confidence + '%');
-  console.log('Scores:', JSON.stringify(diagnosis.hypothesis_scores));
-  console.log('Evidence:', diagnosis.evidence);
 
   assert.equal(diagnosis.primary_diagnosis, HYPOTHESES.RF_INTERFERENCE);
   assert.equal(diagnosis.severity, 'High');
@@ -79,13 +58,6 @@ test('Diagnostic Engine - Scenario D: Hardware / Capability Limited', () => {
 
   const diagnosis = runDiagnosticEngine(scenarioD);
 
-  console.log('\n--- Scenario D Diagnosis ---');
-  console.log('Primary:', diagnosis.primary_diagnosis);
-  console.log('Severity:', diagnosis.severity);
-  console.log('Confidence:', diagnosis.confidence + '%');
-  console.log('Scores:', JSON.stringify(diagnosis.hypothesis_scores));
-  console.log('Evidence:', diagnosis.evidence);
-
   assert.equal(diagnosis.primary_diagnosis, HYPOTHESES.HARDWARE_LIMITED);
   assert.equal(diagnosis.severity, 'Medium');
   assert.equal(diagnosis.status, 'ATTENTION');
@@ -98,71 +70,81 @@ test('Diagnostic Engine - Scenario E: Potential Band Selection / Configuration I
 
   const diagnosis = runDiagnosticEngine(scenarioE);
 
-  console.log('\n--- Scenario E Diagnosis ---');
-  console.log('Primary:', diagnosis.primary_diagnosis);
-  console.log('Severity:', diagnosis.severity);
-  console.log('Confidence:', diagnosis.confidence + '%');
-  console.log('Scores:', JSON.stringify(diagnosis.hypothesis_scores));
-  console.log('Evidence:', diagnosis.evidence);
-
   assert.equal(diagnosis.primary_diagnosis, HYPOTHESES.BAND_SELECTION);
   assert.equal(diagnosis.severity, 'Medium');
   assert.equal(diagnosis.status, 'ATTENTION');
   assert.ok(diagnosis.evidence.some(e => e.includes('2.4GHz') && e.includes('5GHz')));
 });
 
-test('Feature 1: Peer-Corroborated Diagnosis Evaluator', () => {
+test('Feature 1: Peer-Corroborated Diagnosis Evaluator (Device-Specific vs Shared)', () => {
   const scenarioB = SIMULATION_SCENARIOS.find(s => s.scenarioId === 'B')!;
-  const diagnosesMap = {
-    'device-scenario-a': { status: 'HEALTHY' as const, primary_diagnosis: 'Healthy' },
-    'device-scenario-b': { status: 'CRITICAL' as const, primary_diagnosis: 'Weak / Attenuated Signal' },
-    'device-scenario-c': { status: 'CRITICAL' as const, primary_diagnosis: 'Possible RF Interference' }
-  };
+  const scenarioC = SIMULATION_SCENARIOS.find(s => s.scenarioId === 'C')!;
+  const diagnosesMap: Record<string, { status: any; primary_diagnosis: string }> = {};
 
-  const peerResult = evaluatePeerCorroboration(scenarioB, SIMULATION_SCENARIOS, diagnosesMap);
+  for (const d of SIMULATION_SCENARIOS) {
+    const diag = runDiagnosticEngine(d);
+    diagnosesMap[d.id] = { status: diag.status, primary_diagnosis: diag.primary_diagnosis };
+  }
 
-  assert.ok(peerResult, 'Peer result should exist for multi-device network');
-  assert.equal(peerResult.hasPeers, true);
-  assert.equal(peerResult.verdict, 'DEVICE_SPECIFIC');
-  assert.ok(peerResult.summarySentence.includes('nearby device') || peerResult.summarySentence.includes('device-specific'));
-  assert.ok(peerResult.relevantPeers.length > 0);
+  // Check Scenario B (Device-specific placement issue corroborated by healthy 5GHz peers)
+  const peerResultB = evaluatePeerCorroboration(scenarioB, SIMULATION_SCENARIOS, diagnosesMap);
+  assert.ok(peerResultB, 'Peer result should exist for multi-device network');
+  assert.equal(peerResultB.hasPeers, true);
+  assert.equal(peerResultB.verdict, 'DEVICE_SPECIFIC');
+  assert.ok(peerResultB.summarySentence.includes('nearby') || peerResultB.summarySentence.includes('device-specific'));
+  assert.ok(peerResultB.relevantPeers.length > 0);
+
+  // Check Scenario C (Shared environmental issue corroborated by jammed 2.4GHz peers)
+  const peerResultC = evaluatePeerCorroboration(scenarioC, SIMULATION_SCENARIOS, diagnosesMap);
+  assert.ok(peerResultC, 'Peer result should exist for Scenario C');
+  assert.equal(peerResultC.verdict, 'ENVIRONMENTAL_SHARED');
+  assert.ok(peerResultC.summarySentence.includes('Multiple devices'));
 
   // Single device check: should return null
   const singlePeerResult = evaluatePeerCorroboration(scenarioB, [scenarioB], diagnosesMap);
   assert.equal(singlePeerResult, null, 'Single device should return null to hide peer section');
 });
 
-test('Feature 2: Inferred Dead-Zone Mapping', () => {
+test('Feature 2: Inferred Dead-Zone Mapping (Spatial Distance & Zone Clusters)', () => {
   const scenarioB = SIMULATION_SCENARIOS.find(s => s.scenarioId === 'B')!;
-  const diagnosesMap = {
-    'device-scenario-a': { status: 'HEALTHY' as const },
-    'device-scenario-b': { status: 'CRITICAL' as const }
-  };
+  const diagnosesMap: Record<string, { status: any }> = {};
+
+  for (const d of SIMULATION_SCENARIOS) {
+    const diag = runDiagnosticEngine(d);
+    diagnosesMap[d.id] = { status: diag.status };
+  }
 
   const coverage = computeEstimatedCoverage(scenarioB, SIMULATION_SCENARIOS, diagnosesMap);
 
-  assert.ok(coverage.markers.length === SIMULATION_SCENARIOS.length);
+  assert.equal(coverage.markers.length, SIMULATION_SCENARIOS.length);
   assert.equal(coverage.targetZone, 'DEAD_ZONE');
-  assert.ok(coverage.zoneDescription.includes('attenuated') || coverage.zoneDescription.includes('dead zone'));
+  assert.ok(coverage.zoneDescription.includes('Attenuated') || coverage.zoneDescription.includes('Dead Zone'));
+  assert.equal(coverage.targetDistanceMeters, 16.5);
+  assert.ok(coverage.environmentNote?.includes('Corner Office 304'));
+
   const targetMarker = coverage.markers.find(m => m.id === scenarioB.id);
   assert.ok(targetMarker?.isSelected, 'Target marker must be selected');
   assert.ok(targetMarker.positionPercent > 60, 'Weak signal position should be towards edge');
 });
 
-test('Feature 3: Trend & Drift Detection Engine', () => {
-  const testDevId = 'test-trend-device';
+test('Feature 3: Trend & Drift Detection Engine (Synthetic History & Direction)', () => {
+  // Scenario B should be degrading
+  const trendB = evaluateDeviceTrend('device-scenario-b');
+  assert.equal(trendB.hasEnoughData, true);
+  assert.equal(trendB.direction, 'DEGRADING');
+  assert.equal(trendB.symbol, '↓');
+  assert.equal(trendB.qualifier, '(degrading)');
 
-  // Record degrading trend
-  recordDeviceSample(testDevId, -50, 35, 1);
-  recordDeviceSample(testDevId, -58, 28, 5);
-  recordDeviceSample(testDevId, -72, 14, 18);
-  recordDeviceSample(testDevId, -78, 10, 24);
+  // Peer iPad Pro should be improving
+  const trend5G = evaluateDeviceTrend('device-peer-5g');
+  assert.equal(trend5G.hasEnoughData, true);
+  assert.equal(trend5G.direction, 'IMPROVING');
+  assert.equal(trend5G.symbol, '↑');
+  assert.equal(trend5G.qualifier, '(improving)');
 
-  const trend = evaluateDeviceTrend(testDevId);
-
-  assert.equal(trend.hasEnoughData, true);
-  assert.equal(trend.direction, 'DEGRADING');
-  assert.equal(trend.symbol, '↓');
-  assert.equal(trend.qualifier, '(degrading)');
-  assert.ok(trend.sparklinePoints.length >= 3);
+  // Scenario A should be stable
+  const trendA = evaluateDeviceTrend('device-scenario-a');
+  assert.equal(trendA.hasEnoughData, true);
+  assert.equal(trendA.direction, 'STABLE');
+  assert.equal(trendA.symbol, '→');
 });

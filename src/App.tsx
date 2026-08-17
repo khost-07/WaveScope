@@ -67,6 +67,21 @@ export function App() {
     }
   }, [devices]);
 
+  // Live simulation tick timer: periodically updates RF micro-fluctuations to trend history
+  const [tick, setTick] = useState<number>(0);
+  useEffect(() => {
+    if (mode !== 'SIMULATION') return;
+    const interval = setInterval(() => {
+      for (const d of devices) {
+        const jitter = (Math.random() * 0.6 - 0.3);
+        const currentRssi = Math.round(d.telemetry.rssi_dBm + jitter);
+        recordDeviceSample(d.id, currentRssi, d.telemetry.snr_dB, d.telemetry.retryRatePct);
+      }
+      setTick(t => t + 1);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [mode, devices]);
+
   // Compute Layer 2 Diagnoses deterministically for all active devices
   const diagnoses = useMemo(() => {
     const map: Record<string, StructuredDiagnosis> = {};
@@ -83,7 +98,7 @@ export function App() {
       map[d.id] = evaluateDeviceTrend(d.id);
     }
     return map;
-  }, [devices]);
+  }, [devices, tick]);
 
   // Compute status summary counts
   const stats = useMemo(() => {

@@ -1,7 +1,7 @@
 /**
  * LAYER 1: SIMULATION DATASET
- * Controlled, auditable dataset defining Scenarios A through E as specified in Section 2.
- * This acts as both the primary demo dataset and the deterministic test suite.
+ * Controlled, auditable dataset defining Scenarios A through E as specified in Section 2,
+ * enriched with coexisting peer devices, spatial/distance data, and time-series metadata.
  */
 
 import { ClientDevice, APCapabilities } from './types';
@@ -58,6 +58,12 @@ export const SIMULATION_SCENARIOS: ClientDevice[] = [
       packetLossPct: 0.1,
       mcsIndex: 11,
       spatialStreams: 2
+    },
+    location: {
+      estimatedDistanceMeters: 2.8,
+      zone: 'STRONG',
+      relativePosition: 'near',
+      environmentNote: 'Conference Room Alpha (Direct line-of-sight to AP)'
     }
   },
   {
@@ -98,6 +104,55 @@ export const SIMULATION_SCENARIOS: ClientDevice[] = [
       packetLossPct: 4.2,
       mcsIndex: 2,
       spatialStreams: 2
+    },
+    location: {
+      estimatedDistanceMeters: 16.5,
+      zone: 'DEAD_ZONE',
+      relativePosition: 'far',
+      environmentNote: 'Corner Office 304 (Behind reinforced concrete firewall)'
+    }
+  },
+  {
+    id: "device-peer-5g",
+    macAddress: "BC:D1:19:88:41:2B",
+    ipAddress: "192.168.10.145",
+    hostname: "ipad-pro-m4.corp",
+    deviceType: "Tablet / Mobile",
+    vendor: "Apple Inc.",
+    capabilities: {
+      supportedStandards: ["802.11a", "802.11n", "802.11ac", "802.11ax"] as any,
+      maxStandard: "802.11ax",
+      supportedBands: ["2.4GHz", "5GHz", "6GHz"],
+      supports6GHz: true,
+      supports5GHz: true,
+      maxChannelWidthMHz: 160,
+      mimoStreams: "2x2",
+      maxTheoreticalPhyMbps: 2402
+    },
+    apCapabilities: SIMULATED_AP,
+    telemetry: {
+      timestamp: Date.now(),
+      bssid: "74:83:C2:10:9B:41",
+      band: "5GHz",
+      channel: 36,
+      channelWidthMHz: 80,
+      standard: "802.11ax",
+      rssi_dBm: -48,
+      noiseFloor_dBm: -82,
+      snr_dB: 34,
+      txLinkRate_Mbps: 1200,
+      rxLinkRate_Mbps: 1200,
+      maxSupportedPhy_Mbps: 1200,
+      retryRatePct: 1.2,
+      packetLossPct: 0.1,
+      mcsIndex: 10,
+      spatialStreams: 2
+    },
+    location: {
+      estimatedDistanceMeters: 3.6,
+      zone: 'STRONG',
+      relativePosition: 'near',
+      environmentNote: 'Executive Boardroom (Near AP)'
     }
   },
   {
@@ -141,6 +196,58 @@ export const SIMULATION_SCENARIOS: ClientDevice[] = [
       packetLossPct: 5.8,
       mcsIndex: 3,
       spatialStreams: 1
+    },
+    location: {
+      estimatedDistanceMeters: 3.2,
+      zone: 'STRONG',
+      relativePosition: 'near',
+      environmentNote: 'Hardware Testing Lab (Co-located with RF Signal Generator)'
+    }
+  },
+  {
+    id: "device-peer-24g-jammed",
+    macAddress: "48:EA:63:11:80:CC",
+    ipAddress: "192.168.10.182",
+    hostname: "security-cam-east.iot",
+    deviceType: "IP Camera / Security",
+    vendor: "Hikvision Corp.",
+    capabilities: {
+      supportedStandards: ["802.11b", "802.11g", "802.11n"] as any,
+      maxStandard: "802.11n",
+      supportedBands: ["2.4GHz"],
+      supports6GHz: false,
+      supports5GHz: false,
+      maxChannelWidthMHz: 20,
+      mimoStreams: "1x1",
+      maxTheoreticalPhyMbps: 72
+    },
+    apCapabilities: {
+      ...SIMULATED_AP,
+      channelUtilizationPct: 82
+    },
+    telemetry: {
+      timestamp: Date.now(),
+      bssid: "74:83:C2:10:9B:40",
+      band: "2.4GHz",
+      channel: 6,
+      channelWidthMHz: 20,
+      standard: "802.11n",
+      rssi_dBm: -52,
+      noiseFloor_dBm: -56,
+      snr_dB: 12,
+      txLinkRate_Mbps: 36,
+      rxLinkRate_Mbps: 36,
+      maxSupportedPhy_Mbps: 72,
+      retryRatePct: 17.5,
+      packetLossPct: 4.8,
+      mcsIndex: 4,
+      spatialStreams: 1
+    },
+    location: {
+      estimatedDistanceMeters: 4.5,
+      zone: 'STRONG',
+      relativePosition: 'near',
+      environmentNote: 'East Hallway Ceiling (Adjacent to Lab Testing area)'
     }
   },
   {
@@ -181,6 +288,12 @@ export const SIMULATION_SCENARIOS: ClientDevice[] = [
       packetLossPct: 0.2,
       mcsIndex: 7,
       spatialStreams: 1
+    },
+    location: {
+      estimatedDistanceMeters: 5.2,
+      zone: 'MARGINAL',
+      relativePosition: 'mid',
+      environmentNote: 'Server Room HVAC Unit (Fixed position)'
     }
   },
   {
@@ -221,6 +334,55 @@ export const SIMULATION_SCENARIOS: ClientDevice[] = [
       packetLossPct: 0.1,
       mcsIndex: 8,
       spatialStreams: 2
+    },
+    location: {
+      estimatedDistanceMeters: 4.1,
+      zone: 'STRONG',
+      relativePosition: 'near',
+      environmentNote: 'Open Office Area Desk 12 (Close to AP)'
+    }
+  },
+  {
+    id: "device-peer-perimeter",
+    macAddress: "00:80:77:24:D3:59",
+    ipAddress: "192.168.10.199",
+    hostname: "printer-hp-laser.corp",
+    deviceType: "Network Printer",
+    vendor: "HP Inc.",
+    capabilities: {
+      supportedStandards: ["802.11a", "802.11n", "802.11ac"] as any,
+      maxStandard: "802.11ac",
+      supportedBands: ["2.4GHz", "5GHz"],
+      supports6GHz: false,
+      supports5GHz: true,
+      maxChannelWidthMHz: 80,
+      mimoStreams: "2x2",
+      maxTheoreticalPhyMbps: 866
+    },
+    apCapabilities: SIMULATED_AP,
+    telemetry: {
+      timestamp: Date.now(),
+      bssid: "74:83:C2:10:9B:41",
+      band: "5GHz",
+      channel: 36,
+      channelWidthMHz: 80,
+      standard: "802.11ac",
+      rssi_dBm: -67,
+      noiseFloor_dBm: -88,
+      snr_dB: 21,
+      txLinkRate_Mbps: 390,
+      rxLinkRate_Mbps: 390,
+      maxSupportedPhy_Mbps: 866,
+      retryRatePct: 3.5,
+      packetLossPct: 0.4,
+      mcsIndex: 6,
+      spatialStreams: 2
+    },
+    location: {
+      estimatedDistanceMeters: 8.8,
+      zone: 'MARGINAL',
+      relativePosition: 'mid',
+      environmentNote: 'Floor 3 Copy Room (Mid-distance from AP)'
     }
   }
 ];

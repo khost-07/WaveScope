@@ -11,7 +11,7 @@ export const EstimatedCoverageSection: React.FC<EstimatedCoverageSectionProps> =
   coverageResult,
   selectedHostname
 }) => {
-  const { markers, zoneDescription } = coverageResult;
+  const { markers, zoneDescription, environmentNote } = coverageResult;
 
   return (
     <div className="border border-[#E5E5E5] bg-white p-4 space-y-3">
@@ -22,18 +22,28 @@ export const EstimatedCoverageSection: React.FC<EstimatedCoverageSectionProps> =
           <span>Estimated Coverage</span>
         </div>
         <span className="font-mono text-[11px] text-[#747878]">
-          Relative RF Proximity & Zone Cluster
+          {markers.length} Endpoints Plotted
         </span>
       </div>
 
-      {/* Description */}
-      <p className="text-[12px] text-[#444748] font-sans">
-        <strong className="text-black">{selectedHostname}</strong>: {zoneDescription}
-      </p>
+      {/* Description & Physical Environment */}
+      <div className="text-[12px] text-[#444748] font-sans space-y-1">
+        <p>
+          <strong className="text-black">{selectedHostname}</strong>: {zoneDescription}
+        </p>
+        {environmentNote && (
+          <p className="font-mono text-[11px] text-[#747878]">
+            Physical Location: {environmentNote}
+          </p>
+        )}
+      </div>
 
       {/* Horizontal Gradient Bar */}
       <div className="space-y-1.5 pt-2">
-        <div className="relative h-6 bg-gradient-to-r from-[#E8F5E9] via-[#FFF3E0] to-[#FFEBEE] border border-[#E5E5E5]" style={{ background: 'linear-gradient(to right, #E8F5E9 0%, #FFF3E0 55%, #FFEBEE 100%)' }}>
+        <div
+          className="relative h-6 border border-[#E5E5E5]"
+          style={{ background: 'linear-gradient(to right, #E8F5E9 0%, #FFF3E0 55%, #FFEBEE 100%)' }}
+        >
           {/* Zone Dividers */}
           <div className="absolute top-0 bottom-0 left-[35%] w-[1px] bg-black/10"></div>
           <div className="absolute top-0 bottom-0 left-[75%] w-[1px] bg-black/10"></div>
@@ -50,14 +60,20 @@ export const EstimatedCoverageSection: React.FC<EstimatedCoverageSectionProps> =
                   transform: 'translateX(-50%)',
                   zIndex: isTarget ? 20 : 10
                 }}
-                title={`${m.hostname}: ${m.rssi_dBm} dBm (${m.zone})`}
+                title={`${m.hostname}: ${m.rssi_dBm} dBm (~${m.estimatedDistanceMeters}m) [${m.zone}]`}
               >
                 <div
                   className={`w-2.5 h-2.5 border transition-transform ${
                     isTarget ? 'bg-black border-black scale-125 ring-2 ring-black/20' : 'bg-white border-[#747878]'
                   }`}
                   style={{
-                    backgroundColor: isTarget ? '#000000' : m.status === 'CRITICAL' ? '#D32F2F' : m.status === 'ATTENTION' ? '#F57C00' : '#2E7D32'
+                    backgroundColor: isTarget
+                      ? '#000000'
+                      : m.status === 'CRITICAL'
+                      ? '#D32F2F'
+                      : m.status === 'ATTENTION'
+                      ? '#F57C00'
+                      : '#2E7D32'
                   }}
                 />
               </div>

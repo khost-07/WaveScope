@@ -67,6 +67,13 @@ export interface StructuredDiagnosis {
   evaluated_at: number;
 }
 
+export interface DeviceLocation {
+  estimatedDistanceMeters: number; // e.g. 2.5m, 16.5m
+  zone: 'STRONG' | 'MARGINAL' | 'DEAD_ZONE';
+  relativePosition: 'near' | 'mid' | 'far';
+  environmentNote?: string;
+}
+
 export interface ClientDevice {
   id: string;
   macAddress: string;
@@ -77,6 +84,7 @@ export interface ClientDevice {
   capabilities: DeviceCapabilities;
   apCapabilities: APCapabilities;
   telemetry: TelemetryRecord;
+  location?: DeviceLocation;
   scenarioId?: 'A' | 'B' | 'C' | 'D' | 'E' | 'CUSTOM';
   scenarioName?: string;
   scenarioDescription?: string;

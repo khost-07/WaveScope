@@ -13,7 +13,8 @@ export interface DeviceCoverageMarker {
   hostname: string;
   rssi_dBm: number;
   snr_dB: number;
-  positionPercent: number; // 0% (Strong) to 100% (Weak / Dead Zone)
+  estimatedDistanceMeters: number;
+  positionPercent: number; // 0% (Strong / Near) to 100% (Weak / Dead Zone)
   zone: CoverageZone;
   status: DiagnosticStatus;
   isSelected: boolean;
@@ -22,6 +23,8 @@ export interface DeviceCoverageMarker {
 export interface CoverageMapResult {
   markers: DeviceCoverageMarker[];
   targetZone: CoverageZone;
+  targetDistanceMeters: number;
+  environmentNote?: string;
   zoneDescription: string;
 }
 
@@ -46,6 +49,16 @@ export function computeEstimatedCoverage(
     return 'MARGINAL';
   };
 
+  const inferDistanceMeters = (device: ClientDevice): number => {
+    if (device.location?.estimatedDistanceMeters) {
+      return device.location.estimatedDistanceMeters;
+    }
+    // Standard indoor log-distance path loss approximation: PL(d) = 40 + 30*log10(d)
+    const pl = Math.abs(device.telemetry.rssi_dBm);
+    const exp = Math.max(0, (pl - 40) / 30);
+    return Math.round(Math.pow(10, exp) * 10) / 10;
+  };
+
   const markers: DeviceCoverageMarker[] = allDevices.map(d => {
     const rssi = d.telemetry.rssi_dBm;
     const snr = d.telemetry.snr_dB;
@@ -54,6 +67,7 @@ export function computeEstimatedCoverage(
       hostname: d.hostname,
       rssi_dBm: rssi,
       snr_dB: snr,
+      estimatedDistanceMeters: inferDistanceMeters(d),
       positionPercent: getPositionPercent(rssi),
       zone: getZone(rssi, snr),
       status: diagnoses[d.id]?.status || 'HEALTHY',
@@ -61,22 +75,26 @@ export function computeEstimatedCoverage(
     };
   });
 
-  // Sort so selected marker is drawn clearly
+  // Sort so selected marker renders on top
   markers.sort((a, b) => (a.isSelected ? 1 : 0) - (b.isSelected ? 1 : 0));
 
   const targetZone = getZone(targetDevice.telemetry.rssi_dBm, targetDevice.telemetry.snr_dB);
+  const targetDistanceMeters = inferDistanceMeters(targetDevice);
   let zoneDescription = '';
+
   if (targetZone === 'STRONG') {
-    zoneDescription = 'Device is in optimal line-of-sight/near-field AP coverage (< 5m estimated relative path).';
+    zoneDescription = `Optimal near-field AP coverage (~${targetDistanceMeters}m path loss). High SNR margin and direct radio propagation.`;
   } else if (targetZone === 'MARGINAL') {
-    zoneDescription = 'Device is in secondary perimeter coverage (5–12m estimated relative path).';
+    zoneDescription = `Secondary perimeter coverage (~${targetDistanceMeters}m path loss). Usable link margin with slight attenuation.`;
   } else {
-    zoneDescription = 'Device is in an attenuated / dead zone (> 12m or high partition barrier loss).';
+    zoneDescription = `Attenuated / Dead Zone (~${targetDistanceMeters}m path loss or severe partition shielding). Significant RF margin compression.`;
   }
 
   return {
     markers,
     targetZone,
+    targetDistanceMeters,
+    environmentNote: targetDevice.location?.environmentNote,
     zoneDescription
   };
 }
