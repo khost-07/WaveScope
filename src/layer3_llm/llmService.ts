@@ -11,7 +11,7 @@
  */
 
 import { ClientDevice, StructuredDiagnosis } from '../layer1_data/types';
-import { LLMExplanationResponse } from './types';
+import { LLMExplanationResponse, SimpleOverview } from './types';
 import { buildLLMPrompt } from './promptBuilder';
 
 export const DEFAULT_GEMINI_MODEL = 'gemini-3.1-flash-lite';
@@ -25,7 +25,7 @@ export interface LLMRequestState {
 
 /**
  * Calls the Google Gemini API (model: gemini-3.1-flash-lite) to generate
- * a natural language explanation for a selected device's pre-computed diagnosis.
+ * a natural language explanation and super-simple overview for a selected device.
  */
 export async function generateExplanation(
   device: ClientDevice,
@@ -104,9 +104,20 @@ export async function generateExplanation(
     throw new Error(`Failed to parse LLM JSON response: ${parseErr.message}\nRaw Text: ${rawText}`);
   }
 
+  const simpleOverview: SimpleOverview = {
+    headline: parsed.simpleOverview?.headline || diagnosis.primary_diagnosis,
+    whatIsHappening: parsed.simpleOverview?.whatIsHappening || parsed.summary || "Analyzing network conditions...",
+    whyItMatters: parsed.simpleOverview?.whyItMatters || "Connection performance may be impacted.",
+    simpleStepsToFix: Array.isArray(parsed.simpleOverview?.simpleStepsToFix) && parsed.simpleOverview.simpleStepsToFix.length > 0
+      ? parsed.simpleOverview.simpleStepsToFix
+      : (Array.isArray(parsed.recommendations) ? parsed.recommendations.map((r: any) => r.action) : ["Check Wi-Fi connection"]),
+    experienceRating: parsed.simpleOverview?.experienceRating || (diagnosis.status === 'HEALTHY' ? 'Optimal Performance' : 'Performance Degraded')
+  };
+
   return {
     summary: parsed.summary || "Diagnostic analysis generated.",
     plainEnglishExplanation: parsed.plainEnglishExplanation || "",
+    simpleOverview,
     confirmedFacts: Array.isArray(parsed.confirmedFacts) ? parsed.confirmedFacts : diagnosis.evidence,
     possibleHypotheses: Array.isArray(parsed.possibleHypotheses) ? parsed.possibleHypotheses : diagnosis.possible_causes,
     recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ClientDevice, StructuredDiagnosis, WiFiBand, WiFiStandard } from '../layer1_data/types';
 import { LLMExplanationResponse } from '../layer3_llm/types';
+import { SuperSimpleOverview } from './SuperSimpleOverview';
 import { RFLinkBudgetGauge } from './RFLinkBudgetGauge';
 import { CapabilityMatrix } from './CapabilityMatrix';
 import { DiagnosticInspector } from './DiagnosticInspector';
@@ -8,7 +9,7 @@ import { ExplanationCard } from './ExplanationCard';
 import { getDeviceIconComponent, getFriendlyBadgeText } from './DeviceCard';
 import { IconSparkles, IconSignal, IconCpu, IconSliders } from './SvgIcons';
 
-export type DetailTab = 'EXPLANATION' | 'TELEMETRY' | 'CAPABILITIES' | 'SCORES' | 'TUNER';
+export type DetailTab = 'SIMPLE' | 'EXPLANATION' | 'TELEMETRY' | 'CAPABILITIES' | 'SCORES' | 'TUNER';
 
 interface DeviceDetailHubProps {
   device: ClientDevice;
@@ -31,7 +32,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
   onTriggerExplanation,
   onOpenKeyModal
 }) => {
-  const [activeTab, setActiveTab] = useState<DetailTab>('EXPLANATION');
+  const [activeTab, setActiveTab] = useState<DetailTab>('SIMPLE');
 
   const badgeInfo = getFriendlyBadgeText(diagnosis);
   const icon = getDeviceIconComponent(device.deviceType, device.hostname);
@@ -92,11 +93,20 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
       <div className="hub-tab-bar">
         <button
           type="button"
+          className={`hub-tab-btn ${activeTab === 'SIMPLE' ? 'active' : ''}`}
+          onClick={() => setActiveTab('SIMPLE')}
+        >
+          <span style={{ fontSize: '13px' }}>💡</span>
+          <span>Simple Plain English Overview</span>
+        </button>
+
+        <button
+          type="button"
           className={`hub-tab-btn ${activeTab === 'EXPLANATION' ? 'active' : ''}`}
           onClick={() => setActiveTab('EXPLANATION')}
         >
           <IconSparkles size={14} />
-          <span>Root Cause & AI Fixes</span>
+          <span>Diagnostic AI Deep-Dive</span>
         </button>
 
         <button
@@ -146,7 +156,22 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
           </div>
         )}
 
-        {/* TAB 1: ROOT CAUSE & AI FIXES */}
+        {/* TAB 0: SUPER SIMPLE OVERVIEW */}
+        {activeTab === 'SIMPLE' && (
+          <div className="tab-pane-fade">
+            <SuperSimpleOverview
+              diagnosis={diagnosis}
+              explanation={explanation}
+              isLoading={isLoading}
+              error={error}
+              onRefresh={onTriggerExplanation}
+              onOpenKeyModal={onOpenKeyModal}
+              onSwitchToTechnical={() => setActiveTab('TELEMETRY')}
+            />
+          </div>
+        )}
+
+        {/* TAB 1: DIAGNOSTIC AI DEEP-DIVE */}
         {activeTab === 'EXPLANATION' && (
           <div className="tab-pane-fade">
             <ExplanationCard
