@@ -15,6 +15,7 @@ import { DeviceDetailHub } from './components/DeviceDetailHub';
 import { ClientTable } from './components/ClientTable';
 import { ApiKeySetupScreen } from './components/ApiKeySetupScreen';
 import { NetworkReportModal } from './components/NetworkReportModal';
+import { StaggeredMenu, StaggeredMenuItem, StaggeredMenuSocialItem } from './components/StaggeredMenu';
 import { IconRadar, IconKey, IconRouter, IconDashboard, IconRule } from './components/SvgIcons';
 
 const STORAGE_KEY = 'wavescope_gemini_api_key';
@@ -218,7 +219,7 @@ export function App() {
   };
 
   // Run Whole-Network Diagnostic Audit
-  const handleRunNetworkAudit = async () => {
+  const handleRunNetworkAudit = useCallback(async () => {
     setShowReportModal(true);
     setIsScanLoading(true);
     setScanError(null);
@@ -234,7 +235,7 @@ export function App() {
     } finally {
       setIsScanLoading(false);
     }
-  };
+  }, [mode, apiKey]);
 
   const handleSelectDevice = (device: ClientDevice) => {
     setSelectedDeviceId(device.id);
@@ -256,6 +257,42 @@ export function App() {
     setSimulatedDevices(prev => prev.map(d => d.id === updatedDevice.id ? updatedDevice : d));
   };
 
+  // Menu items for StaggeredMenu
+  const menuItems = useMemo<StaggeredMenuItem[]>(() => [
+    {
+      label: 'Fleet Clients',
+      ariaLabel: 'View connected client fleet workspace',
+      onClick: () => setActiveNav('CLIENTS')
+    },
+    {
+      label: 'Telemetry Matrix',
+      ariaLabel: 'Open telemetry and RF matrix table',
+      onClick: () => setActiveNav('OVERVIEW')
+    },
+    {
+      label: 'Diagnostic Rules',
+      ariaLabel: 'Inspect Layer 2 deterministic rules specification',
+      onClick: () => setActiveNav('RULES')
+    },
+    {
+      label: 'Network Audit',
+      ariaLabel: 'Execute whole network AI security and RF audit',
+      onClick: () => handleRunNetworkAudit()
+    },
+    {
+      label: 'Gemini API Key',
+      ariaLabel: 'Configure Google Gemini API key',
+      onClick: () => setShowKeyModal(true)
+    }
+  ], [handleRunNetworkAudit]);
+
+  const socialItems = useMemo<StaggeredMenuSocialItem[]>(() => [
+    { label: 'GitHub Repo', link: 'https://github.com/khost-07/WaveScope' },
+    { label: 'Google AI Studio', link: 'https://aistudio.google.com/app/apikey' },
+    { label: 'Simulation Fleet', link: '#simulation', onClick: () => setMode('SIMULATION') },
+    { label: 'Live WLAN Probe', link: '#real', onClick: () => setMode('REAL') }
+  ], []);
+
   if (!hasCompletedSetup) {
     return <ApiKeySetupScreen initialKey={apiKey} onSaveKey={handleSaveApiKey} />;
   }
@@ -263,9 +300,9 @@ export function App() {
   const activeAp = devices[0]?.apCapabilities || SIMULATED_AP;
 
   return (
-    <div className="bg-[#F4F5F7] text-[#0F1113] font-['Hanken_Grotesk',sans-serif] min-h-screen flex flex-col antialiased">
+    <div className="bg-[#F4F5F7] text-[#0F1113] font-['Hanken_Grotesk',sans-serif] min-h-screen flex flex-col antialiased relative">
       {/* Stitch TopNavBar */}
-      <header className="bg-white border-b border-[#E2E5E9] fixed top-0 left-0 right-0 z-50 h-12 flex justify-between items-center px-6">
+      <header className="bg-white border-b border-[#E2E5E9] fixed top-0 left-0 right-0 z-40 h-12 flex justify-between items-center px-6">
         <div className="flex items-center gap-3">
           <IconRadar size={22} className="text-black" />
           <span className="text-[17px] font-bold text-black tracking-tight">WaveScope</span>
@@ -309,20 +346,37 @@ export function App() {
 
           <button
             type="button"
-            className="btn-instrument-secondary"
+            className="btn-instrument-secondary hidden sm:inline-flex"
             onClick={() => setShowKeyModal(true)}
             title="Configure Gemini API Key"
           >
             <IconKey size={15} />
             <span>API Key</span>
           </button>
+
+          {/* StaggeredMenu Trigger in Header */}
+          <div className="relative pl-1">
+            <StaggeredMenu
+              position="right"
+              items={menuItems}
+              socialItems={socialItems}
+              displaySocials={true}
+              displayItemNumbering={true}
+              menuButtonColor="#0F1113"
+              openMenuButtonColor="#0F1113"
+              changeMenuColorOnOpen={true}
+              colors={['#0F1113', '#23272B', '#E2E5E9']}
+              accentColor="#16A34A"
+              isFixed={true}
+            />
+          </div>
         </div>
       </header>
 
       {/* Main Container with Sidebar */}
       <div className="flex pt-12 min-h-screen">
         {/* Stitch SideNavBar */}
-        <aside className="fixed left-0 top-12 bottom-0 w-60 border-r border-[#E2E5E9] bg-white flex flex-col z-40 hidden md:flex">
+        <aside className="fixed left-0 top-12 bottom-0 w-60 border-r border-[#E2E5E9] bg-white flex flex-col z-30 hidden md:flex">
           <div className="p-4 border-b border-[#E2E5E9]">
             <div className="text-[14px] font-bold text-black">WaveScope Inspector</div>
             <div className="text-[11px] font-mono text-[#6B7280] mt-0.5 truncate">{provenance.sourceIdentifier}</div>
