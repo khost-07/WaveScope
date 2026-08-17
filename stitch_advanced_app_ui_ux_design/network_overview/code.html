@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>WaveScope - Overview</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#1a1c1c",
+                        "surface-container-low": "#f3f3f4",
+                        "tertiary-fixed-dim": "#cac6c4",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed-variant": "#474746",
+                        "tertiary": "#000000",
+                        "status-critical": "#D32F2F",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-container": "#868382",
+                        "surface-container-highest": "#e2e2e2",
+                        "inverse-primary": "#c8c6c5",
+                        "on-primary-container": "#858383",
+                        "inverse-on-surface": "#f0f1f1",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#1c1b1a",
+                        "secondary-container": "#dddddd",
+                        "outline": "#747878",
+                        "surface-variant": "#e2e2e2",
+                        "surface-container-high": "#e8e8e8",
+                        "status-healthy": "#2E7D32",
+                        "surface": "#f9f9f9",
+                        "inverse-surface": "#2f3131",
+                        "status-neutral": "#455A64",
+                        "on-secondary-fixed-variant": "#454747",
+                        "on-tertiary-fixed-variant": "#484645",
+                        "surface-dim": "#dadada",
+                        "primary-fixed": "#e5e2e1",
+                        "status-attention": "#F57C00",
+                        "secondary": "#5d5f5f",
+                        "secondary-fixed-dim": "#c6c6c6",
+                        "border-subtle": "#E5E5E5",
+                        "outline-variant": "#c4c7c7",
+                        "surface-bright": "#f9f9f9",
+                        "tertiary-fixed": "#e6e2df",
+                        "error-container": "#ffdad6",
+                        "on-surface": "#1a1c1c",
+                        "primary": "#000000",
+                        "primary-container": "#1c1b1b",
+                        "on-tertiary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface-tint": "#5f5e5e",
+                        "error": "#ba1a1a",
+                        "tertiary-container": "#1c1b1a",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "background": "#f9f9f9",
+                        "on-secondary-container": "#606161",
+                        "on-surface-variant": "#444748",
+                        "surface-offset": "#FAFAFA",
+                        "on-primary-fixed": "#1c1b1b",
+                        "secondary-fixed": "#e2e2e2",
+                        "surface-container": "#eeeeee",
+                        "surface-container-lowest": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "gutter": "16px",
+                        "margin": "24px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Hanken Grotesk"],
+                        "data-md": ["JetBrains Mono"],
+                        "data-sm": ["JetBrains Mono"],
+                        "body-md": ["Hanken Grotesk"],
+                        "data-lg": ["JetBrains Mono"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "label-caps": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "data-md": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                        "data-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "data-lg": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .sim-pattern {
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0, 0, 0, 0.05) 10px, rgba(0, 0, 0, 0.05) 20px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-on-background text-primary dark:text-primary-fixed border-b border-outline-variant dark:border-outline fixed top-0 w-full z-50 h-12 flex justify-between items-center px-margin max-w-container-max mx-auto">
+<div class="text-headline-md font-headline-md font-bold tracking-tight text-primary dark:text-primary-fixed">WaveScope</div>
+<div class="flex items-center gap-4">
+<div class="flex border border-primary rounded-none h-8 text-data-sm font-data-sm">
+<button class="px-3 bg-primary text-on-primary sim-pattern flex items-center justify-center border-r border-primary hover:bg-surface-container-low transition-colors duration-100">SIM</button>
+<button class="px-3 text-primary bg-transparent hover:bg-surface-container-low transition-colors duration-100 flex items-center justify-center">Live Data</button>
+</div>
+</div>
+</header>
+<!-- SideNavBar & Main Content Wrapper -->
+<div class="flex pt-12 min-h-screen">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-12 bottom-0 flex flex-col z-40 border-r border-outline-variant dark:border-outline bg-surface dark:bg-on-background text-primary dark:text-primary-fixed w-64 pt-6">
+<div class="px-6 mb-6">
+<div class="font-headline-md text-headline-md text-primary dark:text-primary-fixed">WaveScope Admin</div>
+<div class="text-data-sm font-data-sm text-on-surface-variant dark:text-on-surface-variant mt-1">Network Node 01-A</div>
+</div>
+<div class="flex-1 flex flex-col gap-1 px-4">
+<a class="flex items-center gap-3 px-3 py-2 bg-surface-container-high dark:bg-surface-container-highest text-primary dark:text-primary-fixed border-l-2 border-primary hover:bg-surface-container-low dark:hover:bg-surface-container-high translate-x-1 transition-transform duration-75" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="font-label-caps text-label-caps">Overview</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors duration-100" href="#">
+<span class="material-symbols-outlined text-[20px]">router</span>
+<span class="font-label-caps text-label-caps">Connected Clients</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors duration-100" href="#">
+<span class="material-symbols-outlined text-[20px]">rule</span>
+<span class="font-label-caps text-label-caps">Diagnostic Rules</span>
+</a>
+</div>
+<div class="mt-auto px-4 pb-6 flex flex-col gap-1 border-t border-border-subtle pt-4">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors duration-100" href="#">
+<span class="material-symbols-outlined text-[20px]">terminal</span>
+<span class="font-label-caps text-label-caps">System Logs</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors duration-100" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+</div>
+</nav>
+<!-- Main Area -->
+<main class="ml-64 flex-1 p-margin flex flex-col gap-gutter">
+<!-- Summary Row -->
+<div class="grid grid-cols-4 gap-gutter border-b border-border-subtle pb-gutter">
+<div class="border border-border-subtle p-unit rounded-none">
+<div class="font-label-caps text-label-caps text-on-surface-variant px-2 py-1">TOTAL CLIENTS</div>
+<div class="font-data-lg text-data-lg px-2 pb-1">24</div>
+</div>
+<div class="border border-status-healthy p-unit rounded-none bg-status-healthy/5">
+<div class="font-label-caps text-label-caps text-status-healthy px-2 py-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">check_circle</span> HEALTHY</div>
+<div class="font-data-lg text-data-lg text-status-healthy px-2 pb-1">18</div>
+</div>
+<div class="border border-status-attention p-unit rounded-none bg-status-attention/5">
+<div class="font-label-caps text-label-caps text-status-attention px-2 py-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">warning</span> ATTENTION</div>
+<div class="font-data-lg text-data-lg text-status-attention px-2 pb-1">4</div>
+</div>
+<div class="border border-status-critical p-unit rounded-none bg-status-critical/5">
+<div class="font-label-caps text-label-caps text-status-critical px-2 py-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">error</span> CRITICAL</div>
+<div class="font-data-lg text-data-lg text-status-critical px-2 pb-1">2</div>
+</div>
+</div>
+<!-- Primary Device Table -->
+<div class="border border-border-subtle rounded-none overflow-x-auto">
+<table class="w-full text-left border-collapse min-w-[800px]">
+<thead>
+<tr class="bg-surface-offset border-b border-border-subtle font-label-caps text-label-caps text-on-surface-variant">
+<th class="py-2 px-3 border-r border-border-subtle w-32">STATUS</th>
+<th class="py-2 px-3 border-r border-border-subtle">DEVICE</th>
+<th class="py-2 px-3 border-r border-border-subtle">BAND</th>
+<th class="py-2 px-3 border-r border-border-subtle text-right">RSSI</th>
+<th class="py-2 px-3 border-r border-border-subtle text-right">SNR</th>
+<th class="py-2 px-3 text-right">LINK RATE</th>
+</tr>
+</thead>
+<tbody class="font-data-md text-data-md">
+<!-- Row 1: Healthy -->
+<tr class="border-b border-border-subtle hover:bg-surface-offset group">
+<td class="py-2 px-3 border-r border-border-subtle">
+<div class="inline-flex items-center gap-1 border border-status-healthy text-status-healthy px-1">
+<span class="material-symbols-outlined text-[12px]">check_box</span><span class="text-[10px]">HEALTHY</span>
+</div>
+</td>
+<td class="py-2 px-3 border-r border-border-subtle">iPhone 15 Pro</td>
+<td class="py-2 px-3 border-r border-border-subtle">6GHz</td>
+<td class="py-2 px-3 border-r border-border-subtle text-right">-45 dBm</td>
+<td class="py-2 px-3 border-r border-border-subtle text-right">35 dB</td>
+<td class="py-2 px-3 text-right">1200 Mbps</td>
+</tr>
+<!-- Row 2: Weak Signal -->
+<tr class="border-b border-border-subtle hover:bg-surface-offset bg-status-attention/5 group">
+<td class="py-2 px-3 border-r border-border-subtle">
+<div class="inline-flex items-center gap-1 border border-status-attention text-status-attention px-1">
+<span class="material-symbols-outlined text-[12px]">warning</span><span class="text-[10px]">ATTENTION</span>
+</div>
+</td>
+<td class="py-2 px-3 border-r border-border-subtle">Guest_Laptop</td>
+<td class="py-2 px-3 border-r border-border-subtle">5GHz</td>
+<td class="py-2 px-3 border-r border-border-subtle text-right text-status-attention">-76 dBm</td>
+<td class="py-2 px-3 border-r border-border-subtle text-right text-status-attention">11 dB</td>
+<td class="py-2 px-3 text-right text-status-attention">54 Mbps</td>
+</tr>
+<!-- Row 3: Interference -->
+<tr class="border-b border-border-subtle hover:bg-surface-offset bg-status-critical/5 group">
+<td class="py-2 px-3 border-r border-border-subtle">
+<div class="inline-flex items-center gap-1 border border-status-critical text-status-critical px-1">
+<span class="material-symbols-outlined text-[12px]">error</span><span class="text-[10px]">CRITICAL</span>
+</div>
+</td>
+<td class="py-2 px-3 border-r border-border-subtle">Office_Tablet</td>
+<td class="py-2 px-3 border-r border-border-subtle">2.4GHz</td>
+<td class="py-2 px-3 border-r border-border-subtle text-right">-45 dBm</td>
+<td class="py-2 px-3 border-r border-border-subtle text-right text-status-critical">10 dB</td>
+<td class="py-2 px-3 text-right text-status-critical">12 Mbps</td>
+</tr>
+<!-- Row 4: Hardware Limited -->
+<tr class="border-b border-border-subtle hover:bg-surface-offset group">
+<td class="py-2 px-3 border-r border-border-subtle">
+<div class="inline-flex items-center gap-1 border border-status-healthy text-status-healthy px-1">
+<span class="material-symbols-outlined text-[12px]">check_box</span><span class="text-[10px]">HEALTHY</span>
+</div>
+</td>
+<td class="py-2 px-3 border-r border-border-subtle">Legacy_IoT</td>
+<td class="py-2 px-3 border-r border-border-subtle">2.4GHz</td>
+<td class="py-2 px-3 border-r border-border-subtle text-right">-50 dBm</td>
+<td class="py-2 px-3 border-r border-border-subtle text-right">30 dB</td>
+<td class="py-2 px-3 text-right">72 Mbps</td>
+</tr>
+<!-- Row 5: Band Selection -->
+<tr class="hover:bg-surface-offset bg-status-attention/5 group">
+<td class="py-2 px-3 border-r border-border-subtle">
+<div class="inline-flex items-center gap-1 border border-status-attention text-status-attention px-1">
+<span class="material-symbols-outlined text-[12px]">warning</span><span class="text-[10px]">ATTENTION</span>
+</div>
+</td>
+<td class="py-2 px-3 border-r border-border-subtle">Dev_Workstation</td>
+<td class="py-2 px-3 border-r border-border-subtle text-status-attention">2.4GHz <span class="text-[10px] text-on-surface-variant">(6GHz capable)</span></td>
+<td class="py-2 px-3 border-r border-border-subtle text-right">-48 dBm</td>
+<td class="py-2 px-3 border-r border-border-subtle text-right">34 dB</td>
+<td class="py-2 px-3 text-right">144 Mbps</td>
+</tr>
+</tbody>
+</table>
+</div>
+</main>
+</div>
+</body></html>

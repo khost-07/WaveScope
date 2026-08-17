@@ -6,10 +6,9 @@ interface RFLinkBudgetGaugeProps {
 }
 
 export const RFLinkBudgetGauge: React.FC<RFLinkBudgetGaugeProps> = ({ telemetry }) => {
-  // Scale range: -100 dBm to -30 dBm
   const minDbm = -100;
   const maxDbm = -30;
-  const range = maxDbm - minDbm; // 70 dB
+  const range = maxDbm - minDbm;
 
   const getPositionPercent = (dbm: number) => {
     const clamped = Math.max(minDbm, Math.min(maxDbm, dbm));
@@ -20,85 +19,73 @@ export const RFLinkBudgetGauge: React.FC<RFLinkBudgetGaugeProps> = ({ telemetry 
   const noisePos = getPositionPercent(telemetry.noiseFloor_dBm);
   const snrWidth = Math.max(0, rssiPos - noisePos);
 
-  const isRssiGood = telemetry.rssi_dBm >= -65;
-  const isRssiMarginal = telemetry.rssi_dBm < -65 && telemetry.rssi_dBm >= -74;
   const isSnrGood = telemetry.snr_dB >= 25;
   const isSnrMarginal = telemetry.snr_dB < 25 && telemetry.snr_dB >= 15;
 
   return (
-    <div className="rf-gauge-card">
-      <div className="rf-gauge-header">
-        <div>
-          <span className="rf-gauge-title">RF Physical Link Budget & Spectrum Separation</span>
-          <span className="rf-gauge-sub mono">
-            {telemetry.band} &bull; Channel {telemetry.channel} ({telemetry.channelWidthMHz} MHz) &bull; {telemetry.standard}
-          </span>
-        </div>
-        <div className="rf-snr-badge mono">
-          SNR MARGIN: <strong style={{ color: isSnrGood ? '#16A34A' : isSnrMarginal ? '#D97706' : '#DC2626' }}>{telemetry.snr_dB} dB</strong>
-        </div>
+    <div className="border border-border-subtle bg-surface p-4 space-y-4">
+      <div className="flex items-center justify-between border-b border-border-subtle pb-2">
+        <h3 className="font-label-caps text-secondary flex items-center">
+          <span className="material-symbols-outlined mr-1.5 text-[16px]">stacked_bar_chart</span>
+          RF Physical Link Budget & Spectrum Separation
+        </h3>
+        <span className="font-data-sm text-primary font-bold">
+          SNR: <strong style={{ color: isSnrGood ? 'var(--status-healthy)' : isSnrMarginal ? 'var(--status-attention)' : 'var(--status-critical)' }}>{telemetry.snr_dB} dB</strong>
+        </span>
       </div>
 
-      {/* Visual Spectrum Bar */}
-      <div className="rf-bar-wrapper">
-        <div className="rf-bar-track">
-          {/* Signal to Noise span */}
+      {/* Spectrum Scale Bar */}
+      <div className="space-y-2 pt-4 pb-2">
+        <div className="relative h-6 bg-surface-highest border border-border-subtle">
+          {/* SNR span */}
           <div
-            className={`rf-snr-span ${isSnrGood ? 'optimal' : isSnrMarginal ? 'marginal' : 'critical'}`}
+            className="absolute top-0 bottom-0 bg-primary/20 border-x border-primary flex items-center justify-center font-data-sm text-[10px] text-primary font-bold overflow-hidden"
             style={{
               left: `${noisePos}%`,
               width: `${snrWidth}%`
             }}
           >
-            <span className="snr-span-label mono">{telemetry.snr_dB} dB SNR</span>
+            {telemetry.snr_dB} dB SNR
           </div>
 
-          {/* Noise Floor Marker */}
+          {/* Noise Marker */}
           <div
-            className="rf-marker noise"
+            className="absolute top-0 bottom-0 w-0.5 bg-status-critical"
             style={{ left: `${noisePos}%` }}
-          >
-            <div className="marker-pin" />
-            <div className="marker-label mono">
-              Noise: {telemetry.noiseFloor_dBm} dBm
-            </div>
-          </div>
+            title={`Noise Floor: ${telemetry.noiseFloor_dBm} dBm`}
+          />
 
           {/* RSSI Marker */}
           <div
-            className={`rf-marker rssi ${isRssiGood ? 'good' : isRssiMarginal ? 'marginal' : 'critical'}`}
+            className="absolute top-0 bottom-0 w-1 bg-primary"
             style={{ left: `${rssiPos}%` }}
-          >
-            <div className="marker-pin" />
-            <div className="marker-label mono">
-              RSSI: {telemetry.rssi_dBm} dBm
-            </div>
-          </div>
+            title={`RSSI: ${telemetry.rssi_dBm} dBm`}
+          />
         </div>
 
-        {/* Ticks and scale labels */}
-        <div className="rf-scale-ticks mono">
-          <span>-100 dBm (Dead Zone)</span>
+        {/* Ticks */}
+        <div className="flex justify-between font-data-sm text-[10px] text-muted">
+          <span>-100 dBm (Floor)</span>
           <span>-85 dBm (Nominal Noise)</span>
           <span>-70 dBm (Threshold)</span>
           <span>-55 dBm (Strong)</span>
-          <span>-30 dBm (Proximity Max)</span>
+          <span>-30 dBm (Max)</span>
         </div>
       </div>
 
-      {/* Mini Telemetry Highlights */}
-      <div className="rf-gauge-footer">
-        <div className="rf-stat-item">
-          <span className="rf-stat-label">Negotiated PHY:</span>
-          <span className="rf-stat-val mono">{telemetry.txLinkRate_Mbps} / {telemetry.rxLinkRate_Mbps} Mbps</span>
+      {/* Metric summary footer */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 pt-2 border-t border-border-subtle font-data-sm text-[11px]">
+        <div className="p-2 bg-surface-offset border border-border-subtle">
+          <span className="text-muted block">Negotiated PHY:</span>
+          <span className="font-bold text-primary">{telemetry.txLinkRate_Mbps} / {telemetry.rxLinkRate_Mbps} Mbps</span>
         </div>
-        <div className="rf-stat-item">
-          <span className="rf-stat-label">Modulation / Streams:</span>
-          <span className="rf-stat-val mono">MCS {telemetry.mcsIndex} ({telemetry.spatialStreams}x{telemetry.spatialStreams} MIMO)</span>
+        <div className="p-2 bg-surface-offset border border-border-subtle">
+          <span className="text-muted block">Modulation / MIMO:</span>
+          <span className="font-bold text-primary">MCS {telemetry.mcsIndex} ({telemetry.spatialStreams}x{telemetry.spatialStreams})</span>
         </div>
-        <div className="rf-stat-item">
-          <span className="rf-stat-label">Retransmission Rate:</span>
-          <span className="rf-stat-val mono" style={{ color: telemetry.retryRatePct >= 15 ? '#DC2626' : telemetry.retryRatePct >= 6 ? '#D97706' : '#16A34A', fontWeight: 700 }}>
+        <div className="p-2 bg-surface-offset border border-border-subtle">
+          <span className="text-muted block">Retransmission Rate:</span>
+          <span className="font-bold" style={{ color: telemetry.retryRatePct >= 15 ? 'var(--status-critical)' : 'inherit' }}>
             {telemetry.retryRatePct.toFixed(1)}% Retries
           </span>
         </div>

@@ -14,13 +14,14 @@ import { DeviceDetailHub } from './components/DeviceDetailHub';
 import { ClientTable } from './components/ClientTable';
 import { ApiKeySetupScreen } from './components/ApiKeySetupScreen';
 import { NetworkReportModal } from './components/NetworkReportModal';
-import { IconKey, IconSparkles } from './components/SvgIcons';
 
 const STORAGE_KEY = 'wavescope_gemini_api_key';
 
+type NavSection = 'OVERVIEW' | 'CLIENTS' | 'RULES';
+
 export function App() {
   const [mode, setMode] = useState<DataSourceMode>('SIMULATION');
-  const [viewLayout, setViewLayout] = useState<'WORKSPACE' | 'TABLE'>('WORKSPACE');
+  const [activeNav, setActiveNav] = useState<NavSection>('CLIENTS');
   const [simulatedDevices, setSimulatedDevices] = useState<ClientDevice[]>(SIMULATION_SCENARIOS);
   const [devices, setDevices] = useState<ClientDevice[]>(SIMULATION_SCENARIOS);
   const [activeFilter, setActiveFilter] = useState<'ALL' | DiagnosticStatus>('ALL');
@@ -98,147 +99,118 @@ export function App() {
     return diagnoses[selectedDevice.id] || runDiagnosticEngine(selectedDevice);
   }, [selectedDevice, diagnoses]);
 
-  // Trigger LLM Live API Explanation on explicit device selection (Layer 3)
-  const triggerExplanationForDevice = useCallback(async (device: ClientDevice, diagnosis: StructuredDiagnosis, keyToUse?: string) => {
-    const activeKey = keyToUse !== undefined ? keyToUse : apiKey;
-    if (!activeKey || !activeKey.trim()) {
-      setLlmErrors(prev => ({
-        ...prev,
-        [device.id]: 'No Gemini API key configured. Please enter your API key.'
-      }));
+  // Handle data loading when mode toggles
+  useEffect(() => {
+    async function fetchData() {
+      if (mode === 'SIMULATION') {
+        setDevices(simulatedDevices);
+        setProvenance({
+          mode: 'SIMULATION',
+          sourceIdentifier: 'Controlled RF Simulation Dataset (Scenarios A–E)',
+          adapterName: 'Simulated Tri-Band 802.11ax AP Testbed',
+          lastUpdated: Date.now(),
+          isDeterministic: true
+        });
+        setRealError(null);
+      } else {
+        try {
+          const result = await loadDevices('REAL');
+          setDevices(result.devices);
+          setProvenance(result.provenance);
+          setRealError(null);
+          if (result.devices.length > 0) {
+            setSelectedDeviceId(result.devices[0].id);
+          }
+        } catch (err: any) {
+          console.warn('[WaveScope] Real mode telemetry fetch error:', err.message);
+          setRealError(err.message || 'Could not connect to local wlanScanner probe daemon.');
+        }
+      }
+    }
+    fetchData();
+  }, [mode, simulatedDevices]);
+
+  // Trigger Gemini Layer 3 explanation for a given device
+  const triggerExplanationForDevice = useCallback(async (dev: ClientDevice, diag: StructuredDiagnosis) => {
+    if (!apiKey) {
+      setShowKeyModal(true);
       return;
     }
-
     setIsLlmLoading(true);
-    setLlmErrors(prev => ({ ...prev, [device.id]: null }));
+    setLlmErrors(prev => ({ ...prev, [dev.id]: null }));
 
     try {
-      const result = await generateExplanation(device, diagnosis, activeKey);
-      setExplanations(prev => ({
-        ...prev,
-        [device.id]: result
-      }));
-      setLlmErrors(prev => ({
-        ...prev,
-        [device.id]: null
-      }));
+      const resp = await generateExplanation(dev, diag, apiKey);
+      setExplanations(prev => ({ ...prev, [dev.id]: resp }));
     } catch (err: any) {
-      console.error('Error generating explanation via Live API:', err);
+      console.error('[WaveScope] Layer 3 Gemini Error:', err);
       setLlmErrors(prev => ({
         ...prev,
-        [device.id]: err.message || 'Failed to generate explanation from Gemini API.'
+        [dev.id]: err.message || 'Inference error calling Google Gemini API.'
       }));
     } finally {
       setIsLlmLoading(false);
     }
   }, [apiKey]);
 
-  // Handle Full-Network Scan & AI Report
+  // Trigger explanation automatically when selected device changes
+  useEffect(() => {
+    if (selectedDevice && selectedDiagnosis && !explanations[selectedDevice.id] && hasCompletedSetup && apiKey) {
+      triggerExplanationForDevice(selectedDevice, selectedDiagnosis);
+    }
+  }, [selectedDeviceId, selectedDevice, selectedDiagnosis, explanations, hasCompletedSetup, apiKey, triggerExplanationForDevice]);
+
+  // Handle saving API key
+  const handleSaveApiKey = (newKey: string, persist: boolean) => {
+    const clean = newKey.trim();
+    setApiKey(clean);
+    if (persist) {
+      localStorage.setItem(STORAGE_KEY, clean);
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    setHasCompletedSetup(true);
+    setShowKeyModal(false);
+    if (selectedDevice && selectedDiagnosis) {
+      triggerExplanationForDevice(selectedDevice, selectedDiagnosis);
+    }
+  };
+
+  const handleClearApiKey = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    setApiKey('');
+    setHasCompletedSetup(false);
+    setShowKeyModal(false);
+    setExplanations({});
+  };
+
+  // Run Whole-Network Diagnostic Audit
   const handleRunNetworkAudit = async () => {
     setShowReportModal(true);
     setIsScanLoading(true);
     setScanError(null);
 
     try {
-      // Step 1: Scan Network (Router + Subnet Devices)
-      const scan = await scanLocalNetwork(mode);
-      setScanResult(scan);
-
-      // Step 2: Generate AI Report with Gemini 3.1 Flash Lite
-      const report = await generateNetworkAuditReport(scan, apiKey);
-      setAuditReport(report);
+      const scanRes = await scanLocalNetwork(mode);
+      setScanResult(scanRes);
+      const rep = await generateNetworkAuditReport(scanRes, apiKey);
+      setAuditReport(rep);
     } catch (err: any) {
-      console.error('Failed to generate full network audit report:', err);
-      setScanError(err.message || 'Network scan failed. Please check your Gemini API key and try again.');
+      console.error('[WaveScope] Whole-Network Scan Error:', err);
+      setScanError(err.message || 'Network sweep failed. Ensure local probe is accessible.');
     } finally {
       setIsScanLoading(false);
     }
   };
 
-  // Save API Key from Setup Screen
-  const handleSaveApiKey = (newKey: string, persist: boolean) => {
-    setApiKey(newKey);
-    if (persist) {
-      localStorage.setItem(STORAGE_KEY, newKey);
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
-    }
-    setHasCompletedSetup(true);
-    setShowKeyModal(false);
-
-    if (selectedDevice && selectedDiagnosis) {
-      triggerExplanationForDevice(selectedDevice, selectedDiagnosis, newKey);
-    }
-  };
-
-  // Clear API Key
-  const handleClearApiKey = () => {
-    setApiKey('');
-    localStorage.removeItem(STORAGE_KEY);
-    setHasCompletedSetup(false);
-    setShowKeyModal(false);
-  };
-
-  // Load devices on data mode change
-  useEffect(() => {
-    let isMounted = true;
-    async function updateData() {
-      const res = await loadDevices(mode, simulatedDevices);
-      if (!isMounted) return;
-
-      setDevices(res.devices);
-      setProvenance(res.provenance);
-
-      if (mode === 'REAL') {
-        if (res.realProbeStatus?.errorMessage) {
-          setRealError(res.realProbeStatus.errorMessage);
-        } else {
-          setRealError(null);
-        }
-      } else {
-        setRealError(null);
-      }
-
-      if (res.devices.length > 0) {
-        const first = res.devices[0];
-        setSelectedDeviceId(first.id);
-        if (hasCompletedSetup && apiKey) {
-          const diag = runDiagnosticEngine(first);
-          triggerExplanationForDevice(first, diag);
-        }
-      } else {
-        setSelectedDeviceId(null);
-      }
-    }
-
-    updateData();
-    return () => { isMounted = false; };
-  }, [mode, simulatedDevices, hasCompletedSetup, apiKey, triggerExplanationForDevice]);
-
-  // Handle device selection
   const handleSelectDevice = (device: ClientDevice) => {
     setSelectedDeviceId(device.id);
     const diag = diagnoses[device.id] || runDiagnosticEngine(device);
-    if (hasCompletedSetup && apiKey) {
+    if (!explanations[device.id] && apiKey) {
       triggerExplanationForDevice(device, diag);
     }
   };
 
-  // Handle live telemetry tweak in interactive simulator
-  const handleUpdateDeviceTelemetry = (updatedDevice: ClientDevice) => {
-    const nextList = devices.map(d => d.id === updatedDevice.id ? updatedDevice : d);
-    setDevices(nextList);
-    if (mode === 'SIMULATION') {
-      setSimulatedDevices(nextList);
-    }
-    // Re-evaluate diagnosis
-    const diag = runDiagnosticEngine(updatedDevice);
-    if (hasCompletedSetup && apiKey) {
-      triggerExplanationForDevice(updatedDevice, diag);
-    }
-  };
-
-  // Quick scenario selector helper
   const handleQuickScenario = (scenarioId: string) => {
     const target = devices.find(d => d.scenarioId === scenarioId);
     if (target) {
@@ -246,205 +218,261 @@ export function App() {
     }
   };
 
-  // Active AP
-  const activeAp = selectedDevice?.apCapabilities || SIMULATED_AP;
+  const handleUpdateDeviceTelemetry = (updatedDevice: ClientDevice) => {
+    setDevices(prev => prev.map(d => d.id === updatedDevice.id ? updatedDevice : d));
+    setSimulatedDevices(prev => prev.map(d => d.id === updatedDevice.id ? updatedDevice : d));
+  };
 
-  // IF NO API KEY IS CONFIGURED YET -> SHOW ONBOARDING / SETUP SCREEN FIRST
-  if (!hasCompletedSetup || !apiKey) {
-    return (
-      <ApiKeySetupScreen
-        initialKey={apiKey}
-        onSaveKey={handleSaveApiKey}
-      />
-    );
+  if (!hasCompletedSetup) {
+    return <ApiKeySetupScreen initialKey={apiKey} onSaveKey={handleSaveApiKey} />;
   }
 
+  const activeAp = devices[0]?.apCapabilities || SIMULATED_AP;
+
   return (
-    <div className="app-container">
-      {/* Top Navbar */}
-      <header className="app-navbar">
-        <div className="nav-left">
-          <div className="nav-brand-box">
-            <span className="nav-brand-logo">WS</span>
-            <div>
-              <div className="nav-brand-title">WaveScope</div>
-              <div className="nav-brand-sub">Wi-Fi Band & Root-Cause Diagnostic Tool</div>
-            </div>
-          </div>
+    <div className="bg-background text-on-background font-body-md min-h-screen flex flex-col antialiased">
+      {/* Stitch TopNavBar */}
+      <header className="bg-surface border-b border-border-subtle fixed top-0 w-full z-50 h-12 flex justify-between items-center px-6">
+        <div className="flex items-center gap-3">
+          <span className="material-symbols-outlined text-primary text-[22px]">radar</span>
+          <span className="font-headline-md font-bold text-primary tracking-tight">WaveScope</span>
+          <span className="badge-status font-data-sm text-[10px] hidden sm:inline-flex">Instrument Node 01-A</span>
         </div>
 
-        <div className="nav-center">
-          <div className="nav-segmented-toggle">
+        <div className="flex items-center gap-3">
+          {/* Mode Switcher */}
+          <div className="flex border border-primary h-8 font-data-sm">
             <button
               type="button"
-              className={`nav-seg-btn ${viewLayout === 'WORKSPACE' ? 'active' : ''}`}
-              onClick={() => setViewLayout('WORKSPACE')}
-            >
-              Interactive Workspace
-            </button>
-            <button
-              type="button"
-              className={`nav-seg-btn ${viewLayout === 'TABLE' ? 'active' : ''}`}
-              onClick={() => setViewLayout('TABLE')}
-            >
-              Spreadsheet View
-            </button>
-          </div>
-        </div>
-
-        <div className="nav-right">
-          {/* Run Full Network Audit Button */}
-          <button
-            type="button"
-            className="nav-btn-highlight"
-            onClick={handleRunNetworkAudit}
-            title="Scan entire network & generate AI health report"
-          >
-            <IconSparkles size={14} />
-            <span>Scan Network & Report</span>
-          </button>
-
-          {/* Data Mode Selector */}
-          <div className="data-source-pill-group">
-            <button
-              type="button"
-              className={`source-pill ${mode === 'SIMULATION' ? 'active' : ''}`}
+              className={`px-3 flex items-center justify-center border-r border-primary transition-colors ${
+                mode === 'SIMULATION' ? 'bg-primary text-on-primary sim-pattern font-bold' : 'text-primary hover:bg-surface-offset'
+              }`}
               onClick={() => setMode('SIMULATION')}
             >
-              Simulation Mode
+              SIMULATION
             </button>
             <button
               type="button"
-              className={`source-pill ${mode === 'REAL' ? 'active' : ''}`}
+              className={`px-3 flex items-center justify-center transition-colors ${
+                mode === 'REAL' ? 'bg-primary text-on-primary font-bold' : 'text-primary hover:bg-surface-offset'
+              }`}
               onClick={() => setMode('REAL')}
             >
-              Real Wi-Fi
+              LIVE DATA
             </button>
           </div>
 
-          {/* Settings / API Key */}
           <button
             type="button"
-            className="nav-btn-icon"
-            onClick={() => setShowKeyModal(true)}
-            title="Google Gemini API Configuration"
+            className="btn-instrument-primary hidden md:inline-flex"
+            onClick={handleRunNetworkAudit}
           >
-            <IconKey size={14} />
-            <span className="mono" style={{ fontSize: '11.5px' }}>API Key</span>
+            <span className="material-symbols-outlined text-[16px]">radar</span>
+            Whole Network Audit
+          </button>
+
+          <button
+            type="button"
+            className="btn-instrument-secondary"
+            onClick={() => setShowKeyModal(true)}
+            title="Configure Gemini API Key"
+          >
+            <span className="material-symbols-outlined text-[16px]">key</span>
+            API Key
           </button>
         </div>
       </header>
 
-      {/* Sub Header: Provenance & Status */}
-      <div className="app-sub-header">
-        <div className="provenance-chip">
-          <span className="prov-dot" />
-          <span className="prov-label mono">DATA PROVENANCE:</span>
-          <span className="prov-val mono">{provenance.sourceIdentifier}</span>
-          {provenance.adapterName && (
-            <span className="prov-sub mono">({provenance.adapterName})</span>
-          )}
-        </div>
-
-        <div className="model-active-badge mono">
-          <span>AI Engine: <strong>gemini-3.1-flash-lite</strong></span>
-          <span className="live-dot" />
-        </div>
-      </div>
-
-      {/* Real Mode Error / Setup helper if offline */}
-      {mode === 'REAL' && realError && (
-        <div className="real-status-banner">
-          <div>
-            <span className="banner-badge">[REAL TELEMETRY PROBE STATUS]</span>
-            <span className="banner-msg">{realError}</span>
-            <span className="banner-cmd mono">(To launch probe daemon: <code>node server/wlanScanner.cjs</code>)</span>
+      {/* Main Container with Sidebar */}
+      <div className="flex pt-12 min-h-screen">
+        {/* Stitch SideNavBar */}
+        <aside className="fixed left-0 top-12 bottom-0 w-64 border-r border-border-subtle bg-surface flex flex-col z-40 hidden md:flex">
+          <div className="p-4 border-b border-border-subtle">
+            <div className="font-headline-md text-primary text-[15px]">WaveScope Admin</div>
+            <div className="font-data-sm text-muted text-[11px] mt-0.5">{provenance.sourceIdentifier}</div>
           </div>
-          <button
-            type="button"
-            className="btn-banner-action"
-            onClick={() => setMode('SIMULATION')}
-          >
-            Switch to Simulation
-          </button>
-        </div>
-      )}
 
-      {/* Main Container */}
-      <main className="app-main-body">
-        {/* Network Health & Preset Bar */}
-        <NetworkOverviewBar
-          ap={activeAp}
-          stats={stats}
-          activeFilter={activeFilter}
-          onChangeFilter={setActiveFilter}
-          selectedScenarioId={selectedDevice?.scenarioId}
-          onSelectScenario={handleQuickScenario}
-          isSimulation={mode === 'SIMULATION'}
-          onOpenNetworkAudit={handleRunNetworkAudit}
-        />
+          <nav className="flex-1 p-2 space-y-1">
+            <button
+              type="button"
+              className={`w-full flex items-center gap-3 px-3 py-2 text-left font-label-caps transition-colors ${
+                activeNav === 'CLIENTS'
+                  ? 'bg-surface-offset text-primary border-l-2 border-primary font-bold'
+                  : 'text-secondary hover:bg-surface-offset'
+              }`}
+              onClick={() => setActiveNav('CLIENTS')}
+            >
+              <span className="material-symbols-outlined text-[18px]">router</span>
+              <span>Connected Clients</span>
+              <span className="ml-auto badge-status font-data-sm text-[9px]">{devices.length}</span>
+            </button>
 
-        {/* VIEW 1: MASTER-DETAIL INTERACTIVE WORKSPACE */}
-        {viewLayout === 'WORKSPACE' && (
-          <div className="workspace-grid">
-            {/* Left Pane: Device List */}
-            <section className="workspace-left">
-              <DeviceListPane
+            <button
+              type="button"
+              className={`w-full flex items-center gap-3 px-3 py-2 text-left font-label-caps transition-colors ${
+                activeNav === 'OVERVIEW'
+                  ? 'bg-surface-offset text-primary border-l-2 border-primary font-bold'
+                  : 'text-secondary hover:bg-surface-offset'
+              }`}
+              onClick={() => setActiveNav('OVERVIEW')}
+            >
+              <span className="material-symbols-outlined text-[18px]">dashboard</span>
+              <span>Overview Table</span>
+            </button>
+
+            <button
+              type="button"
+              className={`w-full flex items-center gap-3 px-3 py-2 text-left font-label-caps transition-colors ${
+                activeNav === 'RULES'
+                  ? 'bg-surface-offset text-primary border-l-2 border-primary font-bold'
+                  : 'text-secondary hover:bg-surface-offset'
+              }`}
+              onClick={() => setActiveNav('RULES')}
+            >
+              <span className="material-symbols-outlined text-[18px]">rule</span>
+              <span>Diagnostic Rules</span>
+            </button>
+          </nav>
+
+          <div className="p-3 border-t border-border-subtle space-y-1 font-data-sm text-[11px] text-muted">
+            <div>Engine: <strong>L2 Math Scoring</strong></div>
+            <div>AI: <strong>gemini-3.1-flash-lite</strong></div>
+          </div>
+        </aside>
+
+        {/* Main Content Area */}
+        <main className="md:ml-64 flex-1 p-6 space-y-6 max-w-6xl">
+          {/* Real Mode Error Alert if daemon not running */}
+          {mode === 'REAL' && realError && (
+            <div className="p-4 border border-status-critical bg-surface flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="font-label-caps text-status-critical font-bold">REAL WLAN PROBE STATUS</div>
+                <div className="font-data-sm text-secondary">{realError}</div>
+                <div className="font-data-sm text-muted">Run in terminal: <code>node server/wlanScanner.cjs</code></div>
+              </div>
+              <button
+                type="button"
+                className="btn-instrument-primary text-[11px]"
+                onClick={() => setMode('SIMULATION')}
+              >
+                Switch to Simulation
+              </button>
+            </div>
+          )}
+
+          {/* Overview Metric Bar */}
+          <NetworkOverviewBar
+            ap={activeAp}
+            stats={stats}
+            activeFilter={activeFilter}
+            onChangeFilter={setActiveFilter}
+            selectedScenarioId={selectedDevice?.scenarioId}
+            onSelectScenario={handleQuickScenario}
+            isSimulation={mode === 'SIMULATION'}
+            onOpenNetworkAudit={handleRunNetworkAudit}
+          />
+
+          {/* SECTION 1: CONNECTED CLIENTS WORKSPACE (MASTER-DETAIL) */}
+          {activeNav === 'CLIENTS' && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Left Column: Device List */}
+              <div className="lg:col-span-4">
+                <DeviceListPane
+                  devices={visibleDevices}
+                  diagnoses={diagnoses}
+                  selectedDeviceId={selectedDeviceId}
+                  onSelectDevice={handleSelectDevice}
+                />
+              </div>
+
+              {/* Right Column: Device Detail Intelligence Hub */}
+              <div className="lg:col-span-8">
+                {selectedDevice && selectedDiagnosis ? (
+                  <DeviceDetailHub
+                    device={selectedDevice}
+                    diagnosis={selectedDiagnosis}
+                    explanation={explanations[selectedDevice.id] || null}
+                    isLoading={isLlmLoading}
+                    error={llmErrors[selectedDevice.id]}
+                    onUpdateDeviceTelemetry={handleUpdateDeviceTelemetry}
+                    onTriggerExplanation={() => triggerExplanationForDevice(selectedDevice, selectedDiagnosis)}
+                    onOpenKeyModal={() => setShowKeyModal(true)}
+                  />
+                ) : (
+                  <div className="p-12 border border-border-subtle bg-surface text-center text-muted font-body-md">
+                    Select a client from the list to inspect root cause.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 2: HIGH-DENSITY PRIMARY DEVICE TABLE */}
+          {activeNav === 'OVERVIEW' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="font-headline-md text-primary">All Associated Clients Telemetry Matrix</h2>
+                <span className="font-data-sm text-muted">
+                  Showing {visibleDevices.length} of {devices.length} endpoints
+                </span>
+              </div>
+              <ClientTable
                 devices={visibleDevices}
                 diagnoses={diagnoses}
                 selectedDeviceId={selectedDeviceId}
-                onSelectDevice={handleSelectDevice}
+                onSelectDevice={(dev) => {
+                  handleSelectDevice(dev);
+                  setActiveNav('CLIENTS');
+                }}
               />
-            </section>
-
-            {/* Right Pane: Device Detail Intelligence Hub */}
-            <section className="workspace-right">
-              {selectedDevice && selectedDiagnosis ? (
-                <DeviceDetailHub
-                  device={selectedDevice}
-                  diagnosis={selectedDiagnosis}
-                  explanation={explanations[selectedDevice.id] || null}
-                  isLoading={isLlmLoading}
-                  error={llmErrors[selectedDevice.id]}
-                  onUpdateDeviceTelemetry={handleUpdateDeviceTelemetry}
-                  onTriggerExplanation={() => triggerExplanationForDevice(selectedDevice, selectedDiagnosis)}
-                  onOpenKeyModal={() => setShowKeyModal(true)}
-                />
-              ) : (
-                <div className="empty-workspace-state">
-                  <h3>No Device Selected</h3>
-                  <p>Select a client device from the list on the left to inspect its root-cause diagnosis.</p>
-                </div>
-              )}
-            </section>
-          </div>
-        )}
-
-        {/* VIEW 2: HIGH-DENSITY SPREADSHEET TABLE VIEW */}
-        {viewLayout === 'TABLE' && (
-          <div className="table-view-container">
-            <div className="table-view-header">
-              <span style={{ fontWeight: 700, fontSize: '14px', textTransform: 'uppercase' }}>
-                All Associated Clients Telemetry Grid
-              </span>
-              <span className="mono" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                Showing {visibleDevices.length} of {devices.length} endpoints
-              </span>
             </div>
-            <ClientTable
-              devices={visibleDevices}
-              diagnoses={diagnoses}
-              selectedDeviceId={selectedDeviceId}
-              onSelectDevice={(dev) => {
-                handleSelectDevice(dev);
-                setViewLayout('WORKSPACE');
-              }}
-            />
-          </div>
-        )}
-      </main>
+          )}
 
-      {/* WHOLE-NETWORK AUDIT & REPORT MODAL */}
+          {/* SECTION 3: DIAGNOSTIC RULES SPECIFICATION */}
+          {activeNav === 'RULES' && (
+            <div className="border border-border-subtle bg-surface p-6 space-y-4">
+              <div className="border-b border-border-subtle pb-3">
+                <h2 className="font-headline-lg text-primary">Layer 2 Deterministic Rule Engine</h2>
+                <p className="font-body-md text-secondary mt-1">
+                  WaveScope evaluates four competing physical RF hypotheses using local mathematical point thresholds without LLM dependence:
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 border border-border-subtle bg-surface-offset space-y-1">
+                  <div className="font-label-caps text-primary font-bold">1. Weak / Attenuated Signal</div>
+                  <p className="font-body-md text-secondary text-[13px]">
+                    Triggered when RSSI &le; -75 dBm, SNR &le; 15 dB, or Retries &ge; 15%. Confirms high physical path loss or excessive obstacle attenuation.
+                  </p>
+                </div>
+
+                <div className="p-4 border border-border-subtle bg-surface-offset space-y-1">
+                  <div className="font-label-caps text-primary font-bold">2. Possible RF Interference</div>
+                  <p className="font-body-md text-secondary text-[13px]">
+                    Triggered when RSSI &ge; -65 dBm but SNR &le; 12 dB or Noise Floor &ge; -70 dBm. Indicates heavy co-channel / non-Wi-Fi jamming.
+                  </p>
+                </div>
+
+                <div className="p-4 border border-border-subtle bg-surface-offset space-y-1">
+                  <div className="font-label-caps text-primary font-bold">3. Hardware / Capability Limited</div>
+                  <p className="font-body-md text-secondary text-[13px]">
+                    Triggered when device standard is 802.11n/legacy, 20MHz width, or 1x1 SISO while RF link is stable (SNR &ge; 25 dB).
+                  </p>
+                </div>
+
+                <div className="p-4 border border-border-subtle bg-surface-offset space-y-1">
+                  <div className="font-label-caps text-primary font-bold">4. Potential Band Selection Issue</div>
+                  <p className="font-body-md text-secondary text-[13px]">
+                    Triggered when a dual-band/tri-band device is associated on congested 2.4GHz despite strong signal (RSSI &ge; -60 dBm).
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* Whole-Network Audit Modal */}
       <NetworkReportModal
         isOpen={showReportModal}
         onClose={() => setShowReportModal(false)}
@@ -455,47 +483,50 @@ export function App() {
         onRescan={handleRunNetworkAudit}
       />
 
-      {/* API Key Modal for Changing Key while inside app */}
+      {/* API Key Modal */}
       {showKeyModal && (
-        <div className="modal-backdrop">
-          <div className="modal-dialog">
+        <div className="modal-overlay">
+          <div className="modal-instrument max-w-md">
             <div className="modal-header">
-              <h3>Google Gemini API Configuration</h3>
-            </div>
-            <p className="modal-desc">
-              WaveScope connects directly to <strong>gemini-3.1-flash-lite</strong> to generate live plain-English explanations.
-            </p>
-
-            <div className="modal-input-group">
-              <label>Gemini API Key:</label>
-              <input
-                type="password"
-                className="input-instrument mono"
-                style={{ width: '100%', borderRadius: '6px' }}
-                placeholder="AIzaSy..."
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                autoFocus
-              />
-            </div>
-
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn-instrument"
-                onClick={handleClearApiKey}
-                style={{ color: '#DC2626' }}
-              >
-                Clear Key & Log Out
+              <span className="font-headline-md text-primary text-[15px]">Google Gemini API Configuration</span>
+              <button type="button" className="font-bold text-muted hover:text-primary" onClick={() => setShowKeyModal(false)}>
+                ✕
               </button>
-              <button
-                type="button"
-                className="btn-instrument primary"
-                onClick={() => handleSaveApiKey(apiKey, true)}
-                disabled={!apiKey.trim()}
-              >
-                Save & Update
-              </button>
+            </div>
+            <div className="modal-body space-y-4">
+              <p className="font-body-md text-secondary text-[13px]">
+                Connected Model: <strong>gemini-3.1-flash-lite</strong>. Zero fallback cache.
+              </p>
+
+              <div className="space-y-1">
+                <label className="font-label-caps text-secondary text-[10px]">Gemini API Key</label>
+                <input
+                  type="password"
+                  className="w-full bg-surface-offset border border-border-subtle p-2.5 font-data-md text-primary outline-none focus:border-primary"
+                  placeholder="AIzaSy..."
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex justify-between pt-2 border-t border-border-subtle">
+                <button
+                  type="button"
+                  className="btn-instrument-secondary text-status-critical border-status-critical text-[11px]"
+                  onClick={handleClearApiKey}
+                >
+                  Clear Key & Log Out
+                </button>
+                <button
+                  type="button"
+                  className="btn-instrument-primary text-[11px]"
+                  onClick={() => handleSaveApiKey(apiKey, true)}
+                  disabled={!apiKey.trim()}
+                >
+                  Save & Update
+                </button>
+              </div>
             </div>
           </div>
         </div>

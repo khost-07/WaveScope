@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { ClientDevice, StructuredDiagnosis } from '../layer1_data/types';
 import { DeviceCard } from './DeviceCard';
-import { IconSearch } from './SvgIcons';
 
 interface DeviceListPaneProps {
   devices: ClientDevice[];
@@ -34,32 +33,34 @@ export const DeviceListPane: React.FC<DeviceListPaneProps> = ({
   }, [devices, diagnoses, searchQuery]);
 
   return (
-    <div className="device-list-pane">
-      {/* Search Bar */}
-      <div className="list-search-bar">
-        <div className="search-input-box">
-          <IconSearch size={15} className="search-icon" />
+    <div className="bg-surface border border-border-subtle flex flex-col h-full">
+      {/* Search Header */}
+      <div className="p-3 border-b border-border-subtle bg-surface-offset">
+        <div className="relative">
           <input
             type="text"
-            className="search-input"
-            placeholder="Search by device, vendor, MAC, or issue..."
+            className="w-full bg-surface border border-border-subtle p-2 pl-8 font-data-sm text-primary placeholder-muted outline-none focus:border-primary"
+            placeholder="Search MAC, IP, vendor, or issue..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
+          <span className="material-symbols-outlined absolute left-2 top-2 text-[16px] text-muted">
+            search
+          </span>
           {searchQuery && (
             <button
               type="button"
-              className="search-clear-btn"
+              className="absolute right-2 top-2 text-muted hover:text-primary font-bold"
               onClick={() => setSearchQuery('')}
             >
-              &times;
+              ×
             </button>
           )}
         </div>
       </div>
 
-      {/* Device Cards List */}
-      <div className="list-cards-scroll">
+      {/* Device List Scroll Area */}
+      <div className="p-3 flex-1 overflow-y-auto max-h-[calc(100vh-280px)]">
         {filteredDevices.length > 0 ? (
           filteredDevices.map(device => {
             const diagnosis = diagnoses[device.id] || {
@@ -85,17 +86,16 @@ export const DeviceListPane: React.FC<DeviceListPaneProps> = ({
             );
           })
         ) : (
-          <div className="empty-search-state">
-            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)' }}>No matching devices found</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>Try adjusting your search query</div>
+          <div className="p-6 text-center text-muted font-body-md text-[13px]">
+            No matching client devices found.
           </div>
         )}
       </div>
 
-      {/* Pane Footer */}
-      <div className="list-pane-footer mono">
-        <span>Associated Clients: <strong>{devices.length}</strong></span>
-        <span>Engine: <strong>Deterministic L2</strong></span>
+      {/* Footer Info */}
+      <div className="p-2.5 border-t border-border-subtle bg-surface-offset font-data-sm text-[11px] text-muted flex justify-between">
+        <span>Clients: <strong>{devices.length}</strong></span>
+        <span>Engine: <strong>L2 Deterministic</strong></span>
       </div>
     </div>
   );

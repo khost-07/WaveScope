@@ -26,100 +26,98 @@ export const ApiKeySetupScreen: React.FC<ApiKeySetupScreenProps> = ({
   };
 
   return (
-    <div className="setup-screen-backdrop">
-      <div className="setup-card">
+    <div className="fixed inset-0 bg-background grid-bg flex items-center justify-center p-6 z-50">
+      <div className="bg-surface border border-primary max-w-lg w-full p-8 space-y-6">
         {/* Brand Header */}
-        <div className="setup-brand-row">
-          <div className="setup-logo-badge">WS</div>
-          <div>
-            <h1 className="setup-title">WaveScope</h1>
-            <p className="setup-subtitle">Wi-Fi Band Analyzer & Root-Cause Diagnostic Tool</p>
+        <div className="flex items-center justify-between border-b border-border-subtle pb-4">
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-primary text-[28px]">radar</span>
+            <div>
+              <h1 className="font-headline-lg text-primary text-[22px]">WaveScope</h1>
+              <p className="font-data-sm text-muted">Precision RF Wi-Fi Diagnostic Instrument</p>
+            </div>
           </div>
+          <span className="badge-status font-data-sm">Instrument Setup</span>
         </div>
 
-        <div className="setup-divider" />
-
-        {/* Informative Intro */}
-        <div className="setup-intro">
-          <div className="setup-badge-tag">Model: gemini-3.1-flash-lite</div>
-          <h2 className="setup-heading">Enter your Google Gemini API Key</h2>
-          <p className="setup-desc">
-            WaveScope pairs a deterministic RF diagnostic engine with <strong>gemini-3.1-flash-lite</strong> to generate plain-English explanations and step-by-step troubleshooting actions.
+        {/* Intro */}
+        <div className="space-y-2">
+          <h2 className="font-headline-md text-primary text-[17px]">Connect Google Gemini AI Engine</h2>
+          <p className="font-body-md text-secondary leading-relaxed">
+            WaveScope runs Layer 2 deterministic RF scoring locally, then connects directly to{' '}
+            <strong className="text-primary">gemini-3.1-flash-lite</strong> for live root-cause explanations and whole-network audits.
           </p>
         </div>
 
-        {/* Input Form */}
-        <form onSubmit={handleSubmit} className="setup-form">
-          <div className="setup-field">
-            <div className="setup-label-row">
-              <label htmlFor="gemini-key" className="setup-label">
-                Google Gemini API Key
-              </label>
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between font-label-caps text-secondary text-[10px]">
+              <label htmlFor="gemini-key">Gemini API Key</label>
               <button
                 type="button"
-                className="setup-toggle-btn"
+                className="text-primary hover:underline"
                 onClick={() => setShowKey(!showKey)}
               >
                 {showKey ? 'Hide Key' : 'Show Key'}
               </button>
             </div>
 
-            <div className="setup-input-wrapper">
-              <input
-                id="gemini-key"
-                type={showKey ? 'text' : 'password'}
-                className={`setup-input mono ${error ? 'input-error' : ''}`}
-                placeholder="AIzaSy..."
-                value={keyInput}
-                onChange={(e) => {
-                  setKeyInput(e.target.value);
-                  if (error) setError(null);
-                }}
-                autoFocus
-              />
-            </div>
+            <input
+              id="gemini-key"
+              type={showKey ? 'text' : 'password'}
+              className="w-full bg-surface-offset border border-border-subtle p-3 font-data-md text-primary outline-none focus:border-primary"
+              placeholder="AIzaSy..."
+              value={keyInput}
+              onChange={(e) => {
+                setKeyInput(e.target.value);
+                if (error) setError(null);
+              }}
+              autoFocus
+            />
 
-            {error && <div className="setup-error-msg">{error}</div>}
+            {error && (
+              <div className="font-data-sm text-status-critical mt-1">{error}</div>
+            )}
 
-            <div className="setup-help-text">
-              Don't have an API key? You can generate a free one in seconds at{' '}
+            <div className="font-data-sm text-muted text-[11px] pt-1">
+              Get a free API key at{' '}
               <a
                 href="https://aistudio.google.com/app/apikey"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="setup-link"
+                className="text-primary underline font-bold"
               >
                 Google AI Studio &rarr;
               </a>
             </div>
           </div>
 
-          <div className="setup-checkbox-row">
-            <label className="setup-checkbox-label">
-              <input
-                type="checkbox"
-                checked={persist}
-                onChange={(e) => setPersist(e.target.checked)}
-                className="setup-checkbox"
-              />
-              <span>Remember API key in this browser session</span>
+          <div className="flex items-center gap-2 font-data-sm text-secondary">
+            <input
+              type="checkbox"
+              id="remember-key"
+              checked={persist}
+              onChange={(e) => setPersist(e.target.checked)}
+              className="cursor-pointer"
+            />
+            <label htmlFor="remember-key" className="cursor-pointer">
+              Remember API key in browser storage
             </label>
           </div>
 
-          <div className="setup-actions">
-            <button
-              type="submit"
-              className="setup-submit-btn"
-              disabled={!keyInput.trim()}
-            >
-              <span>Continue to WaveScope</span>
-              <span>&rarr;</span>
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="w-full btn-instrument-primary py-3 justify-center text-[13px]"
+            disabled={!keyInput.trim()}
+          >
+            Launch WaveScope Instrument &rarr;
+          </button>
         </form>
 
-        <div className="setup-footer-note">
-          <span>⚡ Model: <strong>gemini-3.1-flash-lite</strong> &bull; Zero cached fallbacks &bull; Direct Google Gemini inference</span>
+        <div className="pt-2 border-t border-border-subtle font-data-sm text-[10px] text-muted flex justify-between">
+          <span>Engine: <strong>Deterministic L2 + Gemini 3.1 Flash Lite</strong></span>
+          <span>Zero Fallbacks</span>
         </div>
       </div>
     </div>

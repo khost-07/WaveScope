@@ -1,6 +1,6 @@
 import React from 'react';
 import { ClientDevice, StructuredDiagnosis } from '../layer1_data/types';
-import { StatusBadge, BandBadge } from './StatusBadge';
+import { BandBadge } from './StatusBadge';
 
 interface ClientTableProps {
   devices: ClientDevice[];
@@ -16,19 +16,19 @@ export const ClientTable: React.FC<ClientTableProps> = ({
   onSelectDevice
 }) => {
   return (
-    <div className="instrument-table-wrapper">
+    <div className="border border-border-subtle bg-surface overflow-x-auto">
       <table className="instrument-table">
         <thead>
           <tr>
-            <th>Device Identifier / Hostname</th>
-            <th>Vendor / Class</th>
-            <th>Band</th>
-            <th>Standard</th>
-            <th>RSSI (dBm)</th>
-            <th>SNR (dB)</th>
-            <th>PHY Rate (Tx/Rx)</th>
-            <th>Retries (%)</th>
-            <th>Diagnostic Status</th>
+            <th style={{ width: '130px' }}>STATUS</th>
+            <th>DEVICE / HOSTNAME</th>
+            <th>VENDOR</th>
+            <th>BAND</th>
+            <th style={{ textAlign: 'right' }}>RSSI</th>
+            <th style={{ textAlign: 'right' }}>SNR</th>
+            <th style={{ textAlign: 'right' }}>LINK RATE</th>
+            <th style={{ textAlign: 'right' }}>RETRIES</th>
+            <th style={{ textAlign: 'center', width: '90px' }}>ACTION</th>
           </tr>
         </thead>
         <tbody>
@@ -41,39 +41,83 @@ export const ClientTable: React.FC<ClientTableProps> = ({
             return (
               <tr
                 key={device.id}
-                className={isSelected ? 'selected' : ''}
+                className={isSelected ? 'selected-row' : ''}
+                style={{ cursor: 'pointer' }}
                 onClick={() => onSelectDevice(device)}
               >
                 <td>
-                  <div style={{ fontWeight: 600 }}>{device.hostname}</div>
-                  <div className="mono" style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>
-                    {device.macAddress} {device.scenarioId ? `[SCENARIO ${device.scenarioId}]` : ''}
-                  </div>
+                  {status === 'HEALTHY' && (
+                    <div className="badge-status badge-status-healthy">
+                      <span className="material-symbols-outlined text-[12px]">check_box</span>
+                      <span>HEALTHY</span>
+                    </div>
+                  )}
+                  {status === 'ATTENTION' && (
+                    <div className="badge-status badge-status-attention">
+                      <span className="material-symbols-outlined text-[12px]">warning</span>
+                      <span>ATTENTION</span>
+                    </div>
+                  )}
+                  {status === 'CRITICAL' && (
+                    <div className="badge-status badge-status-critical">
+                      <span className="material-symbols-outlined text-[12px]">error</span>
+                      <span>CRITICAL</span>
+                    </div>
+                  )}
                 </td>
                 <td>
-                  <div style={{ color: 'var(--text-main)' }}>{device.vendor}</div>
-                  <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>{device.deviceType}</div>
+                  <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{device.hostname}</div>
+                  <div className="font-data-sm text-muted">
+                    {device.macAddress} {device.scenarioId ? `• [SCENARIO ${device.scenarioId}]` : ''}
+                  </div>
+                </td>
+                <td className="font-data-sm text-secondary">
+                  {device.vendor} ({device.deviceType})
                 </td>
                 <td>
                   <BandBadge band={telemetry.band} />
                 </td>
-                <td className="mono" style={{ fontSize: '11px' }}>
-                  {telemetry.standard}
-                </td>
-                <td className="mono" style={{ fontWeight: 600, color: telemetry.rssi_dBm <= -75 ? 'var(--rf-critical-text)' : telemetry.rssi_dBm <= -70 ? 'var(--rf-attention-text)' : 'var(--text-main)' }}>
+                <td
+                  style={{
+                    textAlign: 'right',
+                    fontWeight: 600,
+                    color: telemetry.rssi_dBm <= -75 ? 'var(--status-critical)' : telemetry.rssi_dBm <= -70 ? 'var(--status-attention)' : 'var(--text-main)'
+                  }}
+                >
                   {telemetry.rssi_dBm} dBm
                 </td>
-                <td className="mono" style={{ fontWeight: 600, color: telemetry.snr_dB <= 12 ? 'var(--rf-critical-text)' : telemetry.snr_dB <= 20 ? 'var(--rf-attention-text)' : 'var(--text-main)' }}>
+                <td
+                  style={{
+                    textAlign: 'right',
+                    fontWeight: 600,
+                    color: telemetry.snr_dB <= 12 ? 'var(--status-critical)' : telemetry.snr_dB <= 20 ? 'var(--status-attention)' : 'var(--text-main)'
+                  }}
+                >
                   {telemetry.snr_dB} dB
                 </td>
-                <td className="mono" style={{ fontSize: '11px' }}>
-                  {telemetry.txLinkRate_Mbps} / {telemetry.rxLinkRate_Mbps} Mbps
+                <td style={{ textAlign: 'right' }}>
+                  {telemetry.txLinkRate_Mbps} Mbps
                 </td>
-                <td className="mono" style={{ fontWeight: 600, color: telemetry.retryRatePct >= 15 ? 'var(--rf-critical-text)' : telemetry.retryRatePct >= 8 ? 'var(--rf-attention-text)' : 'var(--text-main)' }}>
+                <td
+                  style={{
+                    textAlign: 'right',
+                    fontWeight: 600,
+                    color: telemetry.retryRatePct >= 15 ? 'var(--status-critical)' : telemetry.retryRatePct >= 8 ? 'var(--status-attention)' : 'var(--text-main)'
+                  }}
+                >
                   {telemetry.retryRatePct.toFixed(1)}%
                 </td>
-                <td>
-                  <StatusBadge status={status} />
+                <td style={{ textAlign: 'center' }}>
+                  <button
+                    type="button"
+                    className="btn-instrument-secondary text-[11px] py-0.5 px-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectDevice(device);
+                    }}
+                  >
+                    Inspect
+                  </button>
                 </td>
               </tr>
             );

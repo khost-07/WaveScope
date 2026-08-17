@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Device Diagnostics - Office_Tablet</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#474746",
+                        "surface-container": "#eeeeee",
+                        "border-subtle": "#E5E5E5",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "surface-tint": "#5f5e5e",
+                        "on-surface": "#1a1c1c",
+                        "tertiary": "#000000",
+                        "inverse-primary": "#c8c6c5",
+                        "secondary-fixed-dim": "#c6c6c6",
+                        "tertiary-fixed": "#e6e2df",
+                        "secondary": "#5d5f5f",
+                        "primary-fixed": "#e5e2e1",
+                        "primary-container": "#1c1b1b",
+                        "primary": "#000000",
+                        "on-primary-fixed": "#1c1b1b",
+                        "on-secondary-container": "#606161",
+                        "background": "#f9f9f9",
+                        "inverse-surface": "#2f3131",
+                        "on-tertiary-fixed-variant": "#484645",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#1c1b1a",
+                        "surface-bright": "#f9f9f9",
+                        "on-tertiary": "#ffffff",
+                        "surface-offset": "#FAFAFA",
+                        "inverse-on-surface": "#f0f1f1",
+                        "error-container": "#ffdad6",
+                        "on-surface-variant": "#444748",
+                        "status-healthy": "#2E7D32",
+                        "surface-variant": "#e2e2e2",
+                        "tertiary-fixed-dim": "#cac6c4",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#858383",
+                        "status-neutral": "#455A64",
+                        "on-secondary": "#ffffff",
+                        "outline": "#747878",
+                        "status-critical": "#D32F2F",
+                        "on-background": "#1a1c1c",
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#f3f3f4",
+                        "surface": "#f9f9f9",
+                        "surface-container-high": "#e8e8e8",
+                        "surface-container-highest": "#e2e2e2",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "outline-variant": "#c4c7c7",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#454747",
+                        "on-tertiary-fixed": "#1c1b1a",
+                        "on-tertiary-container": "#868382",
+                        "status-attention": "#F57C00",
+                        "surface-dim": "#dadada",
+                        "secondary-fixed": "#e2e2e2",
+                        "secondary-container": "#dddddd"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin": "24px",
+                        "unit": "4px",
+                        "gutter": "16px",
+                        "container-max": "1440px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Hanken Grotesk"],
+                        "data-lg": ["JetBrains Mono"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "label-caps": ["Hanken Grotesk"],
+                        "data-sm": ["JetBrains Mono"],
+                        "data-md": ["JetBrains Mono"],
+                        "body-md": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "data-lg": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "data-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "data-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Hanken Grotesk', sans-serif; background-color: #f9f9f9; color: #1a1c1c; }
+        .grid-bg {
+            background-size: 20px 20px;
+            background-image: linear-gradient(to right, #E5E5E5 1px, transparent 1px), linear-gradient(to bottom, #E5E5E5 1px, transparent 1px);
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface h-screen flex flex-col overflow-hidden antialiased">
+<!-- TopNavBar -->
+<header class="bg-surface border-b border-border-subtle h-12 w-full flex-shrink-0 z-50">
+<div class="flex justify-between items-center h-full px-margin max-w-container-max mx-auto">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">radar</span>
+<span class="font-headline-md text-headline-md tracking-tight text-primary">WaveScope</span>
+</div>
+<div class="flex items-center h-full">
+<div class="flex h-full border-x border-border-subtle">
+<button class="px-4 h-full flex items-center bg-primary text-on-primary text-label-caps font-label-caps uppercase border-r border-border-subtle">
+<span class="material-symbols-outlined text-[16px] mr-1" style="font-variation-settings: 'FILL' 1;">science</span>
+                        Simulation Mode
+                    </button>
+<button class="px-4 h-full flex items-center bg-surface text-on-surface-variant text-label-caps font-label-caps uppercase hover:bg-surface-container-low transition-colors">
+                        Live Data
+                    </button>
+</div>
+</div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<nav class="fixed md:static w-64 h-full bg-surface border-r border-border-subtle flex-shrink-0 z-40 hidden md:flex flex-col pt-4 pb-4">
+<div class="px-4 pb-6 border-b border-border-subtle mb-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-none border border-border-subtle bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface text-[18px]">admin_panel_settings</span>
+</div>
+<div>
+<div class="font-headline-md text-data-md text-primary leading-tight">WaveScope Admin</div>
+<div class="font-data-sm text-data-sm text-on-surface-variant">Network Node 01-A</div>
+</div>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto px-2 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">dashboard</span>
+<span class="font-label-caps text-label-caps uppercase">Overview</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-surface-container-high text-primary border-l-2 border-primary hover:bg-surface-container-highest transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">router</span>
+<span class="font-label-caps text-label-caps uppercase">Connected Clients</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">rule</span>
+<span class="font-label-caps text-label-caps uppercase">Diagnostic Rules</span>
+</a>
+</div>
+<div class="px-2 pt-4 border-t border-border-subtle space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+<span class="font-label-caps text-label-caps uppercase">System Logs</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+<span class="font-label-caps text-label-caps uppercase">Settings</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto bg-background grid-bg p-margin relative">
+<div class="max-w-5xl mx-auto space-y-6">
+<!-- Breadcrumbs & Header -->
+<div class="mb-8">
+<div class="flex items-center gap-2 font-data-sm text-data-sm text-on-surface-variant uppercase mb-4">
+<a class="hover:text-primary" href="#">Connected Clients</a>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span class="text-primary font-bold">Office_Tablet</span>
+</div>
+<div class="flex items-end justify-between border-b border-border-subtle pb-4">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-primary mb-2">Office_Tablet</h1>
+<div class="flex gap-4 font-data-sm text-data-sm text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">tag</span> MAC: 00:1A:2B:3C:4D:5F</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">lan</span> IP: 192.168.1.105</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 border border-primary text-primary font-label-caps text-label-caps uppercase hover:bg-surface-container-low transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">refresh</span> Re-Scan
+                            </button>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Left Column: Telemetry -->
+<div class="lg:col-span-4 space-y-6">
+<!-- Raw Telemetry Card -->
+<div class="border border-border-subtle bg-surface flex flex-col">
+<div class="bg-surface-offset border-b border-border-subtle px-4 py-2">
+<h2 class="font-label-caps text-label-caps uppercase text-on-surface">Raw Telemetry</h2>
+</div>
+<div class="p-4 space-y-4">
+<div class="flex justify-between items-center border-b border-border-subtle pb-2">
+<span class="font-data-md text-data-md text-on-surface-variant">RSSI</span>
+<span class="font-data-lg text-data-lg text-status-healthy">-45 dBm</span>
+</div>
+<div class="flex justify-between items-center border-b border-border-subtle pb-2">
+<span class="font-data-md text-data-md text-on-surface-variant">SNR</span>
+<span class="font-data-lg text-data-lg text-status-critical">10 dB</span>
+</div>
+<div class="flex justify-between items-center border-b border-border-subtle pb-2">
+<span class="font-data-md text-data-md text-on-surface-variant">Retry Rate</span>
+<span class="font-data-lg text-data-lg text-status-attention">20%</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-data-md text-data-md text-on-surface-variant">Band</span>
+<span class="font-data-lg text-data-lg text-primary">2.4GHz</span>
+</div>
+</div>
+</div>
+<!-- Device Info Graphic placeholder -->
+<div class="border border-border-subtle bg-surface p-1">
+<div class="bg-cover bg-center w-full h-48 border border-border-subtle grayscale opacity-80" data-alt="A precise, technical wireframe schematic of a generic tablet device shown in an isometric view. The image is rendered in stark black lines on a pure white background, resembling high-end engineering blueprints. No text or labels, just clean geometry." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAjHcQD07loS0aN7O-DgHx6jsZkdzqSJhzKQM6rZr9LQyb0Dqf-CTUL3iCcG0b1dgE60GyOTHLYEzWFEg-B752xWmFpAwaMCHgGR_em0KINoee3zJaOMGEfpLaWAuXLv5Y6RtLfRsBvR5zITkGKX0PoYmfMgVl-TuZBDoduSveNN-z7_8ScAOcUpY0HRXXuZwE3anKlsqJqUhKgE7NAvtyOWkvsh_EPdSQ1WXyAJV721YJnPPyAbU1n')"></div>
+</div>
+</div>
+<!-- Right Column: Diagnostics & Analysis -->
+<div class="lg:col-span-8 space-y-6">
+<!-- Diagnostic Result -->
+<div class="border border-border-subtle bg-surface flex flex-col relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-status-attention"></div>
+<div class="p-6 pl-8">
+<div class="flex justify-between items-start mb-4">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-status-attention text-[20px]">warning</span>
+<h3 class="font-headline-md text-headline-md text-status-attention uppercase tracking-wider">Possible RF Interference</h3>
+</div>
+<div class="flex items-center gap-4 mt-2">
+<span class="border border-status-attention px-2 py-0.5 text-status-attention font-label-caps text-label-caps">SEVERITY: MEDIUM</span>
+<span class="font-data-sm text-data-sm text-on-surface-variant">CONFIDENCE: <strong class="text-primary">92%</strong></span>
+</div>
+</div>
+</div>
+<div class="mt-6 border-t border-border-subtle pt-4">
+<h4 class="font-label-caps text-label-caps uppercase text-on-surface-variant mb-3">Evidence Log</h4>
+<ul class="space-y-2 font-data-md text-data-md text-on-surface">
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary mt-0.5">adjust</span>
+<span>RSSI is strong <strong class="text-status-healthy">(-45 dBm)</strong></span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] text-status-critical mt-0.5">signal_cellular_nodata</span>
+<span>SNR is critically low <strong class="text-status-critical">(10 dB)</strong></span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] text-status-attention mt-0.5">sync_problem</span>
+<span>High retries <strong class="text-status-attention">(20%)</strong> suggesting signal drowned by noise, not distance.</span>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<!-- LLM Analysis Section -->
+<div class="border border-border-subtle bg-surface p-6">
+<h4 class="font-label-caps text-label-caps uppercase text-on-surface-variant mb-4 border-b border-border-subtle pb-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">psychology</span> Systems Analysis
+                            </h4>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed max-w-3xl">
+                                The tablet has a strong connection to the access point, but the signal quality is poor due to high background noise. This is typical of 2.4GHz congestion or proximity to non-Wi-Fi interference sources like microwaves or Bluetooth devices.
+                            </p>
+</div>
+<!-- Recommendations Section -->
+<div class="border border-border-subtle bg-surface p-6 bg-surface-offset">
+<h4 class="font-label-caps text-label-caps uppercase text-primary mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">build</span> Actionable Recommendations
+                            </h4>
+<div class="space-y-3">
+<div class="flex items-start gap-3 p-3 border border-border-subtle bg-surface">
+<span class="font-data-md text-data-md font-bold text-primary bg-surface-container px-2 py-0.5 border border-border-subtle">1</span>
+<span class="font-body-md text-body-md text-on-surface pt-0.5">Switch to 5GHz or 6GHz band if supported.</span>
+</div>
+<div class="flex items-start gap-3 p-3 border border-border-subtle bg-surface">
+<span class="font-data-md text-data-md font-bold text-primary bg-surface-container px-2 py-0.5 border border-border-subtle">2</span>
+<span class="font-body-md text-body-md text-on-surface pt-0.5">Identify and remove nearby electronic interference.</span>
+</div>
+<div class="flex items-start gap-3 p-3 border border-border-subtle bg-surface">
+<span class="font-data-md text-data-md font-bold text-primary bg-surface-container px-2 py-0.5 border border-border-subtle">3</span>
+<span class="font-body-md text-body-md text-on-surface pt-0.5">Change AP channel to a less congested one.</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

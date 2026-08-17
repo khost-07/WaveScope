@@ -1,113 +1,81 @@
 import React from 'react';
 import { StructuredDiagnosis } from '../layer1_data/types';
-import { StatusBadge } from './StatusBadge';
 
 interface DiagnosticInspectorProps {
   diagnosis: StructuredDiagnosis;
 }
 
 export const DiagnosticInspector: React.FC<DiagnosticInspectorProps> = ({ diagnosis }) => {
+  const status = diagnosis.status;
+
   return (
-    <div className="instrument-section">
-      <div className="section-header">
-        <span>Layer 2: Deterministic Diagnostic Scoring Result</span>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <StatusBadge status={diagnosis.status} />
-          <span className="mono" style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-            CONFIDENCE: <strong>{diagnosis.confidence}%</strong>
-          </span>
+    <div className="border border-border-subtle bg-surface p-4 space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-border-subtle pb-2">
+        <h3 className="font-label-caps text-secondary flex items-center">
+          <span className="material-symbols-outlined mr-1.5 text-[16px]">analytics</span>
+          Deterministic Hypothesis Scores (Layer 2)
+        </h3>
+        <div className="flex items-center gap-2">
+          {status === 'HEALTHY' && (
+            <span className="badge-status badge-status-healthy">HEALTHY</span>
+          )}
+          {status === 'ATTENTION' && (
+            <span className="badge-status badge-status-attention">ATTENTION</span>
+          )}
+          {status === 'CRITICAL' && (
+            <span className="badge-status badge-status-critical">CRITICAL</span>
+          )}
+          <span className="font-data-sm text-primary font-bold">{diagnosis.confidence}% Confidence</span>
         </div>
       </div>
 
-      <div className="section-body">
-        <div style={{ marginBottom: '14px', paddingBottom: '12px', borderBottom: '1px solid var(--border-light)' }}>
-          <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '2px' }}>
-            Primary Diagnosis
-          </div>
-          <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)' }}>
-            {diagnosis.primary_diagnosis}
-          </div>
-          <div className="mono" style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-            Severity Rating: <strong>{diagnosis.severity}</strong> | Evaluated at: {new Date(diagnosis.evaluated_at).toLocaleTimeString()}
-          </div>
+      {/* Primary Diagnosis Callout */}
+      <div className="p-3 bg-surface-offset border border-border-subtle">
+        <div className="font-label-caps text-muted text-[10px] mb-1">Primary Classified Hypothesis</div>
+        <div className="font-headline-md text-primary text-[16px] font-bold">{diagnosis.primary_diagnosis}</div>
+        <div className="font-data-sm text-secondary mt-1">
+          Severity: <strong>{diagnosis.severity}</strong> | Evaluated at: {new Date(diagnosis.evaluated_at).toLocaleTimeString()}
         </div>
+      </div>
 
-        {/* Structured Evidence */}
-        <div style={{ marginBottom: '14px' }}>
-          <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 700, marginBottom: '6px' }}>
-            Auditable Evidence Base ({diagnosis.evidence.length} Points)
-          </div>
-          <ul className="evidence-list">
-            {diagnosis.evidence.map((item, idx) => (
-              <li key={idx} className="evidence-item">
-                <span className="evidence-bullet">[{idx + 1}]</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+      {/* Hypothesis Score Bars */}
+      <div className="space-y-2">
+        <div className="font-label-caps text-secondary mb-2">Evaluated Competing Hypotheses Distribution</div>
+        {Object.entries(diagnosis.hypothesis_scores).map(([name, score]) => {
+          const isWinner = name === diagnosis.primary_diagnosis;
+          const maxScore = Math.max(...Object.values(diagnosis.hypothesis_scores), 100);
+          const pct = Math.min(100, Math.round((score / maxScore) * 100));
 
-        {/* Possible Causes (Language disciplined) */}
-        <div style={{ marginBottom: '14px' }}>
-          <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 700, marginBottom: '6px' }}>
-            Suspected Physical Root-Causes (Hypotheses)
-          </div>
-          <ul className="evidence-list" style={{ fontFamily: 'var(--font-sans)', fontSize: '12px' }}>
-            {diagnosis.possible_causes.map((cause, idx) => (
-              <li key={idx} className="evidence-item" style={{ borderBottom: 'none', padding: '2px 0' }}>
-                <span className="mono" style={{ color: 'var(--text-muted)' }}>&bull;</span>
-                <span>{cause}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Secondary Contributing Factors */}
-        {diagnosis.secondary_factors && diagnosis.secondary_factors.length > 0 && (
-          <div style={{ marginBottom: '14px', background: 'var(--bg-surface-inset)', border: '1px solid var(--border-light)', padding: '8px 10px' }}>
-            <div style={{ fontSize: '10.5px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '4px' }}>
-              Secondary Contributing Factors
-            </div>
-            {diagnosis.secondary_factors.map((factor, idx) => (
-              <div key={idx} className="mono" style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                - {factor}
+          return (
+            <div key={name} className="flex items-center gap-3 font-data-sm text-[12px]">
+              <span className={`w-64 truncate ${isWinner ? 'font-bold text-primary' : 'text-secondary'}`}>
+                {isWinner ? '▶ ' : '  '}{name}
+              </span>
+              <div className="hypothesis-bar-track flex-1">
+                <div
+                  className={`hypothesis-bar-fill ${isWinner ? 'bg-primary' : 'bg-muted'}`}
+                  style={{ width: `${pct}%` }}
+                />
               </div>
-            ))}
-          </div>
-        )}
+              <span className="w-16 text-right font-bold text-primary">
+                {score} pts
+              </span>
+            </div>
+          );
+        })}
+      </div>
 
-        {/* Hypothesis Score Breakdown */}
-        <div>
-          <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 700, marginBottom: '8px' }}>
-            Competing Hypothesis Scoring Distribution
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {Object.entries(diagnosis.hypothesis_scores).map(([name, score]) => {
-              const isWinner = name === diagnosis.primary_diagnosis;
-              const maxScore = Math.max(...Object.values(diagnosis.hypothesis_scores), 100);
-              const pct = Math.min(100, Math.round((score / maxScore) * 100));
-
-              return (
-                <div key={name} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '11px' }}>
-                  <span style={{ width: '220px', fontWeight: isWinner ? 700 : 400, color: isWinner ? 'var(--text-main)' : 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {isWinner ? '> ' : '  '}{name}
-                  </span>
-                  <div style={{ flex: 1, height: '6px', background: 'var(--bg-surface-subtle)', border: '1px solid var(--border-light)' }}>
-                    <div
-                      style={{
-                        height: '100%',
-                        width: `${pct}%`,
-                        background: isWinner ? 'var(--border-dark)' : 'var(--border-medium)'
-                      }}
-                    />
-                  </div>
-                  <span className="mono" style={{ width: '45px', textAlign: 'right', fontWeight: isWinner ? 700 : 400 }}>
-                    {score} pts
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+      {/* Physical Evidence Bullets */}
+      <div className="space-y-2">
+        <div className="font-label-caps text-secondary">Diagnostic Evidence Base ({diagnosis.evidence.length} Points)</div>
+        <div className="p-3 bg-surface-offset border border-border-subtle space-y-1 font-data-sm text-secondary">
+          {diagnosis.evidence.map((item, idx) => (
+            <div key={idx} className="flex items-start gap-2">
+              <span className="font-bold text-primary flex-shrink-0">[{idx + 1}]</span>
+              <span>{item}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>

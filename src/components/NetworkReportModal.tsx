@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { NetworkScanResult, NetworkAuditReport } from '../layer1_data/networkScannerTypes';
-import { IconCheckCircle, IconAlertTriangle, IconAlertCircle, IconRouter, IconSparkles, IconCpu, IconRefresh } from './SvgIcons';
 
 interface NetworkReportModalProps {
   isOpen: boolean;
@@ -50,243 +49,169 @@ ${report.actionablePlan.map((p, i) => `${i + 1}. [${p.priority}] ${p.action} —
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const scoreClass = (report?.overallHealthScore ?? 80) >= 80 ? 'optimal' : (report?.overallHealthScore ?? 60) >= 60 ? 'warning' : 'critical';
-
   return (
-    <div className="report-modal-backdrop">
-      <div className="report-modal-dialog">
+    <div className="modal-overlay">
+      <div className="modal-instrument">
         {/* Header */}
-        <div className="report-modal-header">
-          <div className="report-header-titles">
-            <div className="report-badge-tag">
-              <IconSparkles size={13} />
-              <span>Full-Network Diagnostic Audit</span>
-            </div>
-            <h2>Network Health & Fleet Inspection Report</h2>
-            {scanResult && (
-              <p className="report-subtitle mono">
-                SSID: <strong>{scanResult.router.ssid}</strong> &bull; Subnet: <strong>{scanResult.subnet}</strong> &bull; Active Clients: <strong>{scanResult.devices.length}</strong>
-              </p>
-            )}
+        <div className="modal-header">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary text-[20px]">radar</span>
+            <span className="font-headline-md text-primary">Whole-Network Diagnostic Audit Report</span>
           </div>
-
-          <div className="report-header-actions">
-            <button type="button" className="btn-modal-close" onClick={onClose}>
-              &times;
+          <div className="flex items-center gap-2 no-print">
+            <button type="button" className="btn-instrument-secondary text-[11px] py-1" onClick={() => window.print()}>
+              Print PDF
+            </button>
+            <button type="button" className="btn-instrument-secondary text-[11px] py-1" onClick={handleCopy}>
+              {copied ? 'Copied!' : 'Copy Summary'}
+            </button>
+            <button type="button" className="btn-instrument-primary text-[11px] py-1 px-3" onClick={onClose}>
+              Close
             </button>
           </div>
         </div>
 
         {/* Modal Body */}
-        <div className="report-modal-body">
+        <div className="modal-body space-y-5">
           {isLoading && (
-            <div className="report-loading-state">
-              <div className="simple-loading-spinner" />
-              <h3>Scanning local network & querying Gemini 3.1 Flash Lite...</h3>
-              <p className="mono" style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                Probing router gateway, analyzing subnet ARP table, and constructing plain-English health report.
-              </p>
+            <div className="p-8 text-center space-y-2">
+              <div className="inline-block animate-spin text-primary">
+                <span className="material-symbols-outlined text-[32px]">sync</span>
+              </div>
+              <h3 className="font-headline-md text-primary">Scanning Subnet & Running AI Engine...</h3>
+              <p className="font-data-sm text-muted">Probing router latency and classifying device fleet.</p>
             </div>
           )}
 
           {error && !isLoading && (
-            <div className="report-error-state">
-              <div style={{ color: '#DC2626', marginBottom: '8px' }}>
-                <IconAlertCircle size={32} />
-              </div>
-              <h3>Network Diagnostic Scan Error</h3>
-              <p className="mono" style={{ color: '#7F1D1D', fontSize: '12px', marginTop: '6px' }}>{error}</p>
-              <div style={{ marginTop: '16px' }}>
-                <button type="button" className="btn-simple-primary" onClick={onRescan}>
-                  <IconRefresh size={14} />
-                  <span>Retry Network Scan</span>
-                </button>
-              </div>
+            <div className="p-5 border border-status-critical bg-surface space-y-3">
+              <div className="font-label-caps text-status-critical">Audit Sweep Error</div>
+              <p className="font-data-sm text-secondary">{error}</p>
+              <button type="button" className="btn-instrument-primary" onClick={onRescan}>
+                Retry Network Scan
+              </button>
             </div>
           )}
 
-          {report && scanResult && !isLoading && (
-            <div className="report-content-scroll">
-              {/* Executive Grade Banner */}
-              <div className={`report-hero-card ${scoreClass}`}>
-                <div className="report-grade-circle">
-                  <div className="grade-letter">{report.healthGrade}</div>
-                  <div className="grade-score mono">{report.overallHealthScore}/100</div>
-                </div>
-
-                <div className="report-hero-text">
-                  <div className="report-hero-title">
-                    {report.overallHealthScore >= 80 ? 'Overall Network Health is Strong' : report.overallHealthScore >= 60 ? 'Moderate Network Bottlenecks Detected' : 'Critical Wi-Fi Optimization Required'}
-                  </div>
-                  <p className="report-hero-summary">
-                    {report.executiveSummary}
-                  </p>
-                </div>
-              </div>
-
-              {/* Grid: Router Health & Device Inventory */}
-              <div className="report-two-col-grid">
-                {/* Router & Gateway Card */}
-                <div className="report-sub-card">
-                  <div className="sub-card-header">
-                    <div className="sub-icon-box">
-                      <IconRouter size={18} />
-                    </div>
-                    <div>
-                      <h4>Connected Router & Wi-Fi Gateway</h4>
-                      <span className="mono" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                        Gateway: {scanResult.router.ip} &bull; BSSID: {scanResult.router.bssid}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="router-metrics-grid mono">
-                    <div className="r-metric">
-                      <span className="label">Operating Band:</span>
-                      <span className="val">{scanResult.router.band} (Ch {scanResult.router.channel})</span>
-                    </div>
-                    <div className="r-metric">
-                      <span className="label">Channel Width:</span>
-                      <span className="val">{scanResult.router.channelWidthMHz} MHz ({scanResult.router.standard})</span>
-                    </div>
-                    <div className="r-metric">
-                      <span className="label">Gateway Latency:</span>
-                      <span className="val" style={{ color: scanResult.router.gatewayPingMs <= 5 ? '#16A34A' : '#D97706', fontWeight: 700 }}>
-                        {scanResult.router.gatewayPingMs} ms
-                      </span>
-                    </div>
-                    <div className="r-metric">
-                      <span className="label">Security Protocol:</span>
-                      <span className="val">{scanResult.router.security}</span>
-                    </div>
-                  </div>
-
-                  <div className="router-assessment-box">
-                    <div className="verdict-line">
-                      <strong>Channel Crowding:</strong> {report.routerAssessment.channelCongestionVerdict}
-                    </div>
-                    <div className="verdict-line">
-                      <strong>Band Distribution:</strong> {report.routerAssessment.bandEfficiencyVerdict}
-                    </div>
-                    <div className="verdict-line">
-                      <strong>Gateway Response:</strong> {report.routerAssessment.gatewayLatencyVerdict}
-                    </div>
+          {!isLoading && !error && report && scanResult && (
+            <>
+              {/* Executive Health Strip */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-border-subtle border border-border-subtle">
+                <div className="telemetry-cell">
+                  <span className="telemetry-cell-label">Network Health Grade</span>
+                  <div className="telemetry-cell-value-group">
+                    <span className="telemetry-cell-value text-primary">{report.healthGrade}</span>
+                    <span className="telemetry-cell-unit">{report.overallHealthScore}/100</span>
                   </div>
                 </div>
 
-                {/* Discovered Device Fleet */}
-                <div className="report-sub-card">
-                  <div className="sub-card-header">
-                    <div className="sub-icon-box">
-                      <IconCpu size={18} />
-                    </div>
-                    <div>
-                      <h4>Connected Device Inventory ({scanResult.devices.length} Endpoints)</h4>
-                      <span className="mono" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                        Discovered via Subnet ARP & Wi-Fi Probing
-                      </span>
-                    </div>
+                <div className="telemetry-cell">
+                  <span className="telemetry-cell-label">Router Gateway Latency</span>
+                  <div className="telemetry-cell-value-group">
+                    <span className="telemetry-cell-value text-primary">{scanResult.router.gatewayPingMs}</span>
+                    <span className="telemetry-cell-unit">ms</span>
                   </div>
+                </div>
 
-                  {/* Category Pills */}
-                  <div className="device-categories-row">
-                    {Object.entries(report.deviceBreakdown.categories).map(([cat, count]) => (
-                      <span key={cat} className="dev-cat-pill">
-                        {cat}: <strong>{count}</strong>
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Device List Table */}
-                  <div className="discovered-devices-list">
-                    {scanResult.devices.map(dev => (
-                      <div key={dev.id} className="discovered-dev-row">
-                        <div className="dev-info-left">
-                          <span className="dev-name">{dev.hostname}</span>
-                          <span className="dev-sub mono">{dev.vendor} &bull; {dev.ip}</span>
-                        </div>
-                        <div className="dev-info-right mono">
-                          <span className="dev-band-tag">{dev.band || 'Wi-Fi'}</span>
-                          <span className="dev-ping">{dev.pingMs} ms</span>
-                        </div>
-                      </div>
-                    ))}
+                <div className="telemetry-cell">
+                  <span className="telemetry-cell-label">Active Discovered Endpoints</span>
+                  <div className="telemetry-cell-value-group">
+                    <span className="telemetry-cell-value text-primary">{scanResult.devices.length}</span>
+                    <span className="telemetry-cell-unit">devices</span>
                   </div>
                 </div>
               </div>
 
-              {/* Key Bottlenecks */}
-              {report.keyBottlenecks.length > 0 && (
-                <div className="report-bottlenecks-card">
-                  <div className="bottlenecks-header">
-                    <IconAlertTriangle size={16} />
-                    <h4>Identified Performance Bottlenecks ({report.keyBottlenecks.length})</h4>
-                  </div>
-                  <ul className="bottlenecks-list">
-                    {report.keyBottlenecks.map((item, idx) => (
-                      <li key={idx}>&bull; {item}</li>
-                    ))}
-                  </ul>
+              {/* Executive Summary */}
+              <div className="p-4 border border-border-subtle bg-surface-offset space-y-1">
+                <div className="font-label-caps text-secondary">Executive Summary</div>
+                <p className="font-body-md text-primary leading-relaxed">{report.executiveSummary}</p>
+              </div>
+
+              {/* Router Health & Verdicts */}
+              <div className="border border-border-subtle bg-surface p-4 space-y-3">
+                <div className="font-label-caps text-secondary border-b border-border-subtle pb-2">
+                  Router & Wi-Fi Gateway Audit ({scanResult.router.ssid})
                 </div>
-              )}
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-data-sm">
+                  <div className="p-2.5 bg-surface-offset border border-border-subtle">
+                    <div className="font-label-caps text-muted text-[10px] mb-1">Channel Congestion</div>
+                    <div className="text-primary font-medium">{report.routerAssessment.channelCongestionVerdict}</div>
+                  </div>
+
+                  <div className="p-2.5 bg-surface-offset border border-border-subtle">
+                    <div className="font-label-caps text-muted text-[10px] mb-1">Band Efficiency</div>
+                    <div className="text-primary font-medium">{report.routerAssessment.bandEfficiencyVerdict}</div>
+                  </div>
+
+                  <div className="p-2.5 bg-surface-offset border border-border-subtle">
+                    <div className="font-label-caps text-muted text-[10px] mb-1">Gateway Responsiveness</div>
+                    <div className="text-primary font-medium">{report.routerAssessment.gatewayLatencyVerdict}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Discovered Device Fleet Table */}
+              <div className="border border-border-subtle bg-surface p-4 space-y-3">
+                <div className="font-label-caps text-secondary flex items-center justify-between border-b border-border-subtle pb-2">
+                  <span>Discovered Fleet Inventory ({scanResult.devices.length} Endpoints)</span>
+                  <span className="font-data-sm text-muted">Subnet: {scanResult.subnet}</span>
+                </div>
+
+                <div className="border border-border-subtle overflow-x-auto max-h-56">
+                  <table className="instrument-table">
+                    <thead>
+                      <tr>
+                        <th>Device</th>
+                        <th>Vendor / Category</th>
+                        <th>IP Address</th>
+                        <th>MAC Address</th>
+                        <th style={{ textAlign: 'right' }}>Ping Latency</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {scanResult.devices.map(d => (
+                        <tr key={d.ip}>
+                          <td style={{ fontWeight: 600 }}>{d.hostname}</td>
+                          <td className="font-data-sm text-secondary">{d.vendor} ({d.deviceType})</td>
+                          <td className="font-data-sm">{d.ip}</td>
+                          <td className="font-data-sm text-muted">{d.mac}</td>
+                          <td style={{ textAlign: 'right', fontWeight: 600 }}>{d.pingMs} ms</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
               {/* Actionable Plan */}
-              <div className="report-action-plan-card">
-                <div className="action-plan-header">
-                  <div className="action-plan-icon">
-                    <IconCheckCircle size={18} />
-                  </div>
-                  <div>
-                    <h4>Recommended Optimization Plan</h4>
-                    <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                      Prioritized steps to eliminate lag and maximize network bandwidth
-                    </p>
-                  </div>
+              <div className="border border-border-subtle bg-surface p-4 space-y-3">
+                <div className="font-label-caps text-secondary border-b border-border-subtle pb-2">
+                  Prioritized Action & Optimization Plan
                 </div>
 
-                <div className="action-plan-items">
+                <div className="space-y-2">
                   {report.actionablePlan.map((plan, idx) => (
-                    <div key={idx} className="plan-item-row">
-                      <div className="plan-priority-badge" data-priority={plan.priority}>
-                        {plan.priority}
+                    <div key={idx} className="p-3 bg-surface-offset border border-border-subtle flex items-start gap-3">
+                      <div className="font-data-sm font-bold w-6 h-6 flex items-center justify-center bg-primary text-white flex-shrink-0">
+                        {idx + 1}
                       </div>
-                      <div className="plan-text-block">
-                        <div className="plan-action-title">
-                          <span className="plan-target-tag mono">{plan.targetComponent}</span>
-                          {plan.action}
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-body-md font-semibold text-primary">{plan.action}</span>
+                          <span className="badge-status font-data-sm text-[10px]">
+                            {plan.priority} Priority
+                          </span>
                         </div>
-                        <div className="plan-why-desc">
-                          <strong>Why:</strong> {plan.simpleWhy}
-                        </div>
+                        <p className="font-body-md text-secondary text-[13px]">{plan.simpleWhy}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-            </div>
+            </>
           )}
-        </div>
-
-        {/* Footer Actions */}
-        <div className="report-modal-footer">
-          <div className="footer-left mono">
-            AI Engine: <strong>gemini-3.1-flash-lite (Live API)</strong>
-          </div>
-          <div className="footer-right">
-            <button type="button" className="btn-instrument" onClick={handleCopy} disabled={!report}>
-              {copied ? '✓ Copied Summary!' : 'Copy Summary'}
-            </button>
-            <button type="button" className="btn-instrument" onClick={handlePrint} disabled={!report}>
-              Print / Save PDF
-            </button>
-            <button type="button" className="btn-instrument primary" onClick={onClose}>
-              Done
-            </button>
-          </div>
         </div>
       </div>
     </div>

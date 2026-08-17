@@ -1,6 +1,5 @@
 import React from 'react';
 import { APCapabilities, DiagnosticStatus } from '../layer1_data/types';
-import { IconRouter, IconCheckCircle, IconAlertTriangle, IconAlertCircle, IconSparkles } from './SvgIcons';
 
 interface NetworkOverviewBarProps {
   ap: APCapabilities;
@@ -28,157 +27,153 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
   isSimulation,
   onOpenNetworkAudit
 }) => {
-  // Calculate aggregate health score (0-100)
-  const healthScore = stats.total > 0
-    ? Math.round(((stats.healthy * 100) + (stats.attention * 60) + (stats.critical * 20)) / stats.total)
-    : 100;
-
-  const healthLevel = healthScore >= 80 ? 'optimal' : healthScore >= 50 ? 'warning' : 'critical';
-
   return (
-    <div className="network-overview-card">
-      <div className="overview-main-grid">
-        {/* Network Health Score Meter */}
-        <div className="health-score-widget">
-          <div className={`health-score-circle ${healthLevel}`}>
-            <span className="score-number">{healthScore}</span>
-            <span className="score-label">/ 100</span>
+    <div className="flex flex-col gap-3 mb-6">
+      {/* Stitch 4-Box Metric Summary Strip */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        {/* Total Clients */}
+        <button
+          type="button"
+          className={`telemetry-cell text-left ${activeFilter === 'ALL' ? 'border-primary bg-surface-offset' : ''}`}
+          onClick={() => onChangeFilter('ALL')}
+        >
+          <div className="telemetry-cell-label flex items-center justify-between">
+            <span>TOTAL CLIENTS</span>
+            <span className="material-symbols-outlined text-[16px] text-muted">router</span>
           </div>
-          <div className="health-score-meta">
-            <div className="health-title">
-              {healthLevel === 'optimal' ? 'Network Health: Excellent' : healthLevel === 'warning' ? 'Network Health: Moderate' : 'Network Health: Degraded'}
-            </div>
-            <div className="health-subtitle">
-              {stats.critical > 0
-                ? `${stats.critical} device${stats.critical > 1 ? 's require' : ' requires'} immediate RF optimization`
-                : stats.attention > 0
-                ? `${stats.attention} device${stats.attention > 1 ? 's have' : ' has'} minor performance throttling`
-                : 'All connected clients operating at peak channel efficiency'}
-            </div>
+          <div className="telemetry-cell-value-group">
+            <span className="telemetry-cell-value">{stats.total}</span>
+            <span className="telemetry-cell-unit">nodes</span>
           </div>
-        </div>
+        </button>
 
-        {/* Access Point Hardware Pill */}
-        <div className="ap-info-widget">
-          <div className="ap-icon-box">
-            <IconRouter size={20} />
+        {/* Healthy */}
+        <button
+          type="button"
+          className={`telemetry-cell text-left ${activeFilter === 'HEALTHY' ? 'border-status-healthy bg-status-healthy-bg' : ''}`}
+          style={{ borderColor: activeFilter === 'HEALTHY' ? 'var(--status-healthy)' : 'var(--border-subtle)' }}
+          onClick={() => onChangeFilter('HEALTHY')}
+        >
+          <div className="telemetry-cell-label flex items-center justify-between" style={{ color: 'var(--status-healthy)' }}>
+            <span className="flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px]">check_box</span>
+              HEALTHY
+            </span>
           </div>
-          <div className="ap-text-block">
-            <div className="ap-ssid-name">
-              <span>{ap.ssid}</span>
-              <span className="ap-tag mono">Tri-Band {ap.maxStandard}</span>
-            </div>
-            <div className="ap-details mono">
-              {ap.apModel} &bull; BSS Load: <span style={{ fontWeight: 700, color: ap.channelUtilizationPct >= 70 ? '#DC2626' : '#16A34A' }}>{ap.channelUtilizationPct}%</span>
-            </div>
+          <div className="telemetry-cell-value-group">
+            <span className="telemetry-cell-value" style={{ color: 'var(--status-healthy)' }}>{stats.healthy}</span>
+            <span className="telemetry-cell-unit">nominal</span>
           </div>
-        </div>
+        </button>
 
-        {/* Action Buttons & Filter Pills */}
-        <div className="status-filter-pills">
-          {onOpenNetworkAudit && (
-            <button
-              type="button"
-              className="btn-run-full-audit"
-              onClick={onOpenNetworkAudit}
-              title="Scan all connected devices & generate whole-network AI audit"
-            >
-              <IconSparkles size={14} />
-              <span>Scan Whole Network</span>
-            </button>
-          )}
+        {/* Attention */}
+        <button
+          type="button"
+          className={`telemetry-cell text-left ${activeFilter === 'ATTENTION' ? 'border-status-attention bg-status-attention-bg' : ''}`}
+          style={{ borderColor: activeFilter === 'ATTENTION' ? 'var(--status-attention)' : 'var(--border-subtle)' }}
+          onClick={() => onChangeFilter('ATTENTION')}
+        >
+          <div className="telemetry-cell-label flex items-center justify-between" style={{ color: 'var(--status-attention)' }}>
+            <span className="flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px]">warning</span>
+              ATTENTION
+            </span>
+          </div>
+          <div className="telemetry-cell-value-group">
+            <span className="telemetry-cell-value" style={{ color: 'var(--status-attention)' }}>{stats.attention}</span>
+            <span className="telemetry-cell-unit">degraded</span>
+          </div>
+        </button>
 
-          <button
-            type="button"
-            className={`filter-pill ${activeFilter === 'ALL' ? 'active' : ''}`}
-            onClick={() => onChangeFilter('ALL')}
-          >
-            <span className="pill-title">All Clients</span>
-            <span className="pill-count">{stats.total}</span>
-          </button>
-
-          <button
-            type="button"
-            className={`filter-pill success ${activeFilter === 'HEALTHY' ? 'active' : ''}`}
-            onClick={() => onChangeFilter('HEALTHY')}
-          >
-            <IconCheckCircle size={13} />
-            <span className="pill-title">Optimal</span>
-            <span className="pill-count">{stats.healthy}</span>
-          </button>
-
-          <button
-            type="button"
-            className={`filter-pill warning ${activeFilter === 'ATTENTION' ? 'active' : ''}`}
-            onClick={() => onChangeFilter('ATTENTION')}
-          >
-            <IconAlertTriangle size={13} />
-            <span className="pill-title">Attention</span>
-            <span className="pill-count">{stats.attention}</span>
-          </button>
-
-          <button
-            type="button"
-            className={`filter-pill critical ${activeFilter === 'CRITICAL' ? 'active' : ''}`}
-            onClick={() => onChangeFilter('CRITICAL')}
-          >
-            <IconAlertCircle size={13} />
-            <span className="pill-title">Critical</span>
-            <span className="pill-count">{stats.critical}</span>
-          </button>
-        </div>
+        {/* Critical */}
+        <button
+          type="button"
+          className={`telemetry-cell text-left ${activeFilter === 'CRITICAL' ? 'border-status-critical bg-status-critical-bg' : ''}`}
+          style={{ borderColor: activeFilter === 'CRITICAL' ? 'var(--status-critical)' : 'var(--border-subtle)' }}
+          onClick={() => onChangeFilter('CRITICAL')}
+        >
+          <div className="telemetry-cell-label flex items-center justify-between" style={{ color: 'var(--status-critical)' }}>
+            <span className="flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px]">error</span>
+              CRITICAL
+            </span>
+          </div>
+          <div className="telemetry-cell-value-group">
+            <span className="telemetry-cell-value" style={{ color: 'var(--status-critical)' }}>{stats.critical}</span>
+            <span className="telemetry-cell-unit">alert</span>
+          </div>
+        </button>
       </div>
 
-      {/* 1-Click Scenario Preset Switcher */}
+      {/* AP Header & Actions Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-surface border border-border-subtle">
+        <div className="flex items-center gap-3">
+          <span className="material-symbols-outlined text-primary text-[20px]">router</span>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-headline-md text-primary text-[15px]">{ap.ssid}</span>
+              <span className="badge-status font-data-sm">{ap.maxStandard}</span>
+              <span className="badge-status font-data-sm">Tri-Band (2.4/5/6 GHz)</span>
+            </div>
+            <div className="font-data-sm text-muted mt-0.5">
+              {ap.apModel} &bull; Channel Load: <span className="font-bold" style={{ color: ap.channelUtilizationPct >= 70 ? 'var(--status-critical)' : 'var(--status-healthy)' }}>{ap.channelUtilizationPct}%</span>
+            </div>
+          </div>
+        </div>
+
+        {onOpenNetworkAudit && (
+          <button
+            type="button"
+            className="btn-instrument-primary"
+            onClick={onOpenNetworkAudit}
+          >
+            <span className="material-symbols-outlined text-[16px]">radar</span>
+            Scan Whole Network & AI Audit
+          </button>
+        )}
+      </div>
+
+      {/* Simulation Scenario Switcher Strip */}
       {isSimulation && onSelectScenario && (
-        <div className="scenario-presets-bar">
-          <span className="scenario-bar-label">
-            <span className="mono">TEST PRESETS:</span>
+        <div className="flex items-center gap-2 p-2 bg-surface-offset border border-border-subtle overflow-x-auto">
+          <span className="font-label-caps text-muted whitespace-nowrap px-1">
+            TEST SCENARIOS:
           </span>
-          <div className="scenario-chips-row">
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
-              className={`scenario-chip ${selectedScenarioId === 'A' ? 'active' : ''}`}
+              className={`btn-instrument-secondary font-data-sm text-[11px] py-1 px-2.5 ${selectedScenarioId === 'A' ? 'bg-inverse text-white' : ''}`}
               onClick={() => onSelectScenario('A')}
             >
-              <span className="chip-badge success">A</span>
-              <span className="chip-text">Fast & Clean (Wi-Fi 6)</span>
+              <strong>A</strong>: Fast 5GHz
             </button>
-
             <button
               type="button"
-              className={`scenario-chip ${selectedScenarioId === 'B' ? 'active' : ''}`}
+              className={`btn-instrument-secondary font-data-sm text-[11px] py-1 px-2.5 ${selectedScenarioId === 'B' ? 'bg-inverse text-white' : ''}`}
               onClick={() => onSelectScenario('B')}
             >
-              <span className="chip-badge critical">B</span>
-              <span className="chip-text">Weak Signal (-76 dBm)</span>
+              <strong>B</strong>: Weak Signal (-76 dBm)
             </button>
-
             <button
               type="button"
-              className={`scenario-chip ${selectedScenarioId === 'C' ? 'active' : ''}`}
+              className={`btn-instrument-secondary font-data-sm text-[11px] py-1 px-2.5 ${selectedScenarioId === 'C' ? 'bg-inverse text-white' : ''}`}
               onClick={() => onSelectScenario('C')}
             >
-              <span className="chip-badge critical">C</span>
-              <span className="chip-text">RF Interference (Ch 6)</span>
+              <strong>C</strong>: RF Interference
             </button>
-
             <button
               type="button"
-              className={`scenario-chip ${selectedScenarioId === 'D' ? 'active' : ''}`}
+              className={`btn-instrument-secondary font-data-sm text-[11px] py-1 px-2.5 ${selectedScenarioId === 'D' ? 'bg-inverse text-white' : ''}`}
               onClick={() => onSelectScenario('D')}
             >
-              <span className="chip-badge warning">D</span>
-              <span className="chip-text">Legacy Device (802.11n)</span>
+              <strong>D</strong>: Legacy IoT
             </button>
-
             <button
               type="button"
-              className={`scenario-chip ${selectedScenarioId === 'E' ? 'active' : ''}`}
+              className={`btn-instrument-secondary font-data-sm text-[11px] py-1 px-2.5 ${selectedScenarioId === 'E' ? 'bg-inverse text-white' : ''}`}
               onClick={() => onSelectScenario('E')}
             >
-              <span className="chip-badge warning">E</span>
-              <span className="chip-text">Wrong Band (2.4GHz)</span>
+              <strong>E</strong>: Wrong Band
             </button>
           </div>
         </div>
