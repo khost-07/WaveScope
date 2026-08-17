@@ -1,6 +1,5 @@
 import React from 'react';
 import { ClientDevice, StructuredDiagnosis } from '../layer1_data/types';
-import { BandBadge } from './StatusBadge';
 import { IconCheckBox, IconAlertTriangle, IconAlertCircle } from './SvgIcons';
 
 interface DeviceCardProps {
@@ -16,7 +15,6 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
   isSelected,
   onSelect
 }) => {
-  const { telemetry } = device;
   const status = diagnosis.status;
 
   return (
@@ -31,7 +29,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
       onClick={() => onSelect(device)}
     >
       {/* Top Row: Device Name & Status Badge */}
-      <div className="flex items-start justify-between gap-2 mb-1.5">
+      <div className="flex items-start justify-between gap-2 mb-1">
         <div>
           <div className="text-[14px] text-black font-bold leading-tight">
             {device.hostname}
@@ -42,45 +40,28 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
         </div>
 
         {status === 'HEALTHY' && (
-          <span className="badge-status badge-status-healthy text-[9px] py-0.5 px-1.5 flex items-center gap-1">
+          <span className="badge-status badge-status-healthy text-[9px] py-0.5 px-1.5 flex items-center gap-1 flex-shrink-0">
             <IconCheckBox size={11} />
             HEALTHY
           </span>
         )}
         {status === 'ATTENTION' && (
-          <span className="badge-status badge-status-attention text-[9px] py-0.5 px-1.5 flex items-center gap-1">
+          <span className="badge-status badge-status-attention text-[9px] py-0.5 px-1.5 flex items-center gap-1 flex-shrink-0">
             <IconAlertTriangle size={11} />
             ATTN
           </span>
         )}
         {status === 'CRITICAL' && (
-          <span className="badge-status badge-status-critical text-[9px] py-0.5 px-1.5 flex items-center gap-1">
+          <span className="badge-status badge-status-critical text-[9px] py-0.5 px-1.5 flex items-center gap-1 flex-shrink-0">
             <IconAlertCircle size={11} />
             CRIT
           </span>
         )}
       </div>
 
-      {/* Diagnosis summary */}
-      <div className="text-[12px] text-[#444748] mb-2 line-clamp-1">
+      {/* Diagnosis summary prose (No redundant dBm/dB values) */}
+      <div className="text-[12px] text-[#444748] line-clamp-2 mt-1">
         {diagnosis.primary_diagnosis}
-      </div>
-
-      {/* Telemetry Metric Badges */}
-      <div className="flex items-center justify-between pt-2 border-t border-[#E5E5E5] font-mono text-[11px]">
-        <div className="flex items-center gap-2">
-          <BandBadge band={telemetry.band} />
-          <span className="text-[#444748] font-semibold">
-            {telemetry.txLinkRate_Mbps} Mbps
-          </span>
-        </div>
-        <div className="text-[#747878]">
-          <span style={{ color: telemetry.rssi_dBm <= -75 ? '#D32F2F' : telemetry.rssi_dBm <= -70 ? '#F57C00' : 'inherit', fontWeight: 600 }}>
-            {telemetry.rssi_dBm} dBm
-          </span>
-          {' / '}
-          <span>{telemetry.snr_dB} dB</span>
-        </div>
       </div>
     </div>
   );

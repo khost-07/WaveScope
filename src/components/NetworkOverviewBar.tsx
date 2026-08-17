@@ -16,6 +16,9 @@ interface NetworkOverviewBarProps {
   onSelectScenario?: (scId: string) => void;
   isSimulation: boolean;
   onOpenNetworkAudit?: () => void;
+  singleDeviceStatus?: DiagnosticStatus;
+  singleDeviceHostname?: string;
+  singleDeviceDiagnosis?: string;
 }
 
 export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
@@ -26,85 +29,136 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
   selectedScenarioId,
   onSelectScenario,
   isSimulation,
-  onOpenNetworkAudit
+  onOpenNetworkAudit,
+  singleDeviceStatus = 'HEALTHY',
+  singleDeviceHostname = 'Connected Wi-Fi Interface',
+  singleDeviceDiagnosis
 }) => {
   return (
     <div className="flex flex-col gap-3 mb-6">
-      {/* Stitch 4-Box Metric Summary Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {/* Total Clients */}
-        <button
-          type="button"
-          className={`telemetry-cell text-left cursor-pointer transition-colors ${activeFilter === 'ALL' ? 'border-black bg-[#FAFAFA]' : 'border-[#E5E5E5] bg-white hover:bg-[#FAFAFA]'}`}
-          onClick={() => onChangeFilter('ALL')}
-        >
-          <div className="telemetry-cell-label flex items-center justify-between">
-            <span>TOTAL CLIENTS</span>
-            <IconRouter size={15} className="text-[#747878]" />
-          </div>
-          <div className="telemetry-cell-value-group">
-            <span className="telemetry-cell-value text-black">{stats.total}</span>
-            <span className="telemetry-cell-unit">nodes</span>
-          </div>
-        </button>
+      {/* MODE CONDITIONAL HEADER */}
 
-        {/* Healthy */}
-        <button
-          type="button"
-          className={`telemetry-cell text-left cursor-pointer transition-colors ${activeFilter === 'HEALTHY' ? 'bg-[#2E7D32]/10' : 'bg-white hover:bg-[#FAFAFA]'}`}
-          style={{ borderColor: activeFilter === 'HEALTHY' ? '#2E7D32' : '#E5E5E5' }}
-          onClick={() => onChangeFilter('HEALTHY')}
-        >
-          <div className="telemetry-cell-label flex items-center justify-between text-[#2E7D32]">
-            <span className="flex items-center gap-1.5">
-              <IconCheckBox size={14} />
-              HEALTHY
+      {/* 1. SIMULATION MODE: 4-Box Fleet Metric Summary Strip */}
+      {isSimulation ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {/* Total Clients */}
+          <button
+            type="button"
+            className={`telemetry-cell text-left cursor-pointer transition-colors ${activeFilter === 'ALL' ? 'border-black bg-[#FAFAFA]' : 'border-[#E5E5E5] bg-white hover:bg-[#FAFAFA]'}`}
+            onClick={() => onChangeFilter('ALL')}
+          >
+            <div className="telemetry-cell-label flex items-center justify-between">
+              <span>TOTAL CLIENTS</span>
+              <IconRouter size={15} className="text-[#747878]" />
+            </div>
+            <div className="telemetry-cell-value-group">
+              <span className="telemetry-cell-value text-black">{stats.total}</span>
+              <span className="telemetry-cell-unit">nodes</span>
+            </div>
+          </button>
+
+          {/* Healthy */}
+          <button
+            type="button"
+            className={`telemetry-cell text-left cursor-pointer transition-colors ${activeFilter === 'HEALTHY' ? 'bg-[#2E7D32]/10' : 'bg-white hover:bg-[#FAFAFA]'}`}
+            style={{ borderColor: activeFilter === 'HEALTHY' ? '#2E7D32' : '#E5E5E5' }}
+            onClick={() => onChangeFilter('HEALTHY')}
+          >
+            <div className="telemetry-cell-label flex items-center justify-between text-[#2E7D32]">
+              <span className="flex items-center gap-1.5">
+                <IconCheckBox size={14} />
+                HEALTHY
+              </span>
+            </div>
+            <div className="telemetry-cell-value-group">
+              <span className="telemetry-cell-value text-[#2E7D32]">{stats.healthy}</span>
+              <span className="telemetry-cell-unit">nominal</span>
+            </div>
+          </button>
+
+          {/* Attention */}
+          <button
+            type="button"
+            className={`telemetry-cell text-left cursor-pointer transition-colors ${activeFilter === 'ATTENTION' ? 'bg-[#F57C00]/10' : 'bg-white hover:bg-[#FAFAFA]'}`}
+            style={{ borderColor: activeFilter === 'ATTENTION' ? '#F57C00' : '#E5E5E5' }}
+            onClick={() => onChangeFilter('ATTENTION')}
+          >
+            <div className="telemetry-cell-label flex items-center justify-between text-[#F57C00]">
+              <span className="flex items-center gap-1.5">
+                <IconAlertTriangle size={14} />
+                ATTENTION
+              </span>
+            </div>
+            <div className="telemetry-cell-value-group">
+              <span className="telemetry-cell-value text-[#F57C00]">{stats.attention}</span>
+              <span className="telemetry-cell-unit">degraded</span>
+            </div>
+          </button>
+
+          {/* Critical */}
+          <button
+            type="button"
+            className={`telemetry-cell text-left cursor-pointer transition-colors ${activeFilter === 'CRITICAL' ? 'bg-[#D32F2F]/10' : 'bg-white hover:bg-[#FAFAFA]'}`}
+            style={{ borderColor: activeFilter === 'CRITICAL' ? '#D32F2F' : '#E5E5E5' }}
+            onClick={() => onChangeFilter('CRITICAL')}
+          >
+            <div className="telemetry-cell-label flex items-center justify-between text-[#D32F2F]">
+              <span className="flex items-center gap-1.5">
+                <IconAlertCircle size={14} />
+                CRITICAL
+              </span>
+            </div>
+            <div className="telemetry-cell-value-group">
+              <span className="telemetry-cell-value text-[#D32F2F]">{stats.critical}</span>
+              <span className="telemetry-cell-unit">alert</span>
+            </div>
+          </button>
+        </div>
+      ) : (
+        /* 2. LIVE DATA MODE (Real Mode): Single proportionate active connection health summary */
+        <div className="border border-[#E5E5E5] bg-white p-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            {singleDeviceStatus === 'HEALTHY' && (
+              <div className="badge-status badge-status-healthy text-[11px] py-1 px-2.5 flex items-center gap-1.5">
+                <IconCheckBox size={14} />
+                <span>HEALTHY LINK</span>
+              </div>
+            )}
+            {singleDeviceStatus === 'ATTENTION' && (
+              <div className="badge-status badge-status-attention text-[11px] py-1 px-2.5 flex items-center gap-1.5">
+                <IconAlertTriangle size={14} />
+                <span>ATTENTION REQUIRED</span>
+              </div>
+            )}
+            {singleDeviceStatus === 'CRITICAL' && (
+              <div className="badge-status badge-status-critical text-[11px] py-1 px-2.5 flex items-center gap-1.5">
+                <IconAlertCircle size={14} />
+                <span>CRITICAL LINK</span>
+              </div>
+            )}
+
+            <div>
+              <div className="text-[15px] font-bold text-black">
+                {singleDeviceStatus === 'HEALTHY'
+                  ? 'Your active Wi-Fi connection is healthy.'
+                  : singleDeviceDiagnosis
+                  ? `1 issue detected: ${singleDeviceDiagnosis}`
+                  : '1 potential issue detected on your active connection.'}
+              </div>
+              <div className="font-mono text-[11px] text-[#747878] mt-0.5">
+                Live host: <strong>{singleDeviceHostname}</strong> &bull; Link evaluated by Layer 2 deterministic engine
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 font-mono text-[11px]">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#FAFAFA] border border-[#E5E5E5] text-black font-semibold">
+              <span className="w-2 h-2 bg-[#2E7D32] inline-block"></span>
+              LIVE PROBE ACTIVE
             </span>
           </div>
-          <div className="telemetry-cell-value-group">
-            <span className="telemetry-cell-value text-[#2E7D32]">{stats.healthy}</span>
-            <span className="telemetry-cell-unit">nominal</span>
-          </div>
-        </button>
-
-        {/* Attention */}
-        <button
-          type="button"
-          className={`telemetry-cell text-left cursor-pointer transition-colors ${activeFilter === 'ATTENTION' ? 'bg-[#F57C00]/10' : 'bg-white hover:bg-[#FAFAFA]'}`}
-          style={{ borderColor: activeFilter === 'ATTENTION' ? '#F57C00' : '#E5E5E5' }}
-          onClick={() => onChangeFilter('ATTENTION')}
-        >
-          <div className="telemetry-cell-label flex items-center justify-between text-[#F57C00]">
-            <span className="flex items-center gap-1.5">
-              <IconAlertTriangle size={14} />
-              ATTENTION
-            </span>
-          </div>
-          <div className="telemetry-cell-value-group">
-            <span className="telemetry-cell-value text-[#F57C00]">{stats.attention}</span>
-            <span className="telemetry-cell-unit">degraded</span>
-          </div>
-        </button>
-
-        {/* Critical */}
-        <button
-          type="button"
-          className={`telemetry-cell text-left cursor-pointer transition-colors ${activeFilter === 'CRITICAL' ? 'bg-[#D32F2F]/10' : 'bg-white hover:bg-[#FAFAFA]'}`}
-          style={{ borderColor: activeFilter === 'CRITICAL' ? '#D32F2F' : '#E5E5E5' }}
-          onClick={() => onChangeFilter('CRITICAL')}
-        >
-          <div className="telemetry-cell-label flex items-center justify-between text-[#D32F2F]">
-            <span className="flex items-center gap-1.5">
-              <IconAlertCircle size={14} />
-              CRITICAL
-            </span>
-          </div>
-          <div className="telemetry-cell-value-group">
-            <span className="telemetry-cell-value text-[#D32F2F]">{stats.critical}</span>
-            <span className="telemetry-cell-unit">alert</span>
-          </div>
-        </button>
-      </div>
+        </div>
+      )}
 
       {/* AP Header & Actions Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white border border-[#E5E5E5]">

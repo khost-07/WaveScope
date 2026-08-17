@@ -6,9 +6,18 @@ import { RFLinkBudgetGauge } from './RFLinkBudgetGauge';
 import { CapabilityMatrix } from './CapabilityMatrix';
 import { DiagnosticInspector } from './DiagnosticInspector';
 import { ExplanationCard } from './ExplanationCard';
-import { IconChevronRight, IconRefresh, IconSignal, IconSparkles, IconSliders, IconCpu, IconRule, IconLightbulb, IconCheckBox, IconAlertTriangle, IconAlertCircle } from './SvgIcons';
+import {
+  IconChevronRight,
+  IconRefresh,
+  IconSignal,
+  IconSparkles,
+  IconRule,
+  IconCheckBox,
+  IconAlertTriangle,
+  IconAlertCircle
+} from './SvgIcons';
 
-export type DetailTab = 'SIMPLE' | 'EXPLANATION' | 'TELEMETRY' | 'CAPABILITIES' | 'SCORES' | 'TUNER';
+export type DetailTab = 'OVERVIEW' | 'EVIDENCE' | 'SPECTRUM';
 
 interface DeviceDetailHubProps {
   device: ClientDevice;
@@ -31,7 +40,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
   onTriggerExplanation,
   onOpenKeyModal
 }) => {
-  const [activeTab, setActiveTab] = useState<DetailTab>('SIMPLE');
+  const [activeTab, setActiveTab] = useState<DetailTab>('OVERVIEW');
   const { telemetry } = device;
 
   const handleTweakField = (field: string, value: any) => {
@@ -84,7 +93,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
         </div>
       </div>
 
-      {/* Section 1: Raw Telemetry 4-Box Grid */}
+      {/* Section 1: Canonical Raw Telemetry 4-Box Grid (Fix 1: Single source of truth for numbers) */}
       <div>
         <div className="text-[11px] font-bold uppercase tracking-wider text-[#444748] mb-2 flex items-center gap-1.5">
           <IconSignal size={15} />
@@ -150,10 +159,10 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
         </div>
       </div>
 
-      {/* Section 2: Stitch Diagnostic Engine Result Card */}
+      {/* Section 2: Layer 2 Diagnostic Result Banner (Fix 1: No duplicated raw numbers) */}
       <div className="border border-[#E5E5E5] bg-white">
         <div
-          className="p-4 border-b border-[#E5E5E5]"
+          className="p-4"
           style={{
             backgroundColor: status === 'CRITICAL' ? 'rgba(211, 47, 47, 0.05)' : status === 'ATTENTION' ? 'rgba(245, 124, 0, 0.05)' : 'rgba(46, 125, 50, 0.05)'
           }}
@@ -185,7 +194,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
           </div>
 
           <h2
-            className="text-[18px] font-bold mb-3"
+            className="text-[18px] font-bold mb-2"
             style={{
               color: status === 'CRITICAL' ? '#D32F2F' : status === 'ATTENTION' ? '#F57C00' : '#2E7D32'
             }}
@@ -193,120 +202,74 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
             {diagnosis.primary_diagnosis}
           </h2>
 
-          <div className="flex flex-wrap gap-6 text-[12px] font-mono text-[#444748]">
+          <div className="flex flex-wrap items-center justify-between gap-4 text-[12px] font-mono text-[#444748] pt-2 border-t border-[#E5E5E5]/60">
             <div>
-              <span className="text-[#747878] block text-[10px] uppercase font-bold mb-0.5">Confidence</span>
-              <span className="text-[14px] text-black font-bold">{diagnosis.confidence}%</span>
+              <span className="text-[#747878] uppercase text-[10px] font-bold mr-1.5">ENGINE CONFIDENCE:</span>
+              <strong className="text-black text-[13px]">{diagnosis.confidence}%</strong>
             </div>
-            <div>
-              <span className="text-[#747878] block text-[10px] uppercase font-bold mb-0.5">Physical Evidence</span>
-              <ul className="list-disc list-inside space-y-0.5 text-[11px]">
-                {diagnosis.evidence.slice(0, 3).map((item, idx) => (
-                  <li key={idx}>{item}</li>
-                ))}
-              </ul>
+            <div className="font-sans text-[12px] text-[#747878]">
+              See Raw Telemetry above for supporting signal data and the Evidence tab for hypothesis breakdown.
             </div>
           </div>
         </div>
       </div>
 
-      {/* Tabs Navigation */}
+      {/* Consolidated 3-Tab Controller (Fix 2) */}
       <div className="flex border-b border-[#E5E5E5] bg-[#FAFAFA] overflow-x-auto">
         <button
           type="button"
-          className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${
-            activeTab === 'SIMPLE'
+          className={`px-5 py-3 text-[12px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-colors ${
+            activeTab === 'OVERVIEW'
               ? 'border-black bg-white text-black font-bold'
               : 'border-transparent text-[#444748] hover:bg-white'
           }`}
-          onClick={() => setActiveTab('SIMPLE')}
+          onClick={() => setActiveTab('OVERVIEW')}
         >
-          <IconLightbulb size={14} />
-          <span>Simple Plain English</span>
+          <IconSparkles size={16} />
+          <span>Overview</span>
         </button>
 
         <button
           type="button"
-          className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${
-            activeTab === 'EXPLANATION'
+          className={`px-5 py-3 text-[12px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-colors ${
+            activeTab === 'EVIDENCE'
               ? 'border-black bg-white text-black font-bold'
               : 'border-transparent text-[#444748] hover:bg-white'
           }`}
-          onClick={() => setActiveTab('EXPLANATION')}
+          onClick={() => setActiveTab('EVIDENCE')}
         >
-          <IconSparkles size={14} />
-          <span>Diagnostic AI Deep-Dive</span>
+          <IconRule size={16} />
+          <span>Evidence</span>
         </button>
 
         <button
           type="button"
-          className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${
-            activeTab === 'TELEMETRY'
+          className={`px-5 py-3 text-[12px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-colors ${
+            activeTab === 'SPECTRUM'
               ? 'border-black bg-white text-black font-bold'
               : 'border-transparent text-[#444748] hover:bg-white'
           }`}
-          onClick={() => setActiveTab('TELEMETRY')}
+          onClick={() => setActiveTab('SPECTRUM')}
         >
-          <IconSignal size={14} />
-          <span>RF Link Budget</span>
-        </button>
-
-        <button
-          type="button"
-          className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${
-            activeTab === 'CAPABILITIES'
-              ? 'border-black bg-white text-black font-bold'
-              : 'border-transparent text-[#444748] hover:bg-white'
-          }`}
-          onClick={() => setActiveTab('CAPABILITIES')}
-        >
-          <IconCpu size={14} />
-          <span>Capability Cross-Reference</span>
-        </button>
-
-        <button
-          type="button"
-          className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${
-            activeTab === 'SCORES'
-              ? 'border-black bg-white text-black font-bold'
-              : 'border-transparent text-[#444748] hover:bg-white'
-          }`}
-          onClick={() => setActiveTab('SCORES')}
-        >
-          <IconRule size={14} />
-          <span>Hypothesis Scores</span>
-        </button>
-
-        <button
-          type="button"
-          className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${
-            activeTab === 'TUNER'
-              ? 'border-black bg-white text-black font-bold'
-              : 'border-transparent text-[#444748] hover:bg-white'
-          }`}
-          onClick={() => setActiveTab('TUNER')}
-        >
-          <IconSliders size={14} />
-          <span>Parameter Tuner</span>
+          <IconSignal size={16} />
+          <span>Spectrum</span>
         </button>
       </div>
 
-      {/* Tab Panels */}
+      {/* 3 Tab Panels */}
       <div>
-        {activeTab === 'SIMPLE' && (
-          <SuperSimpleOverview
-            diagnosis={diagnosis}
-            explanation={explanation}
-            isLoading={isLoading}
-            error={error}
-            onRefresh={onTriggerExplanation}
-            onOpenKeyModal={onOpenKeyModal}
-            onSwitchToTechnical={() => setActiveTab('TELEMETRY')}
-          />
-        )}
+        {/* TAB 1: OVERVIEW (Merged Simple Plain English + Diagnostic AI Deep-Dive) */}
+        {activeTab === 'OVERVIEW' && (
+          <div className="space-y-6">
+            <SuperSimpleOverview
+              diagnosis={diagnosis}
+              explanation={explanation}
+              isLoading={isLoading}
+              error={error}
+              onRefresh={onTriggerExplanation}
+              onOpenKeyModal={onOpenKeyModal}
+            />
 
-        {activeTab === 'EXPLANATION' && (
-          <div className="space-y-4">
             <ExplanationCard
               explanation={explanation}
               isLoading={isLoading}
@@ -314,103 +277,99 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
               onRefresh={onTriggerExplanation}
               onOpenKeyModal={onOpenKeyModal}
             />
-            <DiagnosticInspector diagnosis={diagnosis} />
           </div>
         )}
 
-        {activeTab === 'TELEMETRY' && (
-          <div className="space-y-4">
-            <RFLinkBudgetGauge telemetry={telemetry} />
+        {/* TAB 2: EVIDENCE (Merged Hypothesis Scores + Capability Cross-Reference) */}
+        {activeTab === 'EVIDENCE' && (
+          <div className="space-y-6">
             <DiagnosticInspector diagnosis={diagnosis} />
-          </div>
-        )}
-
-        {activeTab === 'CAPABILITIES' && (
-          <div className="space-y-4">
             <CapabilityMatrix deviceCaps={device.capabilities} apCaps={device.apCapabilities} />
-            <RFLinkBudgetGauge telemetry={telemetry} />
           </div>
         )}
 
-        {activeTab === 'SCORES' && (
-          <div className="space-y-4">
-            <DiagnosticInspector diagnosis={diagnosis} />
+        {/* TAB 3: SPECTRUM (Merged RF Link Budget + Parameter Tuner) */}
+        {activeTab === 'SPECTRUM' && (
+          <div className="space-y-6">
             <RFLinkBudgetGauge telemetry={telemetry} />
-          </div>
-        )}
 
-        {activeTab === 'TUNER' && (
-          <div className="border border-[#E5E5E5] bg-white p-4 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#444748]">Interactive Telemetry Tuner</span>
-              <span className="font-mono text-[11px] text-[#747878]">Sliders recalculate Layer 2 hypothesis scores in real-time</span>
-            </div>
+            {/* Parameter Tuner */}
+            <div className="border border-[#E5E5E5] bg-white p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#444748]">
+                  Interactive RF Parameter Tuner
+                </span>
+                <span className="font-mono text-[11px] text-[#747878]">
+                  Adjust parameters to test Layer 2 scoring engine response in real-time
+                </span>
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="font-mono text-[12px] text-[#444748] block mb-1">
-                  RSSI: <strong className="text-black">{device.telemetry.rssi_dBm} dBm</strong>
-                </label>
-                <input
-                  type="range"
-                  min="-90"
-                  max="-30"
-                  value={device.telemetry.rssi_dBm}
-                  onChange={(e) => handleTweakField('rssi_dBm', parseInt(e.target.value, 10))}
-                />
-                <div className="flex justify-between font-mono text-[10px] text-[#747878] mt-1">
-                  <span>-90 dBm (Weak)</span>
-                  <span>-60 dBm (Nominal)</span>
-                  <span>-30 dBm (Strong)</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="font-mono text-[12px] text-[#444748] block mb-1">
+                    RSSI: <strong className="text-black">{device.telemetry.rssi_dBm} dBm</strong>
+                  </label>
+                  <input
+                    type="range"
+                    min="-90"
+                    max="-30"
+                    value={device.telemetry.rssi_dBm}
+                    onChange={(e) => handleTweakField('rssi_dBm', parseInt(e.target.value, 10))}
+                  />
+                  <div className="flex justify-between font-mono text-[10px] text-[#747878] mt-1">
+                    <span>-90 dBm (Weak)</span>
+                    <span>-60 dBm (Nominal)</span>
+                    <span>-30 dBm (Strong)</span>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="font-mono text-[12px] text-[#444748] block mb-1">
-                  Noise Floor: <strong className="text-black">{device.telemetry.noiseFloor_dBm} dBm</strong>
-                </label>
-                <input
-                  type="range"
-                  min="-95"
-                  max="-45"
-                  value={device.telemetry.noiseFloor_dBm}
-                  onChange={(e) => handleTweakField('noiseFloor_dBm', parseInt(e.target.value, 10))}
-                />
-                <div className="flex justify-between font-mono text-[10px] text-[#747878] mt-1">
-                  <span>-95 dBm (Clean)</span>
-                  <span>-70 dBm (Noisy)</span>
-                  <span>-45 dBm (Jammed)</span>
+                <div>
+                  <label className="font-mono text-[12px] text-[#444748] block mb-1">
+                    Noise Floor: <strong className="text-black">{device.telemetry.noiseFloor_dBm} dBm</strong>
+                  </label>
+                  <input
+                    type="range"
+                    min="-95"
+                    max="-45"
+                    value={device.telemetry.noiseFloor_dBm}
+                    onChange={(e) => handleTweakField('noiseFloor_dBm', parseInt(e.target.value, 10))}
+                  />
+                  <div className="flex justify-between font-mono text-[10px] text-[#747878] mt-1">
+                    <span>-95 dBm (Clean)</span>
+                    <span>-70 dBm (Noisy)</span>
+                    <span>-45 dBm (Jammed)</span>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="font-mono text-[12px] text-[#444748] block mb-1">
-                  Retry Rate: <strong className="text-black">{device.telemetry.retryRatePct}%</strong>
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="50"
-                  value={device.telemetry.retryRatePct}
-                  onChange={(e) => handleTweakField('retryRatePct', parseInt(e.target.value, 10))}
-                />
-              </div>
+                <div>
+                  <label className="font-mono text-[12px] text-[#444748] block mb-1">
+                    Retry Rate: <strong className="text-black">{device.telemetry.retryRatePct}%</strong>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="50"
+                    value={device.telemetry.retryRatePct}
+                    onChange={(e) => handleTweakField('retryRatePct', parseInt(e.target.value, 10))}
+                  />
+                </div>
 
-              <div>
-                <label className="font-mono text-[12px] text-[#444748] block mb-1">
-                  Channel Width: <strong className="text-black">{device.telemetry.channelWidthMHz} MHz</strong>
-                </label>
-                <div className="flex gap-2 mt-1">
-                  {[20, 40, 80, 160].map(w => (
-                    <button
-                      key={w}
-                      type="button"
-                      className={`btn-instrument-secondary text-[11px] py-1 px-3 ${device.telemetry.channelWidthMHz === w ? 'bg-black text-white' : ''}`}
-                      onClick={() => handleTweakField('channelWidthMHz', w)}
-                    >
-                      {w} MHz
-                    </button>
-                  ))}
+                <div>
+                  <label className="font-mono text-[12px] text-[#444748] block mb-1">
+                    Channel Width: <strong className="text-black">{device.telemetry.channelWidthMHz} MHz</strong>
+                  </label>
+                  <div className="flex gap-2 mt-1">
+                    {[20, 40, 80, 160].map((w) => (
+                      <button
+                        key={w}
+                        type="button"
+                        className={`btn-instrument-secondary text-[11px] py-1 px-3 ${device.telemetry.channelWidthMHz === w ? 'bg-black text-white' : ''}`}
+                        onClick={() => handleTweakField('channelWidthMHz', w)}
+                      >
+                        {w} MHz
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

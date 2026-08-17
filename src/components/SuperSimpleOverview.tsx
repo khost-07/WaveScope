@@ -10,7 +10,6 @@ interface SuperSimpleOverviewProps {
   error?: string | null;
   onRefresh?: () => void;
   onOpenKeyModal?: () => void;
-  onSwitchToTechnical?: () => void;
 }
 
 export const SuperSimpleOverview: React.FC<SuperSimpleOverviewProps> = ({
@@ -19,8 +18,7 @@ export const SuperSimpleOverview: React.FC<SuperSimpleOverviewProps> = ({
   isLoading,
   error,
   onRefresh,
-  onOpenKeyModal,
-  onSwitchToTechnical
+  onOpenKeyModal
 }) => {
   if (isLoading) {
     return (
@@ -113,7 +111,7 @@ export const SuperSimpleOverview: React.FC<SuperSimpleOverviewProps> = ({
             <span>What is happening?</span>
           </div>
           <p className="text-[13px] text-[#444748] leading-relaxed">
-            {simple?.whatIsHappening || explanation?.plainEnglishExplanation || 'Analyzing network metrics...'}
+            {simple?.whatIsHappening || 'The connection status has been evaluated against RF thresholds.'}
           </p>
         </div>
 
@@ -124,7 +122,7 @@ export const SuperSimpleOverview: React.FC<SuperSimpleOverviewProps> = ({
             <span>Why does this matter?</span>
           </div>
           <p className="text-[13px] text-[#444748] leading-relaxed">
-            {simple?.whyItMatters || 'May cause occasional buffering, lower maximum speed, or longer download times.'}
+            {simple?.whyItMatters || 'Affects streaming stability, throughput, and audio/video call latency.'}
           </p>
         </div>
       </div>
@@ -153,16 +151,6 @@ export const SuperSimpleOverview: React.FC<SuperSimpleOverviewProps> = ({
           )}
         </div>
       </div>
-
-      {/* Switcher */}
-      {onSwitchToTechnical && (
-        <div className="flex items-center justify-between p-3 bg-[#FAFAFA] border border-[#E5E5E5] font-mono text-[12px] text-[#444748]">
-          <span>Need full RF spectrum dBm numbers and Layer 2 hypothesis math?</span>
-          <button type="button" className="btn-instrument-secondary" onClick={onSwitchToTechnical}>
-            View RF Telemetry Spectrum &rarr;
-          </button>
-        </div>
-      )}
     </div>
   );
 };

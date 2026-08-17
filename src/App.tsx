@@ -373,6 +373,9 @@ export function App() {
             onSelectScenario={handleQuickScenario}
             isSimulation={mode === 'SIMULATION'}
             onOpenNetworkAudit={handleRunNetworkAudit}
+            singleDeviceStatus={selectedDiagnosis?.status || 'HEALTHY'}
+            singleDeviceHostname={selectedDevice?.hostname || 'Host Wi-Fi Interface'}
+            singleDeviceDiagnosis={selectedDiagnosis?.primary_diagnosis}
           />
 
           {/* SECTION 1: CONNECTED CLIENTS WORKSPACE (MASTER-DETAIL) */}
