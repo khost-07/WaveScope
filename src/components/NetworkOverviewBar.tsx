@@ -1,6 +1,6 @@
 import React from 'react';
 import { APCapabilities, DiagnosticStatus } from '../layer1_data/types';
-import { IconRouter, IconCheckCircle, IconAlertTriangle, IconAlertCircle } from './SvgIcons';
+import { IconRouter, IconCheckCircle, IconAlertTriangle, IconAlertCircle, IconSparkles } from './SvgIcons';
 
 interface NetworkOverviewBarProps {
   ap: APCapabilities;
@@ -15,6 +15,7 @@ interface NetworkOverviewBarProps {
   selectedScenarioId?: string;
   onSelectScenario?: (scId: string) => void;
   isSimulation: boolean;
+  onOpenNetworkAudit?: () => void;
 }
 
 export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
@@ -24,7 +25,8 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
   onChangeFilter,
   selectedScenarioId,
   onSelectScenario,
-  isSimulation
+  isSimulation,
+  onOpenNetworkAudit
 }) => {
   // Calculate aggregate health score (0-100)
   const healthScore = stats.total > 0
@@ -72,8 +74,20 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
           </div>
         </div>
 
-        {/* Filter Pills */}
+        {/* Action Buttons & Filter Pills */}
         <div className="status-filter-pills">
+          {onOpenNetworkAudit && (
+            <button
+              type="button"
+              className="btn-run-full-audit"
+              onClick={onOpenNetworkAudit}
+              title="Scan all connected devices & generate whole-network AI audit"
+            >
+              <IconSparkles size={14} />
+              <span>Scan Whole Network</span>
+            </button>
+          )}
+
           <button
             type="button"
             className={`filter-pill ${activeFilter === 'ALL' ? 'active' : ''}`}

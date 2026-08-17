@@ -5,12 +5,16 @@ import { loadDevices } from './layer1_data/dataService';
 import { runDiagnosticEngine } from './layer2_engine/engine';
 import { generateExplanation } from './layer3_llm/llmService';
 import { LLMExplanationResponse } from './layer3_llm/types';
+import { scanLocalNetwork } from './layer1_data/networkScanService';
+import { generateNetworkAuditReport } from './layer3_llm/networkReportService';
+import { NetworkScanResult, NetworkAuditReport } from './layer1_data/networkScannerTypes';
 import { NetworkOverviewBar } from './components/NetworkOverviewBar';
 import { DeviceListPane } from './components/DeviceListPane';
 import { DeviceDetailHub } from './components/DeviceDetailHub';
 import { ClientTable } from './components/ClientTable';
 import { ApiKeySetupScreen } from './components/ApiKeySetupScreen';
-import { IconKey } from './components/SvgIcons';
+import { NetworkReportModal } from './components/NetworkReportModal';
+import { IconKey, IconSparkles } from './components/SvgIcons';
 
 const STORAGE_KEY = 'wavescope_gemini_api_key';
 
@@ -39,6 +43,13 @@ export function App() {
     return !!localStorage.getItem(STORAGE_KEY);
   });
   const [showKeyModal, setShowKeyModal] = useState<boolean>(false);
+
+  // Whole-Network Diagnostic Audit States
+  const [showReportModal, setShowReportModal] = useState<boolean>(false);
+  const [scanResult, setScanResult] = useState<NetworkScanResult | null>(null);
+  const [auditReport, setAuditReport] = useState<NetworkAuditReport | null>(null);
+  const [isScanLoading, setIsScanLoading] = useState<boolean>(false);
+  const [scanError, setScanError] = useState<string | null>(null);
 
   // LLM Explanations & Error tracking per device
   const [explanations, setExplanations] = useState<Record<string, LLMExplanationResponse>>({});
@@ -121,6 +132,28 @@ export function App() {
       setIsLlmLoading(false);
     }
   }, [apiKey]);
+
+  // Handle Full-Network Scan & AI Report
+  const handleRunNetworkAudit = async () => {
+    setShowReportModal(true);
+    setIsScanLoading(true);
+    setScanError(null);
+
+    try {
+      // Step 1: Scan Network (Router + Subnet Devices)
+      const scan = await scanLocalNetwork(mode);
+      setScanResult(scan);
+
+      // Step 2: Generate AI Report with Gemini 3.1 Flash Lite
+      const report = await generateNetworkAuditReport(scan, apiKey);
+      setAuditReport(report);
+    } catch (err: any) {
+      console.error('Failed to generate full network audit report:', err);
+      setScanError(err.message || 'Network scan failed. Please check your Gemini API key and try again.');
+    } finally {
+      setIsScanLoading(false);
+    }
+  };
 
   // Save API Key from Setup Screen
   const handleSaveApiKey = (newKey: string, persist: boolean) => {
@@ -260,6 +293,17 @@ export function App() {
         </div>
 
         <div className="nav-right">
+          {/* Run Full Network Audit Button */}
+          <button
+            type="button"
+            className="nav-btn-highlight"
+            onClick={handleRunNetworkAudit}
+            title="Scan entire network & generate AI health report"
+          >
+            <IconSparkles size={14} />
+            <span>Scan Network & Report</span>
+          </button>
+
           {/* Data Mode Selector */}
           <div className="data-source-pill-group">
             <button
@@ -337,6 +381,7 @@ export function App() {
           selectedScenarioId={selectedDevice?.scenarioId}
           onSelectScenario={handleQuickScenario}
           isSimulation={mode === 'SIMULATION'}
+          onOpenNetworkAudit={handleRunNetworkAudit}
         />
 
         {/* VIEW 1: MASTER-DETAIL INTERACTIVE WORKSPACE */}
@@ -398,6 +443,17 @@ export function App() {
           </div>
         )}
       </main>
+
+      {/* WHOLE-NETWORK AUDIT & REPORT MODAL */}
+      <NetworkReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        scanResult={scanResult}
+        report={auditReport}
+        isLoading={isScanLoading}
+        error={scanError}
+        onRescan={handleRunNetworkAudit}
+      />
 
       {/* API Key Modal for Changing Key while inside app */}
       {showKeyModal && (
