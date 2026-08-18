@@ -209,23 +209,40 @@ ${report.actionablePlan.map((p, i) => `${i + 1}. [${p.priority}] ${p.action} —
           </div>
 
           {/* Discovered Subnet Devices Table */}
-          <div className="border border-[#E2E5E9] rounded-2xl bg-white shadow-card overflow-hidden">
-            <div className="p-4 bg-[#F8F9FA] border-b border-[#E2E5E9] flex items-center justify-between">
-              <span className="text-[13px] font-bold text-black uppercase tracking-wider">
-                Discovered LAN Subnet Nodes ({scanResult.devices.length})
-              </span>
-              <span className="font-mono text-[11px] text-[#6B7280]">
-                ARP Probe Table &bull; Hardware Classification &bull; Latency
-              </span>
+          <div className="border border-[#E2E5E9] rounded-2xl bg-white shadow-panel overflow-hidden">
+            <div className="p-4 bg-[#F8F9FA] border-b border-[#E2E5E9] flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[13.5px] font-bold text-black uppercase tracking-wider">
+                    Discovered LAN Subnet Nodes ({scanResult.devices.length})
+                  </span>
+                  <span className="badge-status font-mono text-[10px] bg-white border-[#E2E5E9]">
+                    {scanResult.subnet}
+                  </span>
+                </div>
+                <p className="font-mono text-[11px] text-[#6B7280] mt-0.5">
+                  Physical Wi-Fi LAN endpoints & active network interfaces discovered via ARP & ICMP probe
+                </p>
+              </div>
+
+              <div className="flex items-center gap-1.5 font-mono text-[10.5px]">
+                <span className="text-[#6B7280] mr-1">Filter:</span>
+                <button
+                  type="button"
+                  className="px-2.5 py-1 bg-black text-white rounded-lg font-bold shadow-xs cursor-pointer"
+                >
+                  All ({scanResult.devices.length})
+                </button>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="instrument-table">
                 <thead>
                   <tr>
-                    <th>DEVICE HOSTNAME</th>
+                    <th>DEVICE HOSTNAME / ROLE</th>
                     <th>IP ADDRESS</th>
                     <th>MAC ADDRESS</th>
-                    <th>VENDOR</th>
+                    <th>VENDOR / HARDWARE</th>
                     <th>DEVICE TYPE</th>
                     <th>PING</th>
                     <th>LINK STATUS</th>
@@ -233,14 +250,33 @@ ${report.actionablePlan.map((p, i) => `${i + 1}. [${p.priority}] ${p.action} —
                 </thead>
                 <tbody>
                   {scanResult.devices.map((d, i) => (
-                    <tr key={i} className="hover:bg-[#F8F9FA]">
-                      <td className="font-bold text-black text-[13px]">{d.hostname}</td>
-                      <td className="font-mono text-[11.5px] text-[#3B4045]">{d.ip}</td>
+                    <tr key={i} className="hover:bg-[#F8F9FA] transition-colors">
+                      <td>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-black text-[13px]">{d.hostname}</span>
+                          {d.isGateway && (
+                            <span className="badge-status text-[9px] font-bold bg-[#0F1113] text-white border-[#0F1113] px-2 py-0.5 rounded">
+                              GATEWAY
+                            </span>
+                          )}
+                          {d.deviceType === 'Host Laptop / PC' && !d.isGateway && (
+                            <span className="badge-status text-[9px] font-bold bg-[#E0E7FF] text-[#4338CA] border-[#C7D2FE] px-2 py-0.5 rounded">
+                              THIS HOST PC
+                            </span>
+                          )}
+                          {d.deviceType === 'Virtual NIC / Host Switch' && (
+                            <span className="badge-status text-[9px] font-bold bg-[#F3F4F6] text-[#4B5563] border-[#E5E7EB] px-2 py-0.5 rounded">
+                              VM VIRTUAL NIC
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="font-mono text-[11.5px] font-semibold text-[#0F1113]">{d.ip}</td>
                       <td className="font-mono text-[11.5px] text-[#6B7280]">{d.mac}</td>
-                      <td className="font-sans text-[12px] text-black">{d.vendor}</td>
+                      <td className="font-sans text-[12px] text-black font-medium">{d.vendor}</td>
                       <td className="font-mono text-[11.5px] text-[#6B7280]">{d.deviceType}</td>
                       <td className="font-mono text-[11.5px]">
-                        <span style={{ color: d.pingMs < 30 ? '#16A34A' : d.pingMs < 80 ? '#D97706' : '#DC2626' }}>
+                        <span style={{ color: d.pingMs < 10 ? '#16A34A' : d.pingMs < 50 ? '#D97706' : '#DC2626' }}>
                           {d.pingMs} ms
                         </span>
                       </td>

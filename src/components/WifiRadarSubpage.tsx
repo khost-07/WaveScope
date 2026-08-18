@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { NearbyNetworksScanResult, ScoredNetwork } from '../layer1_data/nearbyWifiTypes';
 import {
   IconRfSignalWave,
@@ -36,6 +36,13 @@ export const WifiRadarSubpage: React.FC<WifiRadarSubpageProps> = ({
   const [connectionMessage, setConnectionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [promptSsid, setPromptSsid] = useState<ScoredNetwork | null>(null);
   const [passphraseInput, setPassphraseInput] = useState('');
+
+  // Automatically trigger rescan on mount if no scan data is loaded
+  useEffect(() => {
+    if (!scanResult && !isLoading) {
+      onRescan();
+    }
+  }, [scanResult, isLoading, onRescan]);
 
   const networks = scanResult?.networks || [];
   const bestNetwork = scanResult?.bestNetwork || null;
@@ -125,12 +132,12 @@ export const WifiRadarSubpage: React.FC<WifiRadarSubpageProps> = ({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="btn-instrument-secondary text-[11.5px] py-2 px-3.5 rounded-xl flex items-center gap-1.5 shadow-xs"
+              className="btn-instrument-primary text-[11.5px] py-2 px-3.5 rounded-xl flex items-center gap-1.5 shadow-card cursor-pointer"
               onClick={onRescan}
               disabled={isLoading}
             >
               <IconRefresh size={14} className={isLoading ? 'animate-spin' : ''} />
-              <span>{isLoading ? 'Scanning Spectrum...' : 'Rescan Airwaves'}</span>
+              <span>{isLoading ? 'Scanning Airwaves...' : 'Rescan Airwaves'}</span>
             </button>
           </div>
         </div>
@@ -159,8 +166,21 @@ export const WifiRadarSubpage: React.FC<WifiRadarSubpageProps> = ({
         </div>
       )}
 
+      {/* Loading Banner */}
+      {isLoading && (
+        <div className="p-8 bg-white border border-[#E2E5E9] rounded-2xl text-center space-y-3 shadow-card animate-pulse">
+          <div className="inline-block animate-spin text-black">
+            <IconRefresh size={28} />
+          </div>
+          <h3 className="text-[16px] font-bold text-black">Scanning Local 2.4GHz, 5GHz & 6GHz Airwaves...</h3>
+          <p className="font-mono text-[11.5px] text-[#6B7280]">
+            Probing Wi-Fi beacon frames, measuring channel utilization, and computing WQI scores.
+          </p>
+        </div>
+      )}
+
       {/* SPOTLIGHT CARD: #1 Recommended Best Network */}
-      {bestNetwork && (
+      {bestNetwork && !isLoading && (
         <div className="p-6 rounded-2xl border-2 border-[#16A34A] bg-[#F0FDF4]/50 shadow-panel relative overflow-hidden">
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div className="space-y-3 flex-1 min-w-[280px]">
@@ -236,7 +256,7 @@ export const WifiRadarSubpage: React.FC<WifiRadarSubpageProps> = ({
       )}
 
       {/* Spectrum Analysis Comparison Delta */}
-      {scanResult?.comparisonSummary && (
+      {scanResult?.comparisonSummary && !isLoading && (
         <div className="p-4 bg-white border border-[#E2E5E9] rounded-2xl text-[13.5px] text-black leading-relaxed font-sans shadow-card flex items-start gap-3">
           <span className="text-[18px] flex-shrink-0">⚡</span>
           <div>
@@ -258,7 +278,7 @@ export const WifiRadarSubpage: React.FC<WifiRadarSubpageProps> = ({
           <div className="flex items-center gap-1.5 font-mono text-[11px]">
             <button
               type="button"
-              className={`px-3 py-1.5 rounded-lg border transition-all ${
+              className={`px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
                 filter === 'ALL'
                   ? 'bg-black text-white border-black shadow-xs'
                   : 'bg-white text-[#6B7280] border-[#E2E5E9] hover:border-black'
@@ -269,7 +289,7 @@ export const WifiRadarSubpage: React.FC<WifiRadarSubpageProps> = ({
             </button>
             <button
               type="button"
-              className={`px-3 py-1.5 rounded-lg border transition-all ${
+              className={`px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
                 filter === 'FAST_BANDS'
                   ? 'bg-black text-white border-black shadow-xs'
                   : 'bg-white text-[#6B7280] border-[#E2E5E9] hover:border-black'
@@ -280,7 +300,7 @@ export const WifiRadarSubpage: React.FC<WifiRadarSubpageProps> = ({
             </button>
             <button
               type="button"
-              className={`px-3 py-1.5 rounded-lg border transition-all ${
+              className={`px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
                 filter === 'SAVED'
                   ? 'bg-black text-white border-black shadow-xs'
                   : 'bg-white text-[#6B7280] border-[#E2E5E9] hover:border-black'
@@ -291,7 +311,7 @@ export const WifiRadarSubpage: React.FC<WifiRadarSubpageProps> = ({
             </button>
             <button
               type="button"
-              className={`px-3 py-1.5 rounded-lg border transition-all ${
+              className={`px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
                 filter === 'OPEN'
                   ? 'bg-black text-white border-black shadow-xs'
                   : 'bg-white text-[#6B7280] border-[#E2E5E9] hover:border-black'
@@ -320,78 +340,99 @@ export const WifiRadarSubpage: React.FC<WifiRadarSubpageProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {filteredNetworks.map((net) => {
-                  const isTarget = net.isConnected;
-                  const isTopRanked = net.rank === 1;
+                {filteredNetworks.length === 0 && !isLoading && (
+                  <tr>
+                    <td colSpan={8} className="p-12 text-center">
+                      <div className="space-y-3 max-w-md mx-auto">
+                        <div className="w-12 h-12 rounded-2xl bg-[#F0FDF4] text-[#16A34A] mx-auto flex items-center justify-center border border-[#16A34A]/30 shadow-xs">
+                          <IconRfSignalWave size={22} />
+                        </div>
+                        <h4 className="text-[15px] font-bold text-black">No Reachable Wi-Fi Networks Found</h4>
+                        <p className="font-mono text-[11.5px] text-[#6B7280]">
+                          Click below to trigger a live hardware scan across local 2.4GHz, 5GHz, and 6GHz airwaves.
+                        </p>
+                        <button
+                          type="button"
+                          className="btn-instrument-primary text-[12px] py-2 px-4 rounded-xl shadow-card inline-flex items-center gap-2 cursor-pointer"
+                          onClick={onRescan}
+                        >
+                          <IconRefresh size={14} />
+                          <span>Scan Local Airwaves</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+
+                {filteredNetworks.map((net, i) => {
+                  const isTopRank = i === 0 && filter === 'ALL';
 
                   return (
                     <tr
-                      key={net.bssid || net.ssid}
-                      className={`transition-colors ${
-                        isTarget ? 'bg-[#F0FDF4]/50' : 'hover:bg-[#F8F9FA]'
+                      key={net.bssid || `${net.ssid}-${i}`}
+                      className={`hover:bg-[#F8F9FA] transition-colors ${
+                        net.isConnected ? 'bg-[#F0FDF4]/40 font-medium' : ''
                       }`}
                     >
                       {/* Rank */}
-                      <td>
-                        <div className="flex items-center gap-1.5">
-                          <span
-                            className={`w-7 h-7 rounded-lg font-mono text-[12px] font-bold flex items-center justify-center ${
-                              isTopRanked
-                                ? 'bg-[#16A34A] text-white shadow-xs'
-                                : 'bg-[#F0F2F5] text-black border border-[#E2E5E9]'
-                            }`}
-                          >
-                            #{net.rank}
+                      <td className="font-mono font-bold text-[12px]">
+                        {isTopRank ? (
+                          <span className="w-6 h-6 rounded-full bg-[#16A34A] text-white flex items-center justify-center text-[10.5px] font-extrabold shadow-xs">
+                            1
                           </span>
-                        </div>
+                        ) : (
+                          <span className="text-[#6B7280] pl-1.5">#{i + 1}</span>
+                        )}
                       </td>
 
                       {/* SSID */}
                       <td>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-black text-[14px]">{net.ssid}</span>
-                          {isTarget && (
-                            <span className="badge-status text-[9px] bg-[#16A34A] text-white border-[#16A34A] px-2 py-0.5 rounded">
-                              ACTIVE
-                            </span>
-                          )}
-                          {net.isSavedProfile && !isTarget && (
-                            <span className="badge-status text-[9px] font-mono rounded">
-                              SAVED
-                            </span>
-                          )}
-                        </div>
-                        <div className="font-mono text-[11px] text-[#6B7280]">
-                          {net.radioType} &bull; {net.vendor || net.bssid}
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-black text-[13.5px]">{net.ssid}</span>
+                            {net.isConnected && (
+                              <span className="badge-status text-[9px] font-bold bg-[#16A34A] text-white border-[#16A34A] px-1.5 py-0.2 rounded">
+                                CONNECTED
+                              </span>
+                            )}
+                            {net.isSavedProfile && !net.isConnected && (
+                              <span className="badge-status font-mono text-[9px] bg-white text-[#6B7280] border-[#E2E5E9] px-1.5 py-0.2 rounded">
+                                SAVED
+                              </span>
+                            )}
+                          </div>
+                          <div className="font-mono text-[10.5px] text-[#6B7280]">
+                            BSSID: {net.bssid} &bull; {net.vendor || 'OEM Hardware'}
+                          </div>
                         </div>
                       </td>
 
                       {/* Band & Channel */}
                       <td>
-                        <span className="badge-status font-mono text-[10.5px] rounded-md font-bold">
-                          {net.band}
-                        </span>
-                        <span className="font-mono text-[11px] text-[#6B7280] ml-1.5">
-                          Ch {net.channel}
-                        </span>
+                        <div className="font-mono text-[12px] space-y-0.5">
+                          <div className="font-bold text-black">{net.band}</div>
+                          <div className="text-[10.5px] text-[#6B7280]">Ch {net.channel} &bull; {net.radioType}</div>
+                        </div>
                       </td>
 
                       {/* Signal */}
                       <td>
-                        <div className="flex items-center gap-2">
-                          <div className="w-18 bg-[#ECEEF1] h-2.5 rounded-full overflow-hidden border border-[#E2E5E9]">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5 font-mono text-[12px] font-bold text-black">
+                            <span>{net.rssi_dBm} dBm</span>
+                            <span className="text-[10px] text-[#6B7280] font-normal">({net.signalPct}%)</span>
+                          </div>
+                          {/* Mini visual signal bar */}
+                          <div className="w-20 h-1.5 bg-[#E2E5E9] rounded-full overflow-hidden">
                             <div
-                              className="h-full rounded-full"
+                              className="h-full rounded-full transition-all"
                               style={{
-                                width: `${net.signalPct}%`,
+                                width: `${Math.min(100, Math.max(10, net.signalPct))}%`,
                                 backgroundColor:
-                                  net.signalPct >= 75 ? '#16A34A' : net.signalPct >= 45 ? '#D97706' : '#DC2626'
+                                  net.signalPct >= 70 ? '#16A34A' : net.signalPct >= 40 ? '#D97706' : '#DC2626'
                               }}
                             />
                           </div>
-                          <span className="font-mono text-[11.5px] font-bold text-black">
-                            {net.rssi_dBm} dBm
-                          </span>
                         </div>
                       </td>
 
@@ -464,7 +505,7 @@ export const WifiRadarSubpage: React.FC<WifiRadarSubpageProps> = ({
                         ) : (
                           <button
                             type="button"
-                            className="btn-instrument-secondary text-[11px] py-1.5 px-3.5 rounded-lg transition-all shadow-xs hover:shadow-subtle hover:bg-black hover:text-white"
+                            className="btn-instrument-secondary text-[11px] py-1.5 px-3.5 rounded-lg transition-all shadow-xs hover:shadow-subtle hover:bg-black hover:text-white cursor-pointer"
                             onClick={() => handleInitiateConnect(net)}
                             disabled={connectingSsid === net.ssid}
                           >

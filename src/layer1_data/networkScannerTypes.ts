@@ -9,7 +9,7 @@ export interface DiscoveredEndpoint {
   mac: string;
   hostname: string;
   vendor: string;
-  deviceType: 'Router / Gateway' | 'Laptop / PC' | 'Smartphone / Tablet' | 'Smart TV / Streaming' | 'IoT / Smart Home' | 'Network Printer' | 'Unknown Device';
+  deviceType: 'Router / Gateway' | 'Host Laptop / PC' | 'Laptop / PC' | 'Smartphone / Tablet' | 'Smart TV / Streaming' | 'IoT / Smart Home' | 'Network Printer' | 'Virtual NIC / Host Switch' | 'AP Sub-Gateway / Extender' | 'Endpoint Client' | 'Unknown Device';
   isGateway: boolean;
   pingMs: number;
   band?: '2.4GHz' | '5GHz' | '6GHz' | 'Ethernet / LAN';

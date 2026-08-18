@@ -295,27 +295,40 @@ export function App() {
       setNearbyScanResult(scoredResult);
       setIsNearbyLoading(false);
     } else {
-      try {
-        const response = await fetch('/api/wlan/nearby-networks');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && Array.isArray(data.networks)) {
-            const scoredResult = rankAndCompareNetworks(data.networks, data.currentConnectedSsid);
-            setNearbyScanResult(scoredResult);
-          } else {
-            setNearbyScanResult(rankAndCompareNetworks([], null));
+      const endpoints = [
+        '/api/wlan/nearby-networks',
+        'http://localhost:5174/api/wlan/nearby-networks'
+      ];
+      let resolved = false;
+
+      for (const endpoint of endpoints) {
+        try {
+          const response = await fetch(endpoint, { signal: AbortSignal.timeout(5000) });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && Array.isArray(data.networks) && data.networks.length > 0) {
+              const scoredResult = rankAndCompareNetworks(data.networks, data.currentConnectedSsid);
+              setNearbyScanResult(scoredResult);
+              resolved = true;
+              break;
+            }
           }
-        } else {
-          setNearbyScanResult(rankAndCompareNetworks([], null));
+        } catch {
+          // try next endpoint
         }
-      } catch (err) {
-        console.warn('[WaveScope] Live Wi-Fi scan error:', err);
-        setNearbyScanResult(rankAndCompareNetworks([], null));
-      } finally {
-        setIsNearbyLoading(false);
       }
+
+      if (!resolved) {
+        setNearbyScanResult(rankAndCompareNetworks([], null));
+      }
+      setIsNearbyLoading(false);
     }
   }, [mode, simulatedActiveSsid]);
+
+  // Initial load of nearby Wi-Fi radar on boot / mode change
+  useEffect(() => {
+    handleOpenWifiRadar();
+  }, [mode, handleOpenWifiRadar]);
 
   const handleConnectNetwork = useCallback(async (ssid: string, password?: string): Promise<{ success: boolean; message: string }> => {
     if (mode === 'SIMULATION') {

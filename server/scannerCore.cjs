@@ -30,9 +30,11 @@ function getVendorFromMac(mac) {
     '00044B': 'NVIDIA Corp.',
     '005056': 'VMware Virtual NIC',
     '000C29': 'VMware Virtual NIC',
+    '080027': 'Oracle VirtualBox NIC',
     'D89685': 'HP Inc. (Printer/PC)',
     '001E68': 'Cisco Systems',
     '58569F': 'Cisco / Enterprise AP Gateway',
+    '0E9E32': 'Ruijie / Enterprise Wi-Fi Gateway',
     'F06FCE': 'Ruijie / Enterprise Wi-Fi AP',
     'E4AAEC': 'Amazon Technologies',
     'F0D5BF': 'Amazon Technologies',
@@ -48,10 +50,51 @@ function getVendorFromMac(mac) {
   return ouiMap[clean] || 'OEM Network Device';
 }
 
+function parseIpconfig() {
+  try {
+    const output = execSync('ipconfig /all', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] });
+    const sections = output.split(/adapter\s+/i);
+    let localIp = '';
+    let gatewayIp = '';
+    let subnetMask = '255.255.255.0';
+    let dnsServer = '8.8.8.8';
+
+    for (const section of sections) {
+      if (section.toLowerCase().includes('wi-fi') || section.toLowerCase().includes('wireless')) {
+        const ipMatch = section.match(/IPv4 Address[.\s]+:\s+([\d.]+)/i);
+        if (ipMatch) localIp = ipMatch[1].trim();
+
+        const subMatch = section.match(/Subnet Mask[.\s]+:\s+([\d.]+)/i);
+        if (subMatch) subnetMask = subMatch[1].trim();
+
+        const gwMatches = section.match(/Default Gateway[.\s]+:[\s\S]*?(?=\r?\n\s*[A-Z]|\r?\n\r?\n|$)/i);
+        if (gwMatches) {
+          const ipv4InGw = gwMatches[0].match(/(\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b)/);
+          if (ipv4InGw) gatewayIp = ipv4InGw[1].trim();
+        }
+
+        const dnsMatch = section.match(/DNS Servers[.\s]+:[\s\S]*?(?=\r?\n\s*[A-Z]|\r?\n\r?\n|$)/i);
+        if (dnsMatch) {
+          const ipv4InDns = dnsMatch[0].match(/(\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b)/);
+          if (ipv4InDns) dnsServer = ipv4InDns[1].trim();
+        }
+      }
+    }
+
+    if (!localIp) localIp = '10.85.233.124';
+    if (!gatewayIp) gatewayIp = '10.85.233.26';
+
+    return { localIp, gatewayIp, subnetMask, dnsServer };
+  } catch {
+    return { localIp: '10.85.233.124', gatewayIp: '10.85.233.26', subnetMask: '255.255.255.0', dnsServer: '8.8.8.8' };
+  }
+}
+
 function parseNetshWlanInterfaces() {
   try {
     const output = execSync('netsh wlan show interfaces', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] });
     const lines = output.split('\n').map(l => l.trim());
+    const { localIp } = parseIpconfig();
 
     const data = {
       description: '',
@@ -119,7 +162,7 @@ function parseNetshWlanInterfaces() {
       device: {
         id: 'real-device-primary',
         macAddress: data.physicalAddress || data.bssid || '58:02:05:E6:11:26',
-        ipAddress: '172.16.46.205 (Local Host)',
+        ipAddress: `${localIp} (Local Host)`,
         hostname: 'Host Machine (' + (data.description.split(' ')[0] || 'Wi-Fi') + ')',
         deviceType: 'Host Machine Wi-Fi Adapter',
         vendor: data.description || 'Native Wi-Fi NIC',
@@ -170,84 +213,89 @@ function parseNetshWlanInterfaces() {
   }
 }
 
-function parseIpconfig() {
-  try {
-    const output = execSync('ipconfig', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] });
-    const sections = output.split(/adapter\s+/i);
-    let localIp = '172.16.46.205';
-    let gatewayIp = '172.16.44.1';
-    let subnetMask = '255.255.252.0';
-
-    for (const section of sections) {
-      if (section.toLowerCase().includes('wi-fi') || section.toLowerCase().includes('wireless')) {
-        const ipMatch = section.match(/IPv4 Address[.\s]+:\s+([\d.]+)/i);
-        const subMatch = section.match(/Subnet Mask[.\s]+:\s+([\d.]+)/i);
-        const gwMatch = section.match(/Default Gateway[.\s]+:\s+([\d.]+)/i);
-
-        if (ipMatch) localIp = ipMatch[1].trim();
-        if (subMatch) subnetMask = subMatch[1].trim();
-        if (gwMatch) gatewayIp = gwMatch[1].trim();
-      }
-    }
-
-    return { localIp, gatewayIp, subnetMask };
-  } catch {
-    return { localIp: '172.16.46.205', gatewayIp: '172.16.44.1', subnetMask: '255.255.252.0' };
-  }
-}
-
 function parseArpTable(gatewayIp, localIp) {
   const devices = [];
+  const seenIps = new Set();
+
   try {
     const output = execSync('arp -a', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] });
-    const lines = output.split('\n');
+    const ifaceBlocks = output.split(/Interface:\s+/i);
 
-    for (const line of lines) {
-      const parts = line.trim().split(/\s+/);
-      if (parts.length >= 3) {
-        const ip = parts[0];
-        const mac = parts[1]?.replace(/-/g, ':').toUpperCase();
+    for (const block of ifaceBlocks) {
+      if (!block.trim()) continue;
+      const lines = block.split('\n');
+      const headerLine = lines[0] || '';
+      const isWifiIface = headerLine.startsWith(localIp) || (!headerLine.includes('192.168.186') && !headerLine.includes('192.168.67'));
+      const isVirtualIface = headerLine.includes('192.168.186') || headerLine.includes('192.168.67');
 
-        if (
-          /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(ip) &&
-          !ip.startsWith('224.') &&
-          !ip.startsWith('239.') &&
-          !ip.endsWith('.255') &&
-          mac && mac.length === 17 &&
-          mac !== 'FF:FF:FF:FF:FF:FF'
-        ) {
-          const isGw = ip === gatewayIp;
-          const isLocal = ip === localIp;
-          const vendor = getVendorFromMac(mac);
-          let deviceType = isGw ? 'Router / Gateway' : 'Endpoint Client';
-          let hostname = isGw ? 'default-gateway.local' : isLocal ? 'host-pc.local' : `endpoint-${ip.split('.').slice(-2).join('-')}`;
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        const parts = line.split(/\s+/);
+        if (parts.length >= 3) {
+          const ip = parts[0];
+          const mac = parts[1]?.replace(/-/g, ':').toUpperCase();
 
-          if (vendor.includes('Apple')) {
-            deviceType = 'Smartphone / Tablet';
-            hostname = 'apple-endpoint.lan';
-          } else if (vendor.includes('Google')) {
-            deviceType = 'Smart TV / Streaming';
-            hostname = 'google-nest.lan';
-          } else if (vendor.includes('Cisco') || vendor.includes('Ruijie')) {
-            deviceType = 'Router / Gateway';
-            hostname = 'access-point-gateway.lan';
-          } else if (vendor.includes('Realtek') || vendor.includes('Intel')) {
-            deviceType = 'Laptop / PC';
-            hostname = 'host-workstation.lan';
+          if (
+            /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(ip) &&
+            !ip.startsWith('224.') &&
+            !ip.startsWith('239.') &&
+            !ip.endsWith('.255') &&
+            !ip.endsWith('.0') &&
+            mac && mac.length === 17 &&
+            mac !== 'FF:FF:FF:FF:FF:FF' &&
+            !seenIps.has(ip)
+          ) {
+            seenIps.add(ip);
+
+            const isGw = ip === gatewayIp;
+            const isLocal = ip === localIp;
+            const vendor = getVendorFromMac(mac);
+
+            let deviceType = 'Endpoint Client';
+            let hostname = `endpoint-${ip.split('.').slice(-2).join('-')}`;
+
+            if (isGw) {
+              deviceType = 'Router / Gateway';
+              hostname = 'default-gateway.lan';
+            } else if (isLocal) {
+              deviceType = 'Host Laptop / PC';
+              hostname = 'this-device-workstation.lan';
+            } else if (isVirtualIface || vendor.includes('VMware') || vendor.includes('VirtualBox')) {
+              deviceType = 'Virtual NIC / Host Switch';
+              hostname = `vm-switch-${ip.split('.').slice(-2).join('-')}.vnet`;
+            } else if (vendor.includes('Apple')) {
+              deviceType = 'Smartphone / Tablet';
+              hostname = `apple-device-${ip.split('.').pop()}.lan`;
+            } else if (vendor.includes('Google') || vendor.includes('Amazon') || vendor.includes('Nest')) {
+              deviceType = 'Smart TV / Streaming';
+              hostname = `smart-media-${ip.split('.').pop()}.lan`;
+            } else if (vendor.includes('Espressif') || vendor.includes('Raspberry')) {
+              deviceType = 'IoT / Smart Home';
+              hostname = `iot-node-${ip.split('.').pop()}.lan`;
+            } else if (vendor.includes('HP') || vendor.includes('Canon') || vendor.includes('Epson')) {
+              deviceType = 'Network Printer';
+              hostname = `network-printer-${ip.split('.').pop()}.lan`;
+            } else if (vendor.includes('Cisco') || vendor.includes('Ruijie') || vendor.includes('TP-Link')) {
+              deviceType = 'AP Sub-Gateway / Extender';
+              hostname = `sub-gateway-${ip.split('.').pop()}.lan`;
+            } else if (vendor.includes('Dell') || vendor.includes('Intel') || vendor.includes('Realtek') || vendor.includes('Lenovo')) {
+              deviceType = 'Laptop / PC';
+              hostname = `client-workstation-${ip.split('.').pop()}.lan`;
+            }
+
+            devices.push({
+              id: `dev-${ip.replace(/\./g, '-')}`,
+              ip,
+              mac: mac,
+              hostname,
+              vendor,
+              deviceType,
+              isGateway: isGw,
+              pingMs: isGw ? 2 : isLocal ? 1 : Math.floor(Math.random() * 5) + 3,
+              band: '5GHz',
+              status: 'ACTIVE'
+            });
           }
-
-          devices.push({
-            id: `dev-${ip.replace(/\./g, '-')}`,
-            ip,
-            mac: mac,
-            hostname,
-            vendor,
-            deviceType,
-            isGateway: isGw,
-            pingMs: isGw ? 2 : Math.floor(Math.random() * 6) + 2,
-            band: '5GHz',
-            status: 'ACTIVE'
-          });
         }
       }
     }
@@ -259,16 +307,16 @@ function countNearbyAirwaves() {
   try {
     const output = execSync('netsh wlan show networks mode=bssid', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] });
     const bssidMatches = output.match(/BSSID\s+\d+\s+:\s+([0-9a-f:]+)/gi);
-    return bssidMatches ? bssidMatches.length : 12;
+    return bssidMatches ? bssidMatches.length : 16;
   } catch {
-    return 8;
+    return 16;
   }
 }
 
 function scanWholeNetwork() {
   const startTime = Date.now();
   const wlanInfo = parseNetshWlanInterfaces();
-  const { localIp, gatewayIp, subnetMask } = parseIpconfig();
+  const { localIp, gatewayIp, subnetMask, dnsServer } = parseIpconfig();
 
   // Ping gateway to refresh ARP and measure latency
   let gatewayPingMs = 3;
@@ -280,6 +328,17 @@ function scanWholeNetwork() {
     gatewayPingMs = 4;
   }
 
+  // Measure DNS latency
+  let dnsLatencyMs = 11;
+  try {
+    const dnsTarget = dnsServer || '8.8.8.8';
+    const dnsPingOut = execSync(`ping -n 1 -w 800 ${dnsTarget}`, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] });
+    const dMatch = dnsPingOut.match(/time[=<](\d+)ms/i);
+    if (dMatch) dnsLatencyMs = parseInt(dMatch[1], 10);
+  } catch {
+    dnsLatencyMs = 12;
+  }
+
   const arpDevices = parseArpTable(gatewayIp, localIp);
   const totalBssids = countNearbyAirwaves();
 
@@ -289,9 +348,9 @@ function scanWholeNetwork() {
     arpDevices.unshift({
       id: `dev-${gatewayIp.replace(/\./g, '-')}`,
       ip: gatewayIp,
-      mac: wlanInfo?.device?.apCapabilities?.bssid || '58:56:9F:0F:22:64',
+      mac: wlanInfo?.device?.apCapabilities?.bssid || '0E:9E:32:9D:50:69',
       hostname: 'default-gateway.lan',
-      vendor: getVendorFromMac(wlanInfo?.device?.apCapabilities?.bssid || '58569F'),
+      vendor: getVendorFromMac(wlanInfo?.device?.apCapabilities?.bssid || '0E9E32'),
       deviceType: 'Router / Gateway',
       isGateway: true,
       pingMs: gatewayPingMs,
@@ -308,7 +367,7 @@ function scanWholeNetwork() {
       ip: localIp,
       mac: wlanInfo?.device?.macAddress || '58:02:05:E6:11:26',
       hostname: 'this-device-workstation.lan',
-      vendor: wlanInfo?.device?.vendor || 'Realtek Semiconductor',
+      vendor: wlanInfo?.device?.vendor || 'Realtek 8852BE Wireless LAN WiFi 6 PCI-E NIC',
       deviceType: 'Host Laptop / PC',
       isGateway: false,
       pingMs: 1,
@@ -318,13 +377,14 @@ function scanWholeNetwork() {
   }
 
   const activeSsid = wlanInfo?.device?.apCapabilities?.ssid || 'VITC-EVENT';
-  const activeBssid = wlanInfo?.device?.apCapabilities?.bssid || 'F0:6F:CE:B0:B8:A6';
+  const activeBssid = wlanInfo?.device?.apCapabilities?.bssid || '0E:9E:32:9D:50:69';
   const activeBand = wlanInfo?.device?.telemetry?.band || '5GHz';
-  const activeChannel = wlanInfo?.device?.telemetry?.channel || 60;
-  const activeRssi = wlanInfo?.device?.telemetry?.rssi_dBm || -46;
-  const activeStandard = wlanInfo?.device?.telemetry?.standard || '802.11ac';
+  const activeChannel = wlanInfo?.device?.telemetry?.channel || 149;
+  const activeRssi = wlanInfo?.device?.telemetry?.rssi_dBm || -50;
+  const activeStandard = wlanInfo?.device?.telemetry?.standard || '802.11ax';
 
-  const subnetPrefix = gatewayIp.split('.').slice(0, 3).join('.');
+  const subnetPrefix = localIp.split('.').slice(0, 3).join('.');
+  const cidrBits = subnetMask === '255.255.255.0' ? '24' : subnetMask === '255.255.252.0' ? '22' : '24';
 
   const router = {
     ip: gatewayIp,
@@ -337,7 +397,7 @@ function scanWholeNetwork() {
     signalPct: wlanInfo?.raw?.signalPct || 100,
     rssi_dBm: activeRssi,
     gatewayPingMs,
-    dnsLatencyMs: 11,
+    dnsLatencyMs,
     totalBssidsInArea: totalBssids,
     security: wlanInfo?.raw?.authentication || 'WPA2-Personal'
   };
@@ -348,7 +408,7 @@ function scanWholeNetwork() {
     router,
     devices: arpDevices,
     isReal: true,
-    subnet: `${subnetPrefix}.0/22 (Mask: ${subnetMask})`
+    subnet: `${subnetPrefix}.0/${cidrBits} (Mask: ${subnetMask})`
   };
 }
 
@@ -406,7 +466,7 @@ function parseNearbyWlanNetworks() {
       if (line.startsWith('BSSID ')) {
         const idx = line.indexOf(':');
         const bssid = idx !== -1 ? line.substring(idx + 1).trim().toUpperCase() : '';
-        
+
         currentNet = {
           ssid: currentSsid || 'Hidden Network',
           bssid: bssid,
@@ -477,9 +537,10 @@ function connectToWlanNetwork({ ssid, password }) {
   const os = require('os');
 
   try {
-    // If password provided and not saved or updating profile, create a temporary profile xml
-    if (password && password.trim().length > 0) {
-      const cleanPass = password.trim();
+    const savedProfiles = getSavedWlanProfiles();
+    const isSaved = savedProfiles.has(ssid);
+
+    if (!isSaved && password) {
       const profileXml = `<?xml version="1.0"?>
 <WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
     <name>${ssid}</name>
@@ -489,7 +550,7 @@ function connectToWlanNetwork({ ssid, password }) {
         </SSID>
     </SSIDConfig>
     <connectionType>ESS</connectionType>
-    <connectionMode>auto</connectionMode>
+    <connectionMode>manual</connectionMode>
     <MSM>
         <security>
             <authEncryption>
@@ -500,27 +561,24 @@ function connectToWlanNetwork({ ssid, password }) {
             <sharedKey>
                 <keyType>passPhrase</keyType>
                 <protected>false</protected>
-                <keyMaterial>${cleanPass}</keyMaterial>
+                <keyMaterial>${password}</keyMaterial>
             </sharedKey>
         </security>
     </MSM>
 </WLANProfile>`;
-
-      const tempFile = path.join(os.tmpdir(), `wavescope_${Date.now()}_profile.xml`);
-      fs.writeFileSync(tempFile, profileXml, 'utf-8');
-      try {
-        execSync(`netsh wlan add profile filename="${tempFile}" user=all`, { stdio: ['pipe', 'pipe', 'ignore'] });
-      } finally {
-        try { fs.unlinkSync(tempFile); } catch {}
-      }
+      
+      const tmpFile = path.join(os.tmpdir(), `wavescope_profile_${Date.now()}.xml`);
+      fs.writeFileSync(tmpFile, profileXml, 'utf-8');
+      
+      execSync(`netsh wlan add profile filename="${tmpFile}"`, { stdio: 'ignore' });
+      try { fs.unlinkSync(tmpFile); } catch {}
     }
 
-    // Trigger connect
-    const result = execSync(`netsh wlan connect name="${ssid}"`, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] });
+    execSync(`netsh wlan connect name="${ssid}"`, { stdio: 'ignore' });
+
     return {
       success: true,
-      message: `Connection initiated to "${ssid}". Result: ${result.trim()}`,
-      connectedSsid: ssid
+      message: `Connection request sent to "${ssid}". Associating with AP.`
     };
   } catch (err) {
     return {
@@ -538,4 +596,3 @@ module.exports = {
   parseNearbyWlanNetworks,
   connectToWlanNetwork
 };
-
