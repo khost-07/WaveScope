@@ -137,6 +137,9 @@ export function App() {
 
   // Handle data loading & continuous live polling
   useEffect(() => {
+    setScanResult(null);
+    setAuditReport(null);
+
     if (mode === 'SIMULATION') {
       setDevices(simulatedDevices);
       setProvenance({

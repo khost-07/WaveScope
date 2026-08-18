@@ -21,6 +21,13 @@ export const NetworkAuditSubpage: React.FC<NetworkAuditSubpageProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
 
+  // Automatically trigger network sweep on mount if no scan data is loaded
+  React.useEffect(() => {
+    if (!scanResult && !isLoading) {
+      onRescan();
+    }
+  }, [scanResult, isLoading, onRescan]);
+
   const handleCopy = () => {
     if (!report || !scanResult) return;
     const text = `=== WaveScope Whole-Network Diagnostic Audit ===
