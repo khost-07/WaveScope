@@ -8,6 +8,9 @@ const { parseNetshWlanInterfaces, scanWholeNetwork, parseNearbyWlanNetworks, con
 
 const PORT = 5174;
 const server = http.createServer((req, res) => {
+  const rawUrl = req.url || '';
+  const urlPath = rawUrl.split('?')[0].replace(/\/+$/, '');
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -18,7 +21,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (req.url === '/api/wlan/real-telemetry') {
+  if (urlPath === '/api/wlan/real-telemetry') {
     const realData = parseNetshWlanInterfaces();
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
@@ -29,7 +32,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (req.url === '/api/scan-network') {
+  if (urlPath === '/api/scan-network') {
     const scanData = scanWholeNetwork();
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
@@ -39,14 +42,14 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (req.url === '/api/wlan/nearby-networks') {
+  if (urlPath === '/api/wlan/nearby-networks') {
     const result = parseNearbyWlanNetworks();
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(result));
     return;
   }
 
-  if (req.url === '/api/wlan/connect-network' && req.method === 'POST') {
+  if (urlPath === '/api/wlan/connect-network' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
     req.on('end', () => {
