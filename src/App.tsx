@@ -315,7 +315,7 @@ export function App() {
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {/* Top-Level Easy Mode / Expert Mode Toggle */}
           <div className="flex border border-[#0F1113] h-8 text-[11px] font-mono font-semibold">
             <button
@@ -382,7 +382,7 @@ export function App() {
           </button>
 
           {/* StaggeredMenu Trigger in Header */}
-          <div className="relative pl-1">
+          <div className="inline-flex items-center">
             <StaggeredMenu
               position="right"
               items={menuItems}
@@ -394,7 +394,7 @@ export function App() {
               changeMenuColorOnOpen={true}
               colors={['#0F1113', '#23272B', '#E2E5E9']}
               accentColor="#16A34A"
-              isFixed={true}
+              isFixed={false}
             />
           </div>
         </div>
