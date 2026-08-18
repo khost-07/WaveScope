@@ -339,6 +339,29 @@ function scanWholeNetwork() {
     dnsLatencyMs = 12;
   }
 
+  // Active Subnet Probe: Send ICMP probes to awaken connected phones/laptops on the hotspot/LAN
+  try {
+    const parts = localIp.split('.');
+    if (parts.length === 4) {
+      const baseIp = parts.slice(0, 3).join('.');
+      const ips = [];
+      const currentHost = parseInt(parts[3], 10);
+      
+      // On mobile hotspots (Android 192.168.43.x, iOS 172.20.10.x, Linux 10.42.0.x), DHCP assigns low host numbers
+      for (let i = 1; i <= 30; i++) {
+        ips.push(`${baseIp}.${i}`);
+      }
+      // Also ping around current host IP
+      for (let i = Math.max(1, currentHost - 5); i <= Math.min(254, currentHost + 5); i++) {
+        const target = `${baseIp}.${i}`;
+        if (!ips.includes(target)) ips.push(target);
+      }
+
+      const pingCmd = ips.map(ip => `ping -n 1 -w 60 ${ip}`).join(' & ');
+      execSync(pingCmd, { stdio: 'ignore', timeout: 2200 });
+    }
+  } catch {}
+
   const arpDevices = parseArpTable(gatewayIp, localIp);
   const totalBssids = countNearbyAirwaves();
 
