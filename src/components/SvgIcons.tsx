@@ -187,3 +187,37 @@ export const IconZap: React.FC<{ size?: number; className?: string }> = ({ size 
   </svg>
 );
 
+export const IconRfSignalWave: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M5 13a10 10 0 0 1 14 0" />
+    <path d="M8.5 16.5a5 5 0 0 1 7 0" />
+    <path d="M2 9.5a15 15 0 0 1 20 0" />
+    <line x1="12" y1="20" x2="12.01" y2="20" strokeWidth="3" />
+  </svg>
+);
+
+export const IconRfInterference: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M2 12h3l2-6 3 12 3-10 2 7 2-3h5" />
+    <circle cx="12" cy="12" r="10" strokeDasharray="3 3" strokeOpacity="0.4" />
+  </svg>
+);
+
+export const IconRfAntenna: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 2v20" />
+    <path d="m7 7 5-5 5 5" />
+    <path d="M4 11a11.3 11.3 0 0 1 16 0" />
+    <path d="M7 14a7 7 0 0 1 10 0" />
+  </svg>
+);
+
+export const IconRfGauge: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 15l3.5-3.5" />
+    <path d="M20.3 18a9 9 0 1 0-16.6 0" />
+    <circle cx="12" cy="15" r="2" fill="currentColor" />
+  </svg>
+);
+
+

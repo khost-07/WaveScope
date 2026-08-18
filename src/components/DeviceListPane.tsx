@@ -46,14 +46,14 @@ export const DeviceListPane: React.FC<DeviceListPaneProps> = ({
   }, [devices, diagnoses, searchQuery, quickFilter]);
 
   return (
-    <div className="bg-white border border-[#E2E5E9] flex flex-col h-full">
+    <div className="bg-white border border-[#E2E5E9] rounded-2xl shadow-panel flex flex-col h-full overflow-hidden">
       {/* Search Header */}
-      <div className="p-3 border-b border-[#E2E5E9] bg-[#F8F9FA] space-y-2">
+      <div className="p-4 border-b border-[#E2E5E9] bg-[#F8F9FA] space-y-2.5">
         <div className="relative flex items-center">
-          <IconSearch size={15} className="absolute left-2.5 text-[#6B7280]" />
+          <IconSearch size={15} className="absolute left-3 text-[#6B7280]" />
           <input
             type="text"
-            className="w-full bg-white border border-[#E2E5E9] py-1.5 pl-8 pr-7 font-mono text-[12px] text-black placeholder-[#6B7280] outline-none focus:border-black transition-colors"
+            className="w-full bg-white border border-[#E2E5E9] rounded-lg py-2 pl-9 pr-7 font-mono text-[12px] text-black placeholder-[#6B7280] outline-none focus:border-black shadow-subtle transition-colors"
             placeholder={isEasyMode ? 'Search your devices...' : 'Search MAC, IP, vendor, or issue...'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -61,7 +61,7 @@ export const DeviceListPane: React.FC<DeviceListPaneProps> = ({
           {searchQuery && (
             <button
               type="button"
-              className="absolute right-2 text-[#6B7280] hover:text-black font-bold text-[14px]"
+              className="absolute right-2.5 text-[#6B7280] hover:text-black font-bold text-[14px]"
               onClick={() => setSearchQuery('')}
             >
               ×
@@ -73,9 +73,9 @@ export const DeviceListPane: React.FC<DeviceListPaneProps> = ({
         <div className="flex items-center gap-1.5 text-[10px] font-mono font-semibold">
           <button
             type="button"
-            className={`px-2 py-0.5 border transition-all ${
+            className={`px-2.5 py-1 rounded-md border transition-all ${
               quickFilter === 'ALL'
-                ? 'bg-black text-white border-black'
+                ? 'bg-black text-white border-black shadow-xs'
                 : 'bg-white text-[#6B7280] border-[#E2E5E9] hover:border-black'
             }`}
             onClick={() => setQuickFilter('ALL')}
@@ -84,9 +84,9 @@ export const DeviceListPane: React.FC<DeviceListPaneProps> = ({
           </button>
           <button
             type="button"
-            className={`px-2 py-0.5 border transition-all ${
+            className={`px-2.5 py-1 rounded-md border transition-all ${
               quickFilter === 'DEGRADED'
-                ? 'bg-[#DC2626] text-white border-[#DC2626]'
+                ? 'bg-[#DC2626] text-white border-[#DC2626] shadow-xs'
                 : 'bg-white text-[#DC2626] border-[#E2E5E9] hover:border-[#DC2626]'
             }`}
             onClick={() => setQuickFilter('DEGRADED')}
@@ -95,9 +95,9 @@ export const DeviceListPane: React.FC<DeviceListPaneProps> = ({
           </button>
           <button
             type="button"
-            className={`px-2 py-0.5 border transition-all ${
+            className={`px-2.5 py-1 rounded-md border transition-all ${
               quickFilter === 'HEALTHY'
-                ? 'bg-[#16A34A] text-white border-[#16A34A]'
+                ? 'bg-[#16A34A] text-white border-[#16A34A] shadow-xs'
                 : 'bg-white text-[#16A34A] border-[#E2E5E9] hover:border-[#16A34A]'
             }`}
             onClick={() => setQuickFilter('HEALTHY')}

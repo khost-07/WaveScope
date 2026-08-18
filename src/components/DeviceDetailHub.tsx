@@ -20,10 +20,56 @@ import {
   IconRule,
   IconCheckBox,
   IconAlertTriangle,
-  IconAlertCircle
+  IconAlertCircle,
+  IconRfSignalWave,
+  IconRfInterference,
+  IconRfAntenna
 } from './SvgIcons';
 
 export type DetailTab = 'OVERVIEW' | 'EVIDENCE' | 'SPECTRUM';
+
+const TelemetryArcGauge: React.FC<{
+  percent: number; // 0 to 100
+  color: string;
+  size?: number;
+  strokeWidth?: number;
+}> = ({ percent, color, size = 38, strokeWidth = 3.5 }) => {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const arcFraction = 240 / 360;
+  const arcLength = circumference * arcFraction;
+  const gapLength = circumference - arcLength;
+  const clampedPercent = Math.max(0, Math.min(100, percent));
+  const fillLength = (clampedPercent / 100) * arcLength;
+  const strokeDashoffset = arcLength - fillLength;
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="rotate-[150deg] flex-shrink-0">
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        stroke="#ECEEF1"
+        strokeWidth={strokeWidth}
+        strokeDasharray={`${arcLength} ${gapLength}`}
+        strokeLinecap="round"
+      />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeDasharray={`${arcLength} ${gapLength}`}
+        strokeDashoffset={strokeDashoffset}
+        strokeLinecap="round"
+        style={{ transition: 'stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.3s ease' }}
+      />
+    </svg>
+  );
+};
 
 interface DeviceDetailHubProps {
   device: ClientDevice;
@@ -85,19 +131,32 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
   const status = diagnosis.status;
   const effectiveConfidence = Math.min(99, diagnosis.confidence + (peerResult?.confidenceBoost || 0));
 
+  // Telemetry gauge calculations
+  const rssiPercent = Math.round(((Math.max(-90, Math.min(-30, telemetry.rssi_dBm)) + 90) / 60) * 100);
+  const rssiColor = telemetry.rssi_dBm <= -75 ? '#DC2626' : telemetry.rssi_dBm <= -70 ? '#D97706' : '#16A34A';
+
+  const snrPercent = Math.round((Math.max(0, Math.min(40, telemetry.snr_dB)) / 40) * 100);
+  const snrColor = telemetry.snr_dB <= 12 ? '#DC2626' : telemetry.snr_dB <= 20 ? '#D97706' : '#16A34A';
+
+  const retryPercent = Math.round((Math.max(0, Math.min(25, telemetry.retryRatePct)) / 25) * 100);
+  const retryColor = telemetry.retryRatePct >= 15 ? '#DC2626' : telemetry.retryRatePct >= 8 ? '#D97706' : '#16A34A';
+
   return (
-    <div className="bg-white border border-[#E2E5E9] p-6 space-y-5">
+    <div className="bg-white border border-[#E2E5E9] rounded-2xl p-6 space-y-6 shadow-panel">
       {/* Breadcrumb & Navigation Path */}
       <div className="flex items-center font-mono text-[11px] text-[#6B7280] uppercase tracking-wider mb-1">
-        <span className="cursor-pointer hover:text-black transition-colors">Client Fleet</span>
+        <span className="cursor-pointer hover:text-black transition-colors px-2 py-0.5 rounded-md hover:bg-[#F8F9FA]">Client Fleet</span>
         <IconChevronRight size={14} className="mx-1 text-[#6B7280]" />
-        <span className="text-black font-bold">{device.hostname}</span>
+        <span className="text-black font-bold px-2 py-0.5 bg-[#F8F9FA] rounded-md border border-[#E2E5E9]">{device.hostname}</span>
       </div>
 
       {/* Page Header */}
       <div className="flex flex-wrap items-end justify-between border-b border-[#E2E5E9] pb-4 gap-4">
         <div>
-          <h1 className="text-[22px] font-bold text-black tracking-tight mb-1">{device.hostname}</h1>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-[24px] font-bold text-black tracking-tight">{device.hostname}</h1>
+            <span className="w-2 h-2 rounded-full inline-block animate-pulse-fast" style={{ backgroundColor: rssiColor }} />
+          </div>
           <p className="font-mono text-[12px] text-[#6B7280]">
             MAC: <strong className="text-black">{device.macAddress}</strong> &bull; IP: <strong className="text-black">{device.ipAddress}</strong> &bull; Vendor: {device.vendor}
           </p>
@@ -116,17 +175,17 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
         </div>
       </div>
 
-      {/* Section 1: Canonical Raw Telemetry 4-Box Grid with Inline Sparkline */}
+      {/* Section 1: Canonical Raw Telemetry 4-Box Grid with Radial Arc Gauges & Sparkline */}
       <div>
-        <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center justify-between mb-3">
           <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] flex items-center gap-1.5">
-            <IconSignal size={15} />
-            <span>Raw Telemetry</span>
+            <IconSignal size={15} className="text-black" />
+            <span>Raw Telemetry Instruments</span>
           </div>
 
           {/* Sparkline */}
           {trend?.hasEnoughData && trend.sparklinePoints.length >= 2 && (
-            <div className="flex items-center gap-2 font-mono text-[11px] text-[#6B7280]">
+            <div className="flex items-center gap-2 font-mono text-[11px] text-[#6B7280] bg-[#F8F9FA] px-2.5 py-1 rounded-lg border border-[#E2E5E9]">
               <span>Signal Drift ({trend.label}):</span>
               <Sparkline points={trend.sparklinePoints} color={trend.color} width={64} height={16} />
               <span className="font-bold" style={{ color: trend.color }}>{trend.symbol}</span>
@@ -134,61 +193,70 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
           )}
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
           {/* RSSI */}
-          <div className="telemetry-cell">
-            <span className="telemetry-cell-label">RSSI (Signal)</span>
-            <div className="telemetry-cell-value-group">
-              <span
-                className="telemetry-cell-value"
-                style={{
-                  color: telemetry.rssi_dBm <= -75 ? '#DC2626' : telemetry.rssi_dBm <= -70 ? '#D97706' : '#16A34A'
-                }}
-              >
+          <div className="bg-white border border-[#E2E5E9] rounded-xl p-4 shadow-card hover:shadow-panel hover:border-[#CBD0D6] transition-all duration-200 flex flex-col justify-between min-h-[96px] group">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#6B7280] font-sans group-hover:text-black transition-colors">
+                RSSI (Signal)
+              </span>
+              <TelemetryArcGauge percent={rssiPercent} color={rssiColor} />
+            </div>
+            <div className="flex items-baseline gap-1.5 mt-auto">
+              <span className="font-mono text-[26px] font-bold tracking-tight leading-none" style={{ color: rssiColor }}>
                 {telemetry.rssi_dBm}
               </span>
-              <span className="telemetry-cell-unit">dBm</span>
+              <span className="font-mono text-[12px] text-[#6B7280] font-semibold">dBm</span>
             </div>
           </div>
 
           {/* SNR */}
-          <div className="telemetry-cell">
-            <span className="telemetry-cell-label">SNR (Signal-to-Noise)</span>
-            <div className="telemetry-cell-value-group">
-              <span
-                className="telemetry-cell-value"
-                style={{
-                  color: telemetry.snr_dB <= 12 ? '#DC2626' : telemetry.snr_dB <= 20 ? '#D97706' : '#16A34A'
-                }}
-              >
+          <div className="bg-white border border-[#E2E5E9] rounded-xl p-4 shadow-card hover:shadow-panel hover:border-[#CBD0D6] transition-all duration-200 flex flex-col justify-between min-h-[96px] group">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#6B7280] font-sans group-hover:text-black transition-colors">
+                SNR (Quality)
+              </span>
+              <TelemetryArcGauge percent={snrPercent} color={snrColor} />
+            </div>
+            <div className="flex items-baseline gap-1.5 mt-auto">
+              <span className="font-mono text-[26px] font-bold tracking-tight leading-none" style={{ color: snrColor }}>
                 {telemetry.snr_dB}
               </span>
-              <span className="telemetry-cell-unit">dB</span>
+              <span className="font-mono text-[12px] text-[#6B7280] font-semibold">dB</span>
             </div>
           </div>
 
           {/* Retry Rate */}
-          <div className="telemetry-cell">
-            <span className="telemetry-cell-label">Frame Retry Rate</span>
-            <div className="telemetry-cell-value-group">
-              <span
-                className="telemetry-cell-value"
-                style={{
-                  color: telemetry.retryRatePct >= 15 ? '#DC2626' : telemetry.retryRatePct >= 8 ? '#D97706' : '#16A34A'
-                }}
-              >
+          <div className="bg-white border border-[#E2E5E9] rounded-xl p-4 shadow-card hover:shadow-panel hover:border-[#CBD0D6] transition-all duration-200 flex flex-col justify-between min-h-[96px] group">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#6B7280] font-sans group-hover:text-black transition-colors">
+                Frame Retries
+              </span>
+              <TelemetryArcGauge percent={retryPercent} color={retryColor} />
+            </div>
+            <div className="flex items-baseline gap-1.5 mt-auto">
+              <span className="font-mono text-[26px] font-bold tracking-tight leading-none" style={{ color: retryColor }}>
                 {telemetry.retryRatePct.toFixed(1)}
               </span>
-              <span className="telemetry-cell-unit">%</span>
+              <span className="font-mono text-[12px] text-[#6B7280] font-semibold">%</span>
             </div>
           </div>
 
           {/* Band & Width */}
-          <div className="telemetry-cell">
-            <span className="telemetry-cell-label">Operating Band</span>
-            <div className="telemetry-cell-value-group">
-              <span className="telemetry-cell-value text-black">{telemetry.band}</span>
-              <span className="telemetry-cell-unit">{telemetry.channelWidthMHz}MHz</span>
+          <div className="bg-white border border-[#E2E5E9] rounded-xl p-4 shadow-card hover:shadow-panel hover:border-[#CBD0D6] transition-all duration-200 flex flex-col justify-between min-h-[96px] group">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#6B7280] font-sans group-hover:text-black transition-colors">
+                Channel Band
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-[#F8F9FA] border border-[#E2E5E9] flex items-center justify-center text-black">
+                <IconRfAntenna size={16} />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-1.5 mt-auto">
+              <span className="font-mono text-[24px] font-bold tracking-tight leading-none text-black">
+                {telemetry.band}
+              </span>
+              <span className="font-mono text-[12px] text-[#6B7280] font-semibold">{telemetry.channelWidthMHz}MHz</span>
             </div>
           </div>
         </div>
@@ -196,15 +264,21 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
 
       {/* Section 2: Layer 2 Diagnostic Result Banner */}
       <div
-        className="border border-[#E2E5E9] p-5 bg-white"
+        className="rounded-xl p-5 border bg-white shadow-card relative overflow-hidden transition-all duration-200"
         style={{
+          borderColor: status === 'CRITICAL' ? 'rgba(220,38,38,0.3)' : status === 'ATTENTION' ? 'rgba(217,119,6,0.3)' : 'rgba(22,163,74,0.3)',
           borderLeftWidth: '4px',
-          borderLeftColor: status === 'CRITICAL' ? '#DC2626' : status === 'ATTENTION' ? '#D97706' : '#16A34A'
+          borderLeftColor: status === 'CRITICAL' ? '#DC2626' : status === 'ATTENTION' ? '#D97706' : '#16A34A',
+          backgroundColor: status === 'CRITICAL' ? 'rgba(220,38,38,0.02)' : status === 'ATTENTION' ? 'rgba(217,119,6,0.02)' : 'rgba(22,163,74,0.02)'
         }}
       >
         <div className="flex items-center justify-between mb-2">
           <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] flex items-center gap-1.5">
-            <IconRule size={15} />
+            {diagnosis.primary_diagnosis.toLowerCase().includes('interference') ? (
+              <IconRfInterference size={15} className="text-black" />
+            ) : (
+              <IconRfSignalWave size={15} className="text-black" />
+            )}
             <span>Layer 2 Diagnostic Engine Verdict</span>
           </div>
 
@@ -234,7 +308,7 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
         </div>
 
         <h2
-          className="text-[18px] font-bold my-2 flex items-center gap-2 flex-wrap"
+          className="text-[20px] font-bold my-2 flex items-center gap-2 flex-wrap"
           style={{
             color: status === 'CRITICAL' ? '#DC2626' : status === 'ATTENTION' ? '#D97706' : '#16A34A'
           }}
@@ -248,14 +322,14 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
         </h2>
 
         {/* Confidence Meter Bar */}
-        <div className="space-y-1.5 pt-3 border-t border-[#E2E5E9]">
+        <div className="space-y-1.5 pt-3 border-t border-[#E2E5E9]/80">
           <div className="flex items-center justify-between text-[11px] font-mono mb-1">
             <span className="text-[#6B7280] uppercase font-bold">Engine Scoring Confidence:</span>
             <strong className="text-black">{effectiveConfidence}%</strong>
           </div>
-          <div className="hypothesis-bar-track">
+          <div className="h-2 w-full bg-[#ECEEF1] rounded-full overflow-hidden border border-[#E2E5E9]">
             <div
-              className="hypothesis-bar-fill"
+              className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${effectiveConfidence}%`,
                 backgroundColor: status === 'CRITICAL' ? '#DC2626' : status === 'ATTENTION' ? '#D97706' : '#16A34A'
@@ -265,44 +339,44 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
         </div>
       </div>
 
-      {/* Consolidated 3-Tab Controller */}
-      <div className="flex border-b border-[#E2E5E9] bg-[#F8F9FA] overflow-x-auto">
+      {/* Linear/Raycast Style Segmented 3-Tab Controller */}
+      <div className="flex items-center gap-1.5 p-1 bg-[#F0F2F5] rounded-xl border border-[#E2E5E9] shadow-subtle overflow-x-auto">
         <button
           type="button"
-          className={`px-5 py-3 text-[12px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-all ${
+          className={`px-4 py-2 text-[12px] font-bold uppercase tracking-wider rounded-lg flex items-center gap-2 transition-all ${
             activeTab === 'OVERVIEW'
-              ? 'border-black bg-white text-black font-bold'
-              : 'border-transparent text-[#6B7280] hover:text-black hover:bg-white'
+              ? 'bg-white text-black shadow-sm border border-[#E2E5E9]/80'
+              : 'text-[#6B7280] hover:text-black hover:bg-white/60'
           }`}
           onClick={() => setActiveTab('OVERVIEW')}
         >
-          <IconSparkles size={16} />
+          <IconSparkles size={15} />
           <span>Overview</span>
         </button>
 
         <button
           type="button"
-          className={`px-5 py-3 text-[12px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-all ${
+          className={`px-4 py-2 text-[12px] font-bold uppercase tracking-wider rounded-lg flex items-center gap-2 transition-all ${
             activeTab === 'EVIDENCE'
-              ? 'border-black bg-white text-black font-bold'
-              : 'border-transparent text-[#6B7280] hover:text-black hover:bg-white'
+              ? 'bg-white text-black shadow-sm border border-[#E2E5E9]/80'
+              : 'text-[#6B7280] hover:text-black hover:bg-white/60'
           }`}
           onClick={() => setActiveTab('EVIDENCE')}
         >
-          <IconRule size={16} />
+          <IconRule size={15} />
           <span>Evidence</span>
         </button>
 
         <button
           type="button"
-          className={`px-5 py-3 text-[12px] font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-all ${
+          className={`px-4 py-2 text-[12px] font-bold uppercase tracking-wider rounded-lg flex items-center gap-2 transition-all ${
             activeTab === 'SPECTRUM'
-              ? 'border-black bg-white text-black font-bold'
-              : 'border-transparent text-[#6B7280] hover:text-black hover:bg-white'
+              ? 'bg-white text-black shadow-sm border border-[#E2E5E9]/80'
+              : 'text-[#6B7280] hover:text-black hover:bg-white/60'
           }`}
           onClick={() => setActiveTab('SPECTRUM')}
         >
-          <IconSignal size={16} />
+          <IconSignal size={15} />
           <span>Spectrum</span>
         </button>
       </div>

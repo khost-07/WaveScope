@@ -32,14 +32,16 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
 
   return (
     <div
-      className={`p-3.5 bg-white border mb-2 cursor-pointer transition-all ${
+      className={`p-3.5 bg-white border rounded-xl mb-2.5 cursor-pointer transition-all duration-200 ${
         isSelected
-          ? 'border-[#0F1113] bg-[#F8F9FA] shadow-sm'
-          : 'border-[#E2E5E9] hover:border-[#CBD0D6] hover:bg-[#F8F9FA]'
+          ? 'border-[#0F1113] bg-[#F8F9FA] shadow-card'
+          : 'border-[#E2E5E9] hover:border-[#CBD0D6] hover:bg-[#F8F9FA] hover:shadow-subtle hover:-translate-y-0.5'
       }`}
       style={{
         borderLeftWidth: isSelected ? '4px' : '1px',
-        borderLeftColor: isSelected ? '#0F1113' : '#E2E5E9'
+        borderLeftColor: isSelected
+          ? (status === 'CRITICAL' ? '#DC2626' : status === 'ATTENTION' ? '#D97706' : '#0F1113')
+          : '#E2E5E9'
       }}
       onClick={() => onSelect(device)}
     >

@@ -42,11 +42,11 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
 
       {/* 1. SIMULATION MODE: 4-Box Fleet Metric Strip with Color Accent Tops */}
       {isSimulation ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
           {/* Total Clients */}
           <button
             type="button"
-            className={`telemetry-cell text-left cursor-pointer transition-all ${
+            className={`telemetry-cell text-left cursor-pointer transition-all duration-200 rounded-xl shadow-card hover:shadow-panel ${
               activeFilter === 'ALL' ? 'border-[#0F1113] bg-[#F8F9FA]' : 'border-[#E2E5E9] bg-white hover:bg-[#F8F9FA]'
             }`}
             style={{ borderTop: '3px solid #0F1113' }}
@@ -65,7 +65,7 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
           {/* Healthy */}
           <button
             type="button"
-            className={`telemetry-cell text-left cursor-pointer transition-all ${
+            className={`telemetry-cell text-left cursor-pointer transition-all duration-200 rounded-xl shadow-card hover:shadow-panel ${
               activeFilter === 'HEALTHY' ? 'bg-[#16A34A]/10 border-[#16A34A]' : 'border-[#E2E5E9] bg-white hover:bg-[#F8F9FA]'
             }`}
             style={{ borderTop: '3px solid #16A34A' }}
@@ -86,7 +86,7 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
           {/* Attention */}
           <button
             type="button"
-            className={`telemetry-cell text-left cursor-pointer transition-all ${
+            className={`telemetry-cell text-left cursor-pointer transition-all duration-200 rounded-xl shadow-card hover:shadow-panel ${
               activeFilter === 'ATTENTION' ? 'bg-[#D97706]/10 border-[#D97706]' : 'border-[#E2E5E9] bg-white hover:bg-[#F8F9FA]'
             }`}
             style={{ borderTop: '3px solid #D97706' }}
@@ -107,7 +107,7 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
           {/* Critical */}
           <button
             type="button"
-            className={`telemetry-cell text-left cursor-pointer transition-all ${
+            className={`telemetry-cell text-left cursor-pointer transition-all duration-200 rounded-xl shadow-card hover:shadow-panel ${
               activeFilter === 'CRITICAL' ? 'bg-[#DC2626]/10 border-[#DC2626]' : 'border-[#E2E5E9] bg-white hover:bg-[#F8F9FA]'
             }`}
             style={{ borderTop: '3px solid #DC2626' }}
@@ -127,22 +127,22 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
         </div>
       ) : (
         /* 2. LIVE DATA MODE (Real Mode): Single proportionate active connection health summary */
-        <div className="border border-[#E2E5E9] bg-white p-4 flex flex-wrap items-center justify-between gap-4">
+        <div className="border border-[#E2E5E9] rounded-xl bg-white p-5 shadow-card flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
             {singleDeviceStatus === 'HEALTHY' && (
-              <div className="badge-status badge-status-healthy text-[11px] py-1 px-2.5 flex items-center gap-1.5">
+              <div className="badge-status badge-status-healthy text-[11px] py-1 px-2.5 flex items-center gap-1.5 rounded-lg">
                 <IconCheckBox size={14} />
                 <span>{isEasyMode ? 'GREAT CONNECTION' : 'HEALTHY LINK'}</span>
               </div>
             )}
             {singleDeviceStatus === 'ATTENTION' && (
-              <div className="badge-status badge-status-attention text-[11px] py-1 px-2.5 flex items-center gap-1.5">
+              <div className="badge-status badge-status-attention text-[11px] py-1 px-2.5 flex items-center gap-1.5 rounded-lg">
                 <IconAlertTriangle size={14} />
                 <span>{isEasyMode ? 'COULD BE BETTER' : 'ATTENTION REQUIRED'}</span>
               </div>
             )}
             {singleDeviceStatus === 'CRITICAL' && (
-              <div className="badge-status badge-status-critical text-[11px] py-1 px-2.5 flex items-center gap-1.5">
+              <div className="badge-status badge-status-critical text-[11px] py-1 px-2.5 flex items-center gap-1.5 rounded-lg">
                 <IconAlertCircle size={14} />
                 <span>{isEasyMode ? 'NEEDS ATTENTION' : 'CRITICAL LINK'}</span>
               </div>
@@ -167,8 +167,8 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
           </div>
 
           <div className="flex items-center gap-2 font-mono text-[11px]">
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F8F9FA] border border-[#E2E5E9] text-black font-semibold">
-              <span className="w-2 h-2 bg-[#16A34A] inline-block animate-pulse-fast"></span>
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F8F9FA] border border-[#E2E5E9] rounded-lg text-black font-semibold shadow-xs">
+              <span className="w-2 h-2 bg-[#16A34A] rounded-full inline-block animate-pulse-fast"></span>
               {isEasyMode ? 'LIVE WI-FI ACTIVE' : 'LIVE PROBE ACTIVE'}
             </span>
           </div>
@@ -176,27 +176,27 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
       )}
 
       {/* AP Header & Actions Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white border border-[#E2E5E9]">
-        <div className="flex items-center gap-3">
-          <div className="p-2 border border-[#E2E5E9] bg-[#F8F9FA] flex items-center justify-center">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-white border border-[#E2E5E9] rounded-xl shadow-card">
+        <div className="flex items-center gap-3.5">
+          <div className="p-2.5 border border-[#E2E5E9] bg-[#F8F9FA] rounded-lg flex items-center justify-center">
             <IconRouter size={20} className="text-black" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap mb-0.5">
-              <span className="text-[15px] font-bold text-black">{ap.ssid}</span>
+              <span className="text-[16px] font-bold text-black">{ap.ssid}</span>
               {!isEasyMode && (
                 <>
-                  <span className="badge-status font-mono text-[10px]">{ap.maxStandard}</span>
-                  <span className="badge-status font-mono text-[10px]">Tri-Band (2.4 / 5 / 6 GHz)</span>
+                  <span className="badge-status font-mono text-[10px] rounded-md">{ap.maxStandard}</span>
+                  <span className="badge-status font-mono text-[10px] rounded-md">Tri-Band (2.4 / 5 / 6 GHz)</span>
                 </>
               )}
               {isEasyMode && (
-                <span className="badge-status font-mono text-[10px] text-[#16A34A] border-[#16A34A]">
+                <span className="badge-status font-mono text-[10px] text-[#16A34A] border-[#16A34A] rounded-md">
                   Home Network
                 </span>
               )}
             </div>
-            <div className="text-[11px] font-mono text-[#6B7280] mt-0.5">
+            <div className="text-[11.5px] font-mono text-[#6B7280] mt-0.5">
               {isEasyMode ? (
                 <span>
                   Router Status:{' '}
@@ -230,7 +230,7 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
 
       {/* Simulation Scenario Switcher Deck */}
       {isSimulation && onSelectScenario && (
-        <div className="flex items-center gap-2 p-2 bg-[#F8F9FA] border border-[#E2E5E9] overflow-x-auto">
+        <div className="flex items-center gap-2 p-2.5 bg-[#F8F9FA] border border-[#E2E5E9] rounded-xl overflow-x-auto shadow-subtle">
           <span className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] whitespace-nowrap px-1">
             {isEasyMode ? 'TEST SITUATIONS:' : 'PRESET SCENARIOS:'}
           </span>

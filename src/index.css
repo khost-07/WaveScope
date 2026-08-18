@@ -40,12 +40,11 @@
   --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, Menlo, monospace;
 }
 
-/* Global Reset & Stitch 0px Hard Corner Rule */
+/* Global Reset */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  border-radius: 0 !important;
 }
 
 html, body {
@@ -533,9 +532,64 @@ code, pre {
 .overflow-y-auto { overflow-y: auto; }
 .max-h-\[calc\(100vh-280px\)\] { max-height: calc(100vh - 280px); }
 .max-h-56 { max-height: 14rem; }
+/* Border Radius Tokens */
+.rounded-none { border-radius: 0px; }
+.rounded-sm { border-radius: 4px; }
+.rounded { border-radius: 6px; }
+.rounded-md { border-radius: 6px; }
+.rounded-lg { border-radius: 8px; }
+.rounded-xl { border-radius: 12px; }
+.rounded-2xl { border-radius: 16px; }
+.rounded-3xl { border-radius: 24px; }
+.rounded-full { border-radius: 9999px; }
+.rounded-t-lg { border-top-left-radius: 8px; border-top-right-radius: 8px; }
+.rounded-t-xl { border-top-left-radius: 12px; border-top-right-radius: 12px; }
+.rounded-b-lg { border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
+.rounded-b-xl { border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
+.rounded-l-lg { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+.rounded-r-lg { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+
+/* Elevation Shadows */
+.shadow-none { box-shadow: none; }
+.shadow-subtle { box-shadow: 0 1px 2px rgba(15, 17, 19, 0.04), 0 1px 3px rgba(15, 17, 19, 0.06); }
+.shadow-card { box-shadow: 0 1px 3px rgba(15, 17, 19, 0.04), 0 4px 14px rgba(15, 17, 19, 0.04); }
+.shadow-panel { box-shadow: 0 4px 20px -2px rgba(15, 17, 19, 0.06), 0 2px 6px -1px rgba(15, 17, 19, 0.04); }
+.shadow-float { box-shadow: 0 12px 32px -4px rgba(15, 17, 19, 0.1), 0 4px 12px -2px rgba(15, 17, 19, 0.05); }
 .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
-.shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+.shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04); }
 .shadow-xl { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+
+.shadow-glow-healthy { box-shadow: 0 0 16px rgba(22, 163, 74, 0.15); }
+.shadow-glow-attention { box-shadow: 0 0 16px rgba(217, 119, 6, 0.15); }
+.shadow-glow-critical { box-shadow: 0 0 16px rgba(220, 38, 38, 0.15); }
+
+/* Premium Linear / Vercel Glass & Elevated Cards */
+.card-panel {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E5E9;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(15, 17, 19, 0.04), 0 4px 14px rgba(15, 17, 19, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-panel-highlight {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 3px rgba(15, 17, 19, 0.04), 0 4px 14px rgba(15, 17, 19, 0.04);
+}
+
+.card-interactive {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px -2px rgba(15, 17, 19, 0.08), 0 2px 8px -1px rgba(15, 17, 19, 0.05);
+  border-color: #CBD0D6;
+}
+
+.card-interactive:active {
+  transform: translateY(0);
+}
 
 /* Stitch Diagonal Hash Stripe Pattern for Simulation State */
 .sim-pattern {
@@ -546,18 +600,22 @@ code, pre {
 .telemetry-cell {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  padding: 12px 16px;
+  border-radius: 10px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 82px;
+  min-height: 88px;
   box-sizing: border-box;
   position: relative;
-  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(15, 17, 19, 0.03), 0 2px 6px rgba(15, 17, 19, 0.02);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .telemetry-cell:hover {
   border-color: var(--border-outline);
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 12px rgba(15, 17, 19, 0.06);
 }
 
 .telemetry-cell-label {
@@ -597,6 +655,7 @@ code, pre {
   background-color: #0F1113;
   color: #FFFFFF;
   border: 1px solid #0F1113;
+  border-radius: 8px;
   padding: 7px 14px;
   font-family: var(--font-mono);
   font-size: 11px;
@@ -608,12 +667,19 @@ code, pre {
   align-items: center;
   gap: 6px;
   line-height: 1.2;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
   transition: all 0.15s ease;
 }
 
 .btn-instrument-primary:hover:not(:disabled) {
   background-color: #272A2E;
   border-color: #272A2E;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18);
+}
+
+.btn-instrument-primary:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .btn-instrument-primary:disabled {
@@ -625,6 +691,7 @@ code, pre {
   background-color: #FFFFFF;
   color: #0F1113;
   border: 1px solid var(--border-outline);
+  border-radius: 8px;
   padding: 7px 14px;
   font-family: var(--font-mono);
   font-size: 11px;
@@ -636,6 +703,7 @@ code, pre {
   align-items: center;
   gap: 6px;
   line-height: 1.2;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
   transition: all 0.15s ease;
 }
 
@@ -643,15 +711,22 @@ code, pre {
   background-color: #0F1113;
   color: #FFFFFF;
   border-color: #0F1113;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.btn-instrument-secondary:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 /* Status Badges */
 .badge-status {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
+  gap: 5px;
+  padding: 3px 8px;
   border: 1px solid currentColor;
+  border-radius: 6px;
   font-family: var(--font-sans);
   font-size: 10px;
   font-weight: 700;
@@ -659,24 +734,26 @@ code, pre {
   text-transform: uppercase;
   line-height: 1.2;
   background: var(--bg-surface);
+  box-shadow: 0 1px 2px rgba(15, 17, 19, 0.03);
+  transition: all 0.15s ease;
 }
 
 .badge-status-healthy {
   color: var(--status-healthy);
-  background-color: var(--status-healthy-bg);
-  border-color: var(--status-healthy);
+  background-color: rgba(22, 163, 74, 0.08);
+  border-color: rgba(22, 163, 74, 0.35);
 }
 
 .badge-status-attention {
   color: var(--status-attention);
-  background-color: var(--status-attention-bg);
-  border-color: var(--status-attention);
+  background-color: rgba(217, 119, 6, 0.08);
+  border-color: rgba(217, 119, 6, 0.35);
 }
 
 .badge-status-critical {
   color: var(--status-critical);
-  background-color: var(--status-critical-bg);
-  border-color: var(--status-critical);
+  background-color: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.35);
 }
 
 /* Instrument Telemetry Matrix Table */
