@@ -10,11 +10,13 @@ export const DiagnosticInspector: React.FC<DiagnosticInspectorProps> = ({ diagno
   const status = diagnosis.status;
 
   return (
-    <div className="border border-[#E2E5E9] bg-white p-5 space-y-4">
+    <div className="border border-[#E2E5E9] rounded-2xl bg-white p-6 space-y-5 shadow-panel">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#E2E5E9] pb-2 flex-wrap gap-2 mb-1">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] flex items-center gap-1.5">
-          <IconRule size={15} />
+      <div className="flex items-center justify-between border-b border-[#E2E5E9] pb-3 flex-wrap gap-2 mb-1">
+        <div className="text-[12px] font-bold uppercase tracking-wider text-[#3B4045] flex items-center gap-2">
+          <div className="w-6 h-6 rounded-md bg-black text-white flex items-center justify-center">
+            <IconRule size={14} />
+          </div>
           <span>Deterministic Hypothesis Scoring (Layer 2)</span>
         </div>
         <div className="flex items-center gap-2">
@@ -36,22 +38,24 @@ export const DiagnosticInspector: React.FC<DiagnosticInspectorProps> = ({ diagno
               CRITICAL
             </span>
           )}
-          <span className="font-mono text-[12px] text-black font-bold">{diagnosis.confidence}% Confidence</span>
+          <span className="font-mono text-[12px] text-black font-bold bg-[#F8F9FA] px-2.5 py-1 rounded-md border border-[#E2E5E9]">
+            {diagnosis.confidence}% Confidence
+          </span>
         </div>
       </div>
 
       {/* Primary Diagnosis Callout */}
-      <div className="p-3.5 bg-[#F8F9FA] border border-[#E2E5E9]">
+      <div className="p-4 bg-[#F8F9FA] border border-[#E2E5E9] rounded-xl shadow-subtle">
         <div className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mb-1">Primary Classified Hypothesis</div>
-        <div className="text-[16px] font-bold text-black my-1">{diagnosis.primary_diagnosis}</div>
-        <div className="font-mono text-[11px] text-[#3B4045] mt-1.5">
+        <div className="text-[18px] font-bold text-black my-1 tracking-tight">{diagnosis.primary_diagnosis}</div>
+        <div className="font-mono text-[11.5px] text-[#3B4045] mt-1.5">
           Severity: <strong className="text-black">{diagnosis.severity}</strong> &bull; Evaluated: {new Date(diagnosis.evaluated_at).toLocaleTimeString()}
         </div>
       </div>
 
       {/* Hypothesis Score Bars */}
-      <div className="space-y-2.5">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] mb-2">Evaluated Competing Hypotheses Distribution</div>
+      <div className="space-y-3">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-[#6B7280] mb-2">Evaluated Competing Hypotheses Distribution</div>
         {Object.entries(diagnosis.hypothesis_scores).map(([name, score]) => {
           const isWinner = name === diagnosis.primary_diagnosis;
           const maxScore = Math.max(...Object.values(diagnosis.hypothesis_scores), 100);
@@ -62,9 +66,9 @@ export const DiagnosticInspector: React.FC<DiagnosticInspectorProps> = ({ diagno
               <span className={`w-64 truncate ${isWinner ? 'font-bold text-black' : 'text-[#3B4045]'}`}>
                 {isWinner ? '▶ ' : '  '}{name}
               </span>
-              <div className="hypothesis-bar-track flex-1">
+              <div className="h-2.5 flex-1 bg-[#ECEEF1] rounded-full overflow-hidden border border-[#E2E5E9]">
                 <div
-                  className={`hypothesis-bar-fill ${isWinner ? 'bg-black' : 'bg-[#CBD0D6]'}`}
+                  className={`h-full rounded-full transition-all duration-500 ${isWinner ? 'bg-black' : 'bg-[#CBD0D6]'}`}
                   style={{ width: `${pct}%` }}
                 />
               </div>
@@ -77,15 +81,17 @@ export const DiagnosticInspector: React.FC<DiagnosticInspectorProps> = ({ diagno
       </div>
 
       {/* Physical Evidence Bullets */}
-      <div className="space-y-2 pt-1">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045] mb-1">
+      <div className="space-y-2.5 pt-1">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-[#6B7280] mb-1">
           Diagnostic Evidence Base ({diagnosis.evidence.length} Points)
         </div>
-        <div className="p-3 bg-[#F8F9FA] border border-[#E2E5E9] space-y-1.5 font-mono text-[11px] text-[#3B4045]">
+        <div className="p-4 bg-[#F8F9FA] border border-[#E2E5E9] rounded-xl space-y-2 font-mono text-[11.5px] text-[#3B4045]">
           {diagnosis.evidence.map((item, idx) => (
-            <div key={idx} className="flex items-start gap-2">
-              <span className="font-bold text-black flex-shrink-0">[{idx + 1}]</span>
-              <span>{item}</span>
+            <div key={idx} className="flex items-start gap-2.5">
+              <span className="font-bold w-5 h-5 rounded-md bg-black text-white flex items-center justify-center flex-shrink-0 text-[10px]">
+                {idx + 1}
+              </span>
+              <span className="leading-snug">{item}</span>
             </div>
           ))}
         </div>
@@ -93,3 +99,4 @@ export const DiagnosticInspector: React.FC<DiagnosticInspectorProps> = ({ diagno
     </div>
   );
 };
+

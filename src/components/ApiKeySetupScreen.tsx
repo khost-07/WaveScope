@@ -27,18 +27,20 @@ export const ApiKeySetupScreen: React.FC<ApiKeySetupScreenProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-[#F4F5F7] flex items-center justify-center p-6 z-50">
-      <div className="bg-white border border-[#0F1113] max-w-lg w-full p-8 space-y-6 shadow-xl">
+    <div className="fixed inset-0 bg-[#0F1113]/40 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-fade-in">
+      <div className="bg-white border border-[#E2E5E9] max-w-lg w-full p-8 space-y-6 rounded-2xl shadow-float">
         {/* Brand Header */}
         <div className="flex items-center justify-between border-b border-[#E2E5E9] pb-4">
           <div className="flex items-center gap-3">
-            <IconRadar size={28} className="text-black" />
+            <div className="w-10 h-10 rounded-xl bg-black text-white flex items-center justify-center shadow-md">
+              <IconRadar size={22} />
+            </div>
             <div>
               <h1 className="text-[22px] font-bold text-black tracking-tight mb-0.5">WaveScope</h1>
               <p className="font-mono text-[11px] text-[#6B7280]">Precision RF Wi-Fi Diagnostic Instrument</p>
             </div>
           </div>
-          <span className="badge-status font-mono text-[10px]">Setup Configuration</span>
+          <span className="badge-status font-mono text-[10px] rounded-md">Setup Configuration</span>
         </div>
 
         {/* Intro */}
@@ -67,7 +69,7 @@ export const ApiKeySetupScreen: React.FC<ApiKeySetupScreenProps> = ({
             <input
               id="gemini-key"
               type={showKey ? 'text' : 'password'}
-              className="w-full bg-[#F8F9FA] border border-[#E2E5E9] p-3 font-mono text-[13px] text-black outline-none focus:border-black transition-colors"
+              className="w-full bg-[#F8F9FA] border border-[#E2E5E9] rounded-xl p-3.5 font-mono text-[13px] text-black outline-none focus:border-black shadow-subtle transition-colors"
               placeholder="AIzaSy..."
               value={keyInput}
               onChange={(e) => {
@@ -100,7 +102,7 @@ export const ApiKeySetupScreen: React.FC<ApiKeySetupScreenProps> = ({
               id="remember-key"
               checked={persist}
               onChange={(e) => setPersist(e.target.checked)}
-              className="cursor-pointer"
+              className="cursor-pointer rounded"
             />
             <label htmlFor="remember-key" className="cursor-pointer">
               Remember API key in browser storage
@@ -109,14 +111,14 @@ export const ApiKeySetupScreen: React.FC<ApiKeySetupScreenProps> = ({
 
           <button
             type="submit"
-            className="w-full btn-instrument-primary py-3 justify-center text-[13px]"
+            className="w-full btn-instrument-primary py-3.5 justify-center text-[13.5px] rounded-xl shadow-card hover:shadow-panel transition-all"
             disabled={!keyInput.trim()}
           >
             Launch WaveScope Instrument &rarr;
           </button>
         </form>
 
-        <div className="pt-2 border-t border-[#E2E5E9] font-mono text-[10px] text-[#6B7280] flex justify-between">
+        <div className="pt-3 border-t border-[#E2E5E9] font-mono text-[10.5px] text-[#6B7280] flex justify-between">
           <span>Engine: <strong>Deterministic L2 + Gemini 3.1 Flash Lite</strong></span>
           <span>Zero Fallbacks</span>
         </div>

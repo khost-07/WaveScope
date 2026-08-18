@@ -37,14 +37,14 @@ export const EasyModeView: React.FC<EasyModeViewProps> = ({
   const { headline, explanation, peerOrTrendNote, recommendedAction, level, iconType } = easyData;
 
   return (
-    <div className="bg-white border border-[#E2E5E9] p-7 space-y-6 shadow-sm">
+    <div className="bg-white border border-[#E2E5E9] rounded-2xl p-7 space-y-6 shadow-panel">
       {/* Device Name Header */}
-      <div className="border-b border-[#E2E5E9] pb-4 flex items-center justify-between flex-wrap gap-3">
+      <div className="border-b border-[#E2E5E9] pb-5 flex items-center justify-between flex-wrap gap-4">
         <div>
           <span className="text-[11px] font-mono uppercase tracking-wider text-[#6B7280] font-bold block mb-1">
             Selected Device
           </span>
-          <h1 className="text-[24px] font-bold text-black tracking-tight">
+          <h1 className="text-[26px] font-bold text-black tracking-tight">
             {device.hostname}
           </h1>
         </div>
@@ -54,36 +54,37 @@ export const EasyModeView: React.FC<EasyModeViewProps> = ({
 
       {/* Main Friendly Verdict Card */}
       <div
-        className="p-6 border bg-[#F8F9FA] space-y-3"
+        className="p-6 border rounded-xl bg-[#F8F9FA] space-y-3 shadow-card"
         style={{
           borderLeftWidth: '5px',
-          borderLeftColor: level === 'GREAT' ? '#16A34A' : level === 'ATTENTION' ? '#D97706' : '#DC2626'
+          borderLeftColor: level === 'GREAT' ? '#16A34A' : level === 'ATTENTION' ? '#D97706' : '#DC2626',
+          backgroundColor: level === 'GREAT' ? 'rgba(22,163,74,0.02)' : level === 'ATTENTION' ? 'rgba(217,119,6,0.02)' : 'rgba(220,38,38,0.02)'
         }}
       >
         <span className="text-[11px] font-mono uppercase tracking-wider font-bold text-[#6B7280] block mb-1">
           Diagnosis Summary
         </span>
 
-        <h2 className="text-[22px] font-bold text-black leading-snug mb-2">
+        <h2 className="text-[22px] font-bold text-black leading-snug mb-2 tracking-tight">
           {headline}
         </h2>
 
-        <p className="text-[15px] text-[#3B4045] leading-relaxed font-sans mb-1">
+        <p className="text-[15.5px] text-[#3B4045] leading-relaxed font-sans mb-1">
           {explanation}
         </p>
 
         {/* Peer or Trend Context Note in Plain Sentences */}
         {peerOrTrendNote && (
-          <div className="p-3.5 bg-white border border-[#E2E5E9] text-[13px] text-black font-medium leading-relaxed mt-2">
+          <div className="p-4 bg-white border border-[#E2E5E9] rounded-lg text-[13.5px] text-black font-medium leading-relaxed mt-3 shadow-subtle">
             💡 {peerOrTrendNote}
           </div>
         )}
       </div>
 
       {/* Clear Next Action */}
-      <div className="p-6 border border-[#E2E5E9] bg-white space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-6 h-6 bg-black text-white font-bold text-[12px] flex items-center justify-center">
+      <div className="p-6 border border-[#E2E5E9] rounded-xl bg-white space-y-3.5 shadow-card">
+        <div className="flex items-center gap-2.5 mb-1">
+          <div className="w-6 h-6 rounded-md bg-black text-white font-bold text-[12px] flex items-center justify-center">
             ✓
           </div>
           <h3 className="text-[16px] font-bold text-black">
@@ -91,10 +92,11 @@ export const EasyModeView: React.FC<EasyModeViewProps> = ({
           </h3>
         </div>
 
-        <div className="p-4 bg-[#F8F9FA] border border-[#E2E5E9] text-[15px] font-semibold text-black leading-relaxed">
+        <div className="p-4.5 bg-[#F8F9FA] border border-[#E2E5E9] rounded-xl text-[15px] font-semibold text-black leading-relaxed shadow-subtle">
           {recommendedAction}
         </div>
       </div>
     </div>
   );
 };
+
