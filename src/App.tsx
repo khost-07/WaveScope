@@ -25,22 +25,22 @@ import { rankAndCompareNetworks, getSimulatedNearbyNetworks } from './layer2_eng
 const STORAGE_KEY = 'wavescope_gemini_api_key';
 
 export function App() {
-  const [mode, setMode] = useState<DataSourceMode>('SIMULATION');
+  const [mode, setMode] = useState<DataSourceMode>('REAL');
   const [isEasyMode, setIsEasyMode] = useState<boolean>(false);
   const [activeNav, setActiveNav] = useState<NavSection>('OVERVIEW');
   const [simulatedDevices, setSimulatedDevices] = useState<ClientDevice[]>(SIMULATION_SCENARIOS);
-  const [devices, setDevices] = useState<ClientDevice[]>(SIMULATION_SCENARIOS);
+  const [devices, setDevices] = useState<ClientDevice[]>([]);
   const [activeFilter, setActiveFilter] = useState<'ALL' | DiagnosticStatus>('ALL');
   
   const [, setProvenance] = useState<DataProvenance>({
-    mode: 'SIMULATION',
-    sourceIdentifier: 'Controlled RF Simulation Fleet (8 Endpoints)',
-    adapterName: 'Simulated Tri-Band 802.11ax AP Testbed',
+    mode: 'REAL',
+    sourceIdentifier: 'Windows Native WLAN API (netsh wlan show interfaces)',
+    adapterName: 'Host Wi-Fi Interface',
     lastUpdated: Date.now(),
-    isDeterministic: true
+    isDeterministic: false
   });
   
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>('device-scenario-a');
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   
   // API Key State & Storage
   const [apiKey, setApiKey] = useState<string>(() => {
@@ -70,7 +70,7 @@ export function App() {
     }
   }, [devices]);
 
-  // Live simulation tick timer: periodically updates RF micro-fluctuations to trend history
+  // Live simulation tick timer: periodically updates RF micro-fluctuations ONLY in SIMULATION mode
   const [tick, setTick] = useState<number>(0);
   useEffect(() => {
     if (mode !== 'SIMULATION') return;
@@ -135,35 +135,57 @@ export function App() {
     return diagnoses[selectedDevice.id] || runDiagnosticEngine(selectedDevice);
   }, [selectedDevice, diagnoses]);
 
-  // Handle data loading when mode toggles
+  // Handle data loading & continuous live polling
   useEffect(() => {
-    async function fetchData() {
-      if (mode === 'SIMULATION') {
-        setDevices(simulatedDevices);
-        setProvenance({
-          mode: 'SIMULATION',
-          sourceIdentifier: 'Controlled RF Simulation Fleet (8 Endpoints)',
-          adapterName: 'Simulated Tri-Band 802.11ax AP Testbed',
-          lastUpdated: Date.now(),
-          isDeterministic: true
-        });
-        setRealError(null);
-      } else {
-        try {
-          const result = await loadDevices('REAL');
+    if (mode === 'SIMULATION') {
+      setDevices(simulatedDevices);
+      setProvenance({
+        mode: 'SIMULATION',
+        sourceIdentifier: 'Controlled RF Simulation Fleet (8 Endpoints)',
+        adapterName: 'Simulated Tri-Band 802.11ax AP Testbed',
+        lastUpdated: Date.now(),
+        isDeterministic: true
+      });
+      setRealError(null);
+      if (simulatedDevices.length > 0) {
+        setSelectedDeviceId(prev => (prev && simulatedDevices.some(d => d.id === prev) ? prev : simulatedDevices[0].id));
+      }
+      return;
+    }
+
+    // REAL MODE: Continuous live polling from native WLAN adapter
+    let isSubscribed = true;
+    async function pollLiveTelemetry() {
+      try {
+        const result = await loadDevices('REAL');
+        if (!isSubscribed) return;
+
+        if (result.devices.length > 0) {
           setDevices(result.devices);
           setProvenance(result.provenance);
           setRealError(null);
-          if (result.devices.length > 0) {
-            setSelectedDeviceId(result.devices[0].id);
+          setSelectedDeviceId(prev => (prev && result.devices.some(d => d.id === prev) ? prev : result.devices[0].id));
+        } else {
+          setDevices([]);
+          if (result.realProbeStatus?.errorMessage) {
+            setRealError(result.realProbeStatus.errorMessage);
+          } else {
+            setRealError('WLAN interface is disconnected or not associated with an AP.');
           }
-        } catch (err: any) {
-          console.warn('[WaveScope] Real mode telemetry fetch error:', err.message);
-          setRealError(err.message || 'Could not connect to local wlanScanner probe daemon.');
         }
+      } catch (err: any) {
+        if (!isSubscribed) return;
+        setRealError(err.message || 'Could not connect to local wlanScanner probe daemon.');
       }
     }
-    fetchData();
+
+    pollLiveTelemetry();
+    const interval = setInterval(pollLiveTelemetry, 2500);
+
+    return () => {
+      isSubscribed = false;
+      clearInterval(interval);
+    };
   }, [mode, simulatedDevices]);
 
   // Trigger Gemini Layer 3 explanation for a given device
@@ -435,7 +457,18 @@ export function App() {
     return <ApiKeySetupScreen initialKey={apiKey} onSaveKey={handleSaveApiKey} />;
   }
 
-  const activeAp = devices[0]?.apCapabilities || SIMULATED_AP;
+  const activeAp = devices[0]?.apCapabilities || (mode === 'SIMULATION' ? SIMULATED_AP : {
+    ssid: 'Live WLAN Interface',
+    bssid: '--:--:--:--:--:--',
+    apModel: 'Realtek / Local WLAN Adapter',
+    operatingStandards: ['802.11ax', '802.11ac', '802.11n'],
+    maxStandard: '802.11ax',
+    enabledBands: ['2.4GHz', '5GHz'],
+    supports6GHz: false,
+    supports5GHz: true,
+    maxChannelWidthMHz: 80,
+    channelUtilizationPct: 15
+  });
 
   return (
     <div className="bg-[#F4F5F7] text-[#0F1113] font-['Hanken_Grotesk',sans-serif] min-h-screen flex flex-col antialiased relative">
@@ -558,7 +591,7 @@ export function App() {
                   : 'text-[#6B7280] hover:text-black hover:bg-[#F8F9FA]'
               }`}
             >
-              <span>📱 Connected Devices ({devices.length})</span>
+              <span>📱 {mode === 'SIMULATION' ? `Fleet Devices (${devices.length})` : `Connected Device (${devices.length})`}</span>
             </button>
 
             <button
@@ -658,10 +691,10 @@ export function App() {
               isSimulation={mode === 'SIMULATION'}
               isEasyMode={isEasyMode}
               singleDeviceStatus={selectedDiagnosis?.status || 'HEALTHY'}
-              singleDeviceHostname={selectedDevice?.hostname || 'Host Wi-Fi Interface'}
+              singleDeviceHostname={selectedDevice?.hostname || (mode === 'REAL' ? 'Local Host Adapter' : 'Host Wi-Fi Interface')}
               singleDeviceDiagnosis={selectedDiagnosis?.primary_diagnosis}
-              nearbyBestSsid={nearbyScanResult?.bestNetwork?.ssid || 'AeroMesh-Pro-5G'}
-              nearbyCount={nearbyScanResult?.networks?.length || 7}
+              nearbyBestSsid={nearbyScanResult?.bestNetwork?.ssid || (mode === 'SIMULATION' ? 'AeroMesh-Pro-5G' : 'Scan Nearby Airwaves')}
+              nearbyCount={nearbyScanResult?.networks?.length ?? (mode === 'SIMULATION' ? 7 : 0)}
             />
           )}
 

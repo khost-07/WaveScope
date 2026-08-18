@@ -337,14 +337,16 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                   <IconLaptop size={20} />
                 </div>
                 <span className="badge-status text-[10.5px] font-mono font-bold bg-[#F8F9FA] rounded-md">
-                  {stats.total} Active Nodes
+                  {isSimulation ? `${stats.total} Active Nodes` : `${stats.total} Connected Adapter`}
                 </span>
               </div>
               <h3 className="text-[16px] font-bold text-black group-hover:text-black tracking-tight">
-                Connected Devices Workspace
+                {isSimulation ? 'Connected Fleet Workspace' : 'Connected Device Workspace'}
               </h3>
               <p className="text-[13px] text-[#6B7280] leading-relaxed">
-                Inspect client endpoints, Layer 2 mathematical diagnostics, RF Link Budget spectrum, and AI explanations.
+                {isSimulation
+                  ? 'Inspect 8 fleet endpoints, Layer 2 mathematical diagnostics, RF spectrum Link Budget, and AI explanations.'
+                  : 'Inspect live host physical link metrics, real Layer 2 diagnostics, RF spectrum Link Budget, and AI explanations.'}
               </p>
             </div>
             <div className="pt-4 mt-2 border-t border-[#E2E5E9] flex items-center justify-between text-[12px] font-bold text-black group-hover:translate-x-1 transition-transform">
@@ -423,7 +425,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                 </span>
               </div>
               <h3 className="text-[16px] font-bold text-black tracking-tight">
-                Fleet Telemetry Matrix
+                {isSimulation ? 'Fleet Telemetry Matrix' : 'Live Physical Telemetry Matrix'}
               </h3>
               <p className="text-[13px] text-[#6B7280] leading-relaxed">
                 Inspect high-density raw tabular metrics: RSSI, SNR, Noise Floor, MCS Index, Retry %, and Link Rates.

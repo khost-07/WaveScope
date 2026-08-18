@@ -154,11 +154,20 @@ export const SIMULATED_NETWORK_SCAN: NetworkScanResult = {
   ]
 };
 
-export async function scanLocalNetwork(_mode?: 'SIMULATION' | 'REAL'): Promise<NetworkScanResult> {
-  // Always attempt real probe first to give genuine live hardware data
+export async function scanLocalNetwork(mode: 'SIMULATION' | 'REAL' = 'REAL'): Promise<NetworkScanResult> {
+  if (mode === 'SIMULATION') {
+    await new Promise(resolve => setTimeout(resolve, 400));
+    return {
+      ...SIMULATED_NETWORK_SCAN,
+      timestamp: Date.now()
+    };
+  }
+
+  // Strictly REAL mode: Query local live network scanner
+  let lastError = 'Failed to connect to local network probe.';
   for (const endpoint of REAL_SCAN_ENDPOINTS) {
     try {
-      const resp = await fetch(endpoint, { signal: AbortSignal.timeout(3500) });
+      const resp = await fetch(endpoint, { signal: AbortSignal.timeout(5000) });
       if (resp.ok) {
         const data = await resp.json();
         if (data.status === 'SUCCESS' && data.result) {
@@ -167,16 +176,13 @@ export async function scanLocalNetwork(_mode?: 'SIMULATION' | 'REAL'): Promise<N
             isReal: true
           };
         }
+      } else {
+        lastError = `Probe responded with HTTP ${resp.status}`;
       }
-    } catch {
-      // Continue to next endpoint fallback
+    } catch (err: any) {
+      lastError = err.message || 'Probe timeout / connection refused';
     }
   }
 
-  // If real probe is not reachable, fallback to simulation testbed
-  await new Promise(resolve => setTimeout(resolve, 600));
-  return {
-    ...SIMULATED_NETWORK_SCAN,
-    timestamp: Date.now()
-  };
+  throw new Error(`Real network audit probe failed: ${lastError}. Make sure the WaveScope backend daemon is running.`);
 }
