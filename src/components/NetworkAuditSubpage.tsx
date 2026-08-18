@@ -208,6 +208,19 @@ ${report.actionablePlan.map((p, i) => `${i + 1}. [${p.priority}] ${p.action} —
             </div>
           </div>
 
+          {/* Client Isolation Context Notice */}
+          {scanResult.clientIsolationActive && (
+            <div className="p-4 bg-[#F8F9FA] border border-[#E2E5E9] rounded-2xl flex items-start gap-3 text-[12.5px] text-[#3B4045] shadow-xs">
+              <span className="text-[16px] flex-shrink-0">🔒</span>
+              <div>
+                <strong className="text-black">AP Client Isolation Active on "{scanResult.router.ssid}": </strong>
+                <span>
+                  This Wi-Fi network isolates connected clients from probing each other directly. Only the default gateway AP ({scanResult.router.ip}) and this workstation ({scanResult.devices.find(d => !d.isGateway)?.ip || 'local PC'}) are visible on this physical subnet. To discover and map peer devices (phones, laptops, smart TVs), connect to a mobile hotspot or home Wi-Fi network.
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Discovered Subnet Devices Table */}
           <div className="border border-[#E2E5E9] rounded-2xl bg-white shadow-panel overflow-hidden">
             <div className="p-4 bg-[#F8F9FA] border-b border-[#E2E5E9] flex flex-wrap items-center justify-between gap-3">

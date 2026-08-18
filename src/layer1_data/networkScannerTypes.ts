@@ -38,6 +38,7 @@ export interface NetworkScanResult {
   router: RouterProbeData;
   devices: DiscoveredEndpoint[];
   isReal: boolean;
+  clientIsolationActive?: boolean;
   subnet: string;
 }
 
