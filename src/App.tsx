@@ -297,6 +297,7 @@ export function App() {
     } else {
       const endpoints = [
         '/api/wlan/nearby-networks',
+        'http://localhost:5175/api/wlan/nearby-networks',
         'http://localhost:5174/api/wlan/nearby-networks'
       ];
       let resolved = false;
@@ -379,36 +380,37 @@ export function App() {
         message: `Successfully connected to "${ssid}"! AP capabilities and RF metrics have updated in real time.`
       };
     } else {
-      try {
-        const response = await fetch('/api/wlan/connect-network', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ssid, password })
-        });
-        const data = await response.json();
-        if (data.success) {
-          // Re-load devices after 2 seconds
-          setTimeout(async () => {
-            const result = await loadDevices('REAL');
-            setDevices(result.devices);
-            handleOpenWifiRadar();
-          }, 2000);
-          return {
-            success: true,
-            message: data.message || `Successfully connected to "${ssid}"!`
-          };
-        } else {
-          return {
-            success: false,
-            message: data.message || `Failed to connect to "${ssid}".`
-          };
+      const connectEndpoints = [
+        '/api/wlan/connect-network',
+        'http://localhost:5175/api/wlan/connect-network',
+        'http://localhost:5174/api/wlan/connect-network'
+      ];
+      for (const ep of connectEndpoints) {
+        try {
+          const response = await fetch(ep, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ssid, password }),
+            signal: AbortSignal.timeout(5000)
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+              setTimeout(async () => {
+                const res = await loadDevices('REAL');
+                if (res.devices.length > 0) {
+                  setDevices(res.devices);
+                }
+                handleOpenWifiRadar();
+              }, 2000);
+              return { success: true, message: data.message || `Connected to "${ssid}"` };
+            }
+          }
+        } catch {
+          // try next
         }
-      } catch (err: any) {
-        return {
-          success: false,
-          message: err.message || `Network connection error.`
-        };
       }
+      return { success: false, message: `Could not send connection request to "${ssid}".` };
     }
   }, [mode, handleOpenWifiRadar]);
 

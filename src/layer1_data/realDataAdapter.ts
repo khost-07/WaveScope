@@ -15,6 +15,7 @@ export interface RealDataResult {
 
 const REAL_TELEMETRY_ENDPOINTS = [
   '/api/wlan/real-telemetry',
+  'http://localhost:5175/api/wlan/real-telemetry',
   'http://localhost:5174/api/wlan/real-telemetry'
 ];
 

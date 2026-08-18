@@ -6,7 +6,8 @@
 const http = require('http');
 const { parseNetshWlanInterfaces, scanWholeNetwork, parseNearbyWlanNetworks, connectToWlanNetwork } = require('./scannerCore.cjs');
 
-const PORT = 5174;
+const DEFAULT_PORT = 5175;
+
 const server = http.createServer((req, res) => {
   const rawUrl = req.url || '';
   const urlPath = rawUrl.split('?')[0].replace(/\/+$/, '');
@@ -22,30 +23,45 @@ const server = http.createServer((req, res) => {
   }
 
   if (urlPath === '/api/wlan/real-telemetry') {
-    const realData = parseNetshWlanInterfaces();
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({
-      status: realData ? 'SUCCESS' : 'NO_ACTIVE_INTERFACE',
-      provenance: 'Windows Native WLAN API (netsh wlan show interfaces)',
-      device: realData ? realData.device : null
-    }));
+    try {
+      const realData = parseNetshWlanInterfaces();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: realData ? 'SUCCESS' : 'NO_ACTIVE_INTERFACE',
+        provenance: 'Windows Native WLAN API (netsh wlan show interfaces)',
+        device: realData ? realData.device : null
+      }));
+    } catch (err) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'ERROR', message: err.message }));
+    }
     return;
   }
 
   if (urlPath === '/api/scan-network') {
-    const scanData = scanWholeNetwork();
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({
-      status: 'SUCCESS',
-      result: scanData
-    }));
+    try {
+      const scanData = scanWholeNetwork();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'SUCCESS',
+        result: scanData
+      }));
+    } catch (err) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'ERROR', message: err.message }));
+    }
     return;
   }
 
   if (urlPath === '/api/wlan/nearby-networks') {
-    const result = parseNearbyWlanNetworks();
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(result));
+    try {
+      const result = parseNearbyWlanNetworks();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    } catch (err) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: err.message, networks: [] }));
+    }
     return;
   }
 
@@ -59,17 +75,28 @@ const server = http.createServer((req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(result));
       } catch (err) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, message: err.message }));
       }
     });
     return;
   }
 
-  res.writeHead(404);
-  res.end('Not Found');
+  res.writeHead(404, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ error: 'Endpoint Not Found', url: urlPath }));
 });
 
-server.listen(PORT, () => {
-  console.log(`[WaveScope Real Data & Network Scanner] Listening on http://localhost:${PORT}`);
-});
+function startServer(port) {
+  server.listen(port, () => {
+    console.log(`[WaveScope Real Data & Network Scanner Daemon] Active on http://localhost:${port}`);
+  }).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.warn(`[WaveScope Scanner Daemon] Port ${port} in use, trying port ${port + 1}...`);
+      startServer(port + 1);
+    } else {
+      console.error('[WaveScope Scanner Daemon] Server error:', err);
+    }
+  });
+}
+
+startServer(DEFAULT_PORT);

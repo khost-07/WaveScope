@@ -7,6 +7,7 @@ import { NetworkScanResult } from './networkScannerTypes';
 
 const REAL_SCAN_ENDPOINTS = [
   '/api/scan-network',
+  'http://localhost:5175/api/scan-network',
   'http://localhost:5174/api/scan-network'
 ];
 
