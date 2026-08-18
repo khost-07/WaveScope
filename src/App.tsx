@@ -18,9 +18,11 @@ import { EasyModeView } from './components/EasyModeView';
 import { ClientTable } from './components/ClientTable';
 import { ApiKeySetupScreen } from './components/ApiKeySetupScreen';
 import { StaggeredMenu, StaggeredMenuItem, StaggeredMenuSocialItem } from './components/StaggeredMenu';
-import { IconRadar, IconKey, IconRfSignalWave, IconDashboard, IconRule } from './components/SvgIcons';
+import { IconRadar, IconKey, IconRfSignalWave, IconDashboard, IconRule, IconHistory } from './components/SvgIcons';
 import { NearbyNetworksScanResult } from './layer1_data/nearbyWifiTypes';
 import { rankAndCompareNetworks, getSimulatedNearbyNetworks } from './layer2_engine/wifiScoringEngine';
+import { syncHistoricalTelemetry } from './layer1_data/supabaseService';
+import { SupabaseModal } from './components/SupabaseModal';
 
 const STORAGE_KEY = 'wavescope_gemini_api_key';
 
@@ -50,6 +52,7 @@ export function App() {
     return !!localStorage.getItem(STORAGE_KEY);
   });
   const [showKeyModal, setShowKeyModal] = useState<boolean>(false);
+  const [showSupabaseModal, setShowSupabaseModal] = useState<boolean>(false);
 
   // Whole-Network Diagnostic Audit States
   const [scanResult, setScanResult] = useState<NetworkScanResult | null>(null);
@@ -190,6 +193,15 @@ export function App() {
       clearInterval(interval);
     };
   }, [mode, simulatedDevices]);
+
+  // Supabase Historical Telemetry Stream (Additive historical tracker)
+  useEffect(() => {
+    if (devices.length > 0) {
+      syncHistoricalTelemetry(devices, diagnoses, stats).catch(err => {
+        console.error('[WaveScope Supabase] Sync error:', err);
+      });
+    }
+  }, [devices, diagnoses, stats, tick]);
 
   // Trigger Gemini Layer 3 explanation for a given device
   const triggerExplanationForDevice = useCallback(async (dev: ClientDevice, diag: StructuredDiagnosis) => {
@@ -557,7 +569,17 @@ export function App() {
 
           <button
             type="button"
-            className="btn-instrument-secondary hidden sm:inline-flex rounded-lg text-[11.5px] py-1.5 px-3 shadow-xs"
+            className="btn-instrument-secondary hidden sm:inline-flex rounded-lg text-[11.5px] py-1.5 px-3 shadow-xs items-center gap-1.5"
+            onClick={() => setShowSupabaseModal(true)}
+            title="Configure Supabase Historical Tracking"
+          >
+            <IconHistory size={14} />
+            <span>Supabase</span>
+          </button>
+
+          <button
+            type="button"
+            className="btn-instrument-secondary hidden sm:inline-flex rounded-lg text-[11.5px] py-1.5 px-3 shadow-xs items-center gap-1.5"
             onClick={() => setShowKeyModal(true)}
             title="Configure Gemini API Key"
           >
@@ -713,6 +735,7 @@ export function App() {
               singleDeviceDiagnosis={selectedDiagnosis?.primary_diagnosis}
               nearbyBestSsid={nearbyScanResult?.bestNetwork?.ssid || (mode === 'SIMULATION' ? 'AeroMesh-Pro-5G' : 'Scan Nearby Airwaves')}
               nearbyCount={nearbyScanResult?.networks?.length ?? (mode === 'SIMULATION' ? 7 : 0)}
+              onOpenSupabaseModal={() => setShowSupabaseModal(true)}
             />
           )}
 
@@ -1027,6 +1050,12 @@ export function App() {
           </div>
         </div>
       )}
+
+      {/* Supabase Historical Tracking Configuration Modal */}
+      <SupabaseModal
+        isOpen={showSupabaseModal}
+        onClose={() => setShowSupabaseModal(false)}
+      />
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { DiagnosticInspector } from './DiagnosticInspector';
 import { ExplanationCard } from './ExplanationCard';
 import { PeerComparisonSection } from './PeerComparisonSection';
 import { EstimatedCoverageSection } from './EstimatedCoverageSection';
+import { DeviceHistoricalEventsSection } from './DeviceHistoricalEventsSection';
 import { Sparkline } from './Sparkline';
 import {
   IconChevronRight,
@@ -412,6 +413,9 @@ export const DeviceDetailHub: React.FC<DeviceDetailHubProps> = ({
 
             {/* Feature 1: Peer Comparison Section */}
             <PeerComparisonSection peerResult={peerResult} />
+
+            {/* Historical Tracking: Connect / Disconnect Event Log & Uptime */}
+            <DeviceHistoricalEventsSection device={device} onOpenSupabaseModal={onOpenKeyModal} />
 
             <CapabilityMatrix deviceCaps={device.capabilities} apCaps={device.apCapabilities} />
           </div>

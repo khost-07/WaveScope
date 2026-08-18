@@ -1,5 +1,5 @@
-import React from 'react';
 import { APCapabilities, DiagnosticStatus } from '../layer1_data/types';
+import { NetworkHealthHistoryChart } from './NetworkHealthHistoryChart';
 import {
   IconRouter,
   IconCheckBox,
@@ -36,6 +36,7 @@ interface OverviewDashboardProps {
   singleDeviceDiagnosis?: string;
   nearbyBestSsid?: string;
   nearbyCount?: number;
+  onOpenSupabaseModal?: () => void;
 }
 
 export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
@@ -51,7 +52,8 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   singleDeviceHostname = 'Connected Wi-Fi Interface',
   singleDeviceDiagnosis,
   nearbyBestSsid = 'AeroMesh-Pro-5G',
-  nearbyCount = 7
+  nearbyCount = 7,
+  onOpenSupabaseModal
 }) => {
   return (
     <div className="space-y-6 animate-fade-in">
@@ -256,6 +258,9 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
           )}
         </div>
       </div>
+
+      {/* Network Health Score Over Time Chart (Supabase Historical Tracking) */}
+      <NetworkHealthHistoryChart onOpenSupabaseModal={onOpenSupabaseModal} />
 
       {/* 2. SIMULATION SCENARIO QUICK-SWITCHER BAR */}
       {isSimulation && onSelectScenario && (
