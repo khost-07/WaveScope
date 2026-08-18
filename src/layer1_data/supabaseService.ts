@@ -12,6 +12,7 @@ const deviceIdCache = new Map<string, string>();
 
 // In-memory tracking of previously observed online devices to detect connect/disconnect edges
 let lastOnlineMacs = new Set<string>();
+const lastKnownDeviceStatus = new Map<string, 'connect' | 'disconnect'>();
 let isFirstSync = true;
 let lastSnapshotTime = 0;
 let lastReadingsFlushTime = 0;
@@ -130,22 +131,33 @@ export async function syncHistoricalTelemetry(
 
   // 1. Detect Connect / Disconnect Transitions
   if (isFirstSync) {
-    // Initial run: register initial "connect" event for all currently seen devices
+    // Initial run: only insert "connect" if device has no previous events or was last disconnected
     for (const [mac, dev] of currentMacMap.entries()) {
       const devId = await ensureDeviceId(mac, dev.vendor);
       if (devId) {
-        await client.from('connection_events').insert({
-          device_id: devId,
-          event_type: 'connect',
-          timestamp: new Date().toISOString()
-        });
+        const { data: latestEvent } = await client
+          .from('connection_events')
+          .select('event_type')
+          .eq('device_id', devId)
+          .order('timestamp', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!latestEvent || latestEvent.event_type !== 'connect') {
+          await client.from('connection_events').insert({
+            device_id: devId,
+            event_type: 'connect',
+            timestamp: new Date().toISOString()
+          });
+        }
+        lastKnownDeviceStatus.set(mac, 'connect');
       }
     }
     isFirstSync = false;
   } else {
-    // Newly connected devices (in currentMacs but not in lastOnlineMacs)
+    // Newly connected devices (in currentMacs but not previously marked connected)
     for (const [mac, dev] of currentMacMap.entries()) {
-      if (!lastOnlineMacs.has(mac)) {
+      if (!lastOnlineMacs.has(mac) && lastKnownDeviceStatus.get(mac) !== 'connect') {
         const devId = await ensureDeviceId(mac, dev.vendor);
         if (devId) {
           await client.from('connection_events').insert({
@@ -153,13 +165,14 @@ export async function syncHistoricalTelemetry(
             event_type: 'connect',
             timestamp: new Date().toISOString()
           });
+          lastKnownDeviceStatus.set(mac, 'connect');
         }
       }
     }
 
     // Disconnected devices (in lastOnlineMacs but no longer in currentMacs)
     for (const oldMac of lastOnlineMacs) {
-      if (!currentMacs.has(oldMac)) {
+      if (!currentMacs.has(oldMac) && lastKnownDeviceStatus.get(oldMac) === 'connect') {
         const devId = deviceIdCache.get(oldMac) || await ensureDeviceId(oldMac);
         if (devId) {
           await client.from('connection_events').insert({
@@ -167,6 +180,7 @@ export async function syncHistoricalTelemetry(
             event_type: 'disconnect',
             timestamp: new Date().toISOString()
           });
+          lastKnownDeviceStatus.set(oldMac, 'disconnect');
         }
       }
     }
@@ -292,10 +306,13 @@ export async function fetchDeviceUptime(macAddress: string): Promise<DeviceUptim
     for (const ev of events) {
       const evTime = new Date(ev.timestamp).getTime();
       if (ev.event_type === 'connect') {
+        if (isCurrentlyConnected && lastConnectTime !== null) {
+          totalConnectedMs += Math.max(0, evTime - lastConnectTime);
+        }
         lastConnectTime = evTime;
         isCurrentlyConnected = true;
       } else if (ev.event_type === 'disconnect') {
-        if (lastConnectTime !== null) {
+        if (isCurrentlyConnected && lastConnectTime !== null) {
           totalConnectedMs += Math.max(0, evTime - lastConnectTime);
           lastConnectTime = null;
         }

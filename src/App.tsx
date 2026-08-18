@@ -15,7 +15,7 @@ import { NetworkAuditSubpage } from './components/NetworkAuditSubpage';
 import { DeviceListPane } from './components/DeviceListPane';
 import { DeviceDetailHub } from './components/DeviceDetailHub';
 import { EasyModeView } from './components/EasyModeView';
-import { ClientTable } from './components/ClientTable';
+import { HotspotTelemetryMatrix } from './components/HotspotTelemetryMatrix';
 import { ApiKeySetupScreen } from './components/ApiKeySetupScreen';
 import { StaggeredMenu, StaggeredMenuItem, StaggeredMenuSocialItem } from './components/StaggeredMenu';
 import { IconRadar, IconKey, IconRfSignalWave, IconDashboard, IconRule, IconHistory } from './components/SvgIcons';
@@ -668,7 +668,10 @@ export function App() {
 
             <button
               type="button"
-              onClick={() => setActiveNav('MATRIX')}
+              onClick={() => {
+                setActiveNav('MATRIX');
+                if (!nearbyScanResult) handleOpenWifiRadar();
+              }}
               className={`px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeNav === 'MATRIX'
                   ? 'bg-black text-white shadow-xs'
@@ -885,45 +888,22 @@ export function App() {
             />
           )}
 
-          {/* SUBPAGE 5: FLEET TELEMETRY MATRIX VIEW */}
+          {/* SUBPAGE 5: RF AIRWAVES & FLEET TELEMETRY MATRIX VIEW */}
           {activeNav === 'MATRIX' && (
-            <div className="space-y-4 animate-fade-in">
-              <div className="bg-white p-5 border border-[#E2E5E9] rounded-2xl flex items-center justify-between shadow-panel">
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    className="btn-instrument-secondary text-[12px] py-1.5 px-3 rounded-xl flex items-center gap-1 font-semibold"
-                    onClick={() => setActiveNav('OVERVIEW')}
-                  >
-                    &larr; Back to Overview
-                  </button>
-                  <div className="h-5 w-px bg-[#E2E5E9]"></div>
-                  <div>
-                    <h2 className="text-[17px] font-bold text-black tracking-tight">Full Fleet Telemetry Matrix</h2>
-                    <p className="font-mono text-[11px] text-[#6B7280]">
-                      Real-time physical layer metrics, MCS rates, and deterministic classification
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="btn-instrument-primary text-[12px] py-2 px-4 rounded-xl shadow-xs"
-                  onClick={() => setActiveNav('CLIENTS')}
-                >
-                  Inspect Single Device &rarr;
-                </button>
-              </div>
-
-              <ClientTable
-                devices={visibleDevices}
-                diagnoses={diagnoses}
-                selectedDeviceId={selectedDevice?.id || null}
-                onSelectDevice={(dev) => {
-                  handleSelectDevice(dev);
-                  setActiveNav('CLIENTS');
-                }}
-              />
-            </div>
+            <HotspotTelemetryMatrix
+              scanResult={nearbyScanResult}
+              isLoading={isNearbyLoading}
+              onRescan={handleOpenWifiRadar}
+              onConnectNetwork={handleConnectNetwork}
+              devices={visibleDevices}
+              diagnoses={diagnoses}
+              selectedDeviceId={selectedDevice?.id || null}
+              onSelectDevice={(dev) => {
+                handleSelectDevice(dev);
+                setActiveNav('CLIENTS');
+              }}
+              onInspectDeviceSubpage={() => setActiveNav('CLIENTS')}
+            />
           )}
 
           {/* SUBPAGE 6: DETERMINISTIC DIAGNOSTIC RULES SPECIFICATION */}

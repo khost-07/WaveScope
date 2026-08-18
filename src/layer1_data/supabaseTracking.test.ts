@@ -60,6 +60,48 @@ test('Supabase Tracking - Schema and Event Type contracts', () => {
   assert.equal(uptimePct + downtimePct, 100);
 });
 
+test('Supabase Tracking - Consecutive Connect Events preserves active duration', () => {
+  const now = Date.now();
+  const sessionStart = now - 7200000; // 2 hours ago
+  const events = [
+    { event_type: 'connect', timestamp: new Date(sessionStart).toISOString() },
+    { event_type: 'connect', timestamp: new Date(sessionStart + 3600000).toISOString() }, // 1 hr later connect (e.g. reload)
+    { event_type: 'disconnect', timestamp: new Date(sessionStart + 7000000).toISOString() }, // 1.94 hrs later
+    { event_type: 'connect', timestamp: new Date(sessionStart + 7100000).toISOString() } // 1.97 hrs later
+  ];
+
+  let totalConnectedMs = 0;
+  let lastConnectTime: number | null = null;
+  let isCurrentlyConnected = false;
+
+  for (const ev of events) {
+    const evTime = new Date(ev.timestamp).getTime();
+    if (ev.event_type === 'connect') {
+      if (isCurrentlyConnected && lastConnectTime !== null) {
+        totalConnectedMs += Math.max(0, evTime - lastConnectTime);
+      }
+      lastConnectTime = evTime;
+      isCurrentlyConnected = true;
+    } else if (ev.event_type === 'disconnect') {
+      if (isCurrentlyConnected && lastConnectTime !== null) {
+        totalConnectedMs += Math.max(0, evTime - lastConnectTime);
+        lastConnectTime = null;
+      }
+      isCurrentlyConnected = false;
+    }
+  }
+
+  if (isCurrentlyConnected && lastConnectTime !== null) {
+    totalConnectedMs += Math.max(0, now - lastConnectTime);
+  }
+
+  const totalSpanMs = Math.max(now - sessionStart, 10000);
+  const uptimePct = Math.min(100, Math.max(0, Math.round((totalConnectedMs / totalSpanMs) * 100)));
+
+  // Total connected is ~7.1M out of 7.2M = ~98.6%
+  assert.ok(uptimePct >= 97, `Expected >= 97% uptime, got ${uptimePct}%`);
+});
+
 test('Supabase Tracking - Network Health Snapshot aggregation', () => {
   const stats = { healthy: 6, attention: 2, critical: 0, total: 8 };
   const healthScore = Math.max(0, Math.round(
