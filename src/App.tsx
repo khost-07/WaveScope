@@ -17,7 +17,7 @@ import { ClientTable } from './components/ClientTable';
 import { ApiKeySetupScreen } from './components/ApiKeySetupScreen';
 import { NetworkReportModal } from './components/NetworkReportModal';
 import { StaggeredMenu, StaggeredMenuItem, StaggeredMenuSocialItem } from './components/StaggeredMenu';
-import { IconRadar, IconKey, IconRouter, IconDashboard, IconRule } from './components/SvgIcons';
+import { IconRadar, IconKey } from './components/SvgIcons';
 
 const STORAGE_KEY = 'wavescope_gemini_api_key';
 
@@ -31,7 +31,7 @@ export function App() {
   const [devices, setDevices] = useState<ClientDevice[]>(SIMULATION_SCENARIOS);
   const [activeFilter, setActiveFilter] = useState<'ALL' | DiagnosticStatus>('ALL');
   
-  const [provenance, setProvenance] = useState<DataProvenance>({
+  const [, setProvenance] = useState<DataProvenance>({
     mode: 'SIMULATION',
     sourceIdentifier: 'Controlled RF Simulation Fleet (8 Endpoints)',
     adapterName: 'Simulated Tri-Band 802.11ax AP Testbed',
@@ -400,69 +400,10 @@ export function App() {
         </div>
       </header>
 
-      {/* Main Container with Sidebar */}
-      <div className="flex pt-12 min-h-screen">
-        {/* Stitch SideNavBar */}
-        <aside className="fixed left-0 top-12 bottom-0 w-60 border-r border-[#E2E5E9] bg-white flex flex-col z-30 hidden md:flex">
-          <div className="p-4 border-b border-[#E2E5E9]">
-            <div className="text-[14px] font-bold text-black">
-              {isEasyMode ? 'Wi-Fi Health Monitor' : 'WaveScope Inspector'}
-            </div>
-            <div className="text-[11px] font-mono text-[#6B7280] mt-0.5 truncate">
-              {isEasyMode ? 'Home Network Scanner' : provenance.sourceIdentifier}
-            </div>
-          </div>
-
-          <nav className="flex-1 p-2 space-y-1">
-            <button
-              type="button"
-              className={`w-full flex items-center gap-3 px-3 py-2 text-left text-[12px] font-semibold uppercase tracking-wider transition-colors ${
-                activeNav === 'CLIENTS'
-                  ? 'bg-[#F8F9FA] text-black border-l-2 border-black font-bold'
-                  : 'text-[#3B4045] hover:bg-[#F8F9FA]'
-              }`}
-              onClick={() => setActiveNav('CLIENTS')}
-            >
-              <IconRouter size={16} />
-              <span>{isEasyMode ? 'My Devices' : 'Fleet Clients'}</span>
-              <span className="ml-auto font-mono text-[10px] px-1.5 py-0.5 border border-[#E2E5E9] bg-white">{devices.length}</span>
-            </button>
-
-            <button
-              type="button"
-              className={`w-full flex items-center gap-3 px-3 py-2 text-left text-[12px] font-semibold uppercase tracking-wider transition-colors ${
-                activeNav === 'OVERVIEW'
-                  ? 'bg-[#F8F9FA] text-black border-l-2 border-black font-bold'
-                  : 'text-[#3B4045] hover:bg-[#F8F9FA]'
-              }`}
-              onClick={() => setActiveNav('OVERVIEW')}
-            >
-              <IconDashboard size={16} />
-              <span>{isEasyMode ? 'All Devices List' : 'Telemetry Matrix'}</span>
-            </button>
-
-            <button
-              type="button"
-              className={`w-full flex items-center gap-3 px-3 py-2 text-left text-[12px] font-semibold uppercase tracking-wider transition-colors ${
-                activeNav === 'RULES'
-                  ? 'bg-[#F8F9FA] text-black border-l-2 border-black font-bold'
-                  : 'text-[#3B4045] hover:bg-[#F8F9FA]'
-              }`}
-              onClick={() => setActiveNav('RULES')}
-            >
-              <IconRule size={16} />
-              <span>{isEasyMode ? 'How It Works' : 'Diagnostic Rules'}</span>
-            </button>
-          </nav>
-
-          <div className="p-3 border-t border-[#E2E5E9] space-y-1 text-[11px] font-mono text-[#6B7280] bg-[#F8F9FA]">
-            <div>Mode: <strong className="text-black">{isEasyMode ? 'Easy Mode (Friendly)' : 'Expert (Physical RF)'}</strong></div>
-            <div>Engine: <strong className="text-black">L2 Rule System</strong></div>
-          </div>
-        </aside>
-
+      {/* Main Container */}
+      <div className="pt-12 min-h-screen">
         {/* Main Content Area */}
-        <main className="md:ml-60 flex-1 p-6 space-y-5 max-w-[1400px] w-full">
+        <main className="flex-1 p-6 space-y-5 max-w-[1600px] w-full mx-auto">
           {/* Real Mode Error Alert if daemon not running */}
           {mode === 'REAL' && realError && (
             <div className="p-4 border border-[#DC2626] bg-white flex items-center justify-between gap-4">
