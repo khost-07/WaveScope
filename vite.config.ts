@@ -39,6 +39,36 @@ function realNetworkScannerPlugin(): Plugin {
             return;
           }
         }
+        if (req.url === '/api/wlan/nearby-networks') {
+          try {
+            const { parseNearbyWlanNetworks } = require('./server/scannerCore.cjs');
+            const result = parseNearbyWlanNetworks();
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(result));
+            return;
+          } catch (err: any) {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ success: false, error: err.message, networks: [] }));
+            return;
+          }
+        }
+        if (req.url === '/api/wlan/connect-network' && req.method === 'POST') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const { connectToWlanNetwork } = require('./server/scannerCore.cjs');
+              const payload = JSON.parse(body || '{}');
+              const result = connectToWlanNetwork(payload);
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(result));
+            } catch (err: any) {
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ success: false, message: err.message }));
+            }
+          });
+          return;
+        }
         next();
       });
     }

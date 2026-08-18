@@ -1,6 +1,6 @@
 import React from 'react';
 import { APCapabilities, DiagnosticStatus } from '../layer1_data/types';
-import { IconRouter, IconCheckBox, IconAlertTriangle, IconAlertCircle, IconRadar } from './SvgIcons';
+import { IconRouter, IconCheckBox, IconAlertTriangle, IconAlertCircle, IconRadar, IconRfSignalWave } from './SvgIcons';
 
 interface NetworkOverviewBarProps {
   ap: APCapabilities;
@@ -16,6 +16,7 @@ interface NetworkOverviewBarProps {
   onSelectScenario?: (scId: string) => void;
   isSimulation: boolean;
   onOpenNetworkAudit?: () => void;
+  onOpenWifiRadar?: () => void;
   singleDeviceStatus?: DiagnosticStatus;
   singleDeviceHostname?: string;
   singleDeviceDiagnosis?: string;
@@ -31,6 +32,7 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
   onSelectScenario,
   isSimulation,
   onOpenNetworkAudit,
+  onOpenWifiRadar,
   singleDeviceStatus = 'HEALTHY',
   singleDeviceHostname = 'Connected Wi-Fi Interface',
   singleDeviceDiagnosis,
@@ -216,16 +218,29 @@ export const NetworkOverviewBar: React.FC<NetworkOverviewBarProps> = ({
           </div>
         </div>
 
-        {onOpenNetworkAudit && (
-          <button
-            type="button"
-            className="btn-instrument-primary"
-            onClick={onOpenNetworkAudit}
-          >
-            <IconRadar size={15} />
-            <span>{isEasyMode ? 'Check Entire Wi-Fi' : 'Whole-Network AI Audit'}</span>
-          </button>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {onOpenWifiRadar && (
+            <button
+              type="button"
+              className="btn-instrument-secondary font-semibold text-[12px] py-2 px-3.5 rounded-xl shadow-xs hover:shadow-subtle flex items-center gap-2 border-[#16A34A]/40 text-black hover:border-black"
+              onClick={onOpenWifiRadar}
+            >
+              <IconRfSignalWave size={15} className="text-[#16A34A]" />
+              <span>{isEasyMode ? 'Find Best Wi-Fi' : 'Wi-Fi Radar & Best Network'}</span>
+            </button>
+          )}
+
+          {onOpenNetworkAudit && (
+            <button
+              type="button"
+              className="btn-instrument-primary text-[12px] py-2 px-3.5 rounded-xl shadow-card hover:shadow-panel"
+              onClick={onOpenNetworkAudit}
+            >
+              <IconRadar size={15} />
+              <span>{isEasyMode ? 'Check Entire Wi-Fi' : 'Whole-Network AI Audit'}</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Simulation Scenario Switcher Deck */}

@@ -16,23 +16,20 @@ import { EasyModeView } from './components/EasyModeView';
 import { ClientTable } from './components/ClientTable';
 import { ApiKeySetupScreen } from './components/ApiKeySetupScreen';
 import { NetworkReportModal } from './components/NetworkReportModal';
-import {
-  IconRadar,
-  IconKey,
-  IconDashboard,
-  IconRule,
-  IconSignal,
-  IconSparkles
-} from './components/SvgIcons';
+import { NearbyWifiRadarModal } from './components/NearbyWifiRadarModal';
+import { StaggeredMenu, StaggeredMenuItem, StaggeredMenuSocialItem } from './components/StaggeredMenu';
+import { IconRadar, IconKey, IconRfSignalWave } from './components/SvgIcons';
+import { NearbyNetworksScanResult } from './layer1_data/nearbyWifiTypes';
+import { rankAndCompareNetworks, getSimulatedNearbyNetworks } from './layer2_engine/wifiScoringEngine';
 
 const STORAGE_KEY = 'wavescope_gemini_api_key';
 
-type NavSection = 'INSPECTOR' | 'MATRIX' | 'RULES';
+type NavSection = 'OVERVIEW' | 'CLIENTS' | 'RULES';
 
 export function App() {
   const [mode, setMode] = useState<DataSourceMode>('SIMULATION');
   const [isEasyMode, setIsEasyMode] = useState<boolean>(false);
-  const [activeNav, setActiveNav] = useState<NavSection>('INSPECTOR');
+  const [activeNav, setActiveNav] = useState<NavSection>('CLIENTS');
   const [simulatedDevices, setSimulatedDevices] = useState<ClientDevice[]>(SIMULATION_SCENARIOS);
   const [devices, setDevices] = useState<ClientDevice[]>(SIMULATION_SCENARIOS);
   const [activeFilter, setActiveFilter] = useState<'ALL' | DiagnosticStatus>('ALL');
@@ -265,6 +262,170 @@ export function App() {
     setSimulatedDevices(prev => prev.map(d => d.id === updatedDevice.id ? updatedDevice : d));
   };
 
+  // Wi-Fi Radar & Best Network States
+  const [showWifiRadarModal, setShowWifiRadarModal] = useState<boolean>(false);
+  const [nearbyScanResult, setNearbyScanResult] = useState<NearbyNetworksScanResult | null>(null);
+  const [isNearbyLoading, setIsNearbyLoading] = useState<boolean>(false);
+  const [simulatedActiveSsid, setSimulatedActiveSsid] = useState<string>('VITC-EVENT');
+
+  const handleOpenWifiRadar = useCallback(async () => {
+    setShowWifiRadarModal(true);
+    setIsNearbyLoading(true);
+
+    if (mode === 'SIMULATION') {
+      const currentSsid = simulatedActiveSsid;
+      const simNetworks = getSimulatedNearbyNetworks(currentSsid);
+      const scoredResult = rankAndCompareNetworks(simNetworks, currentSsid);
+      setNearbyScanResult(scoredResult);
+      setIsNearbyLoading(false);
+    } else {
+      try {
+        const response = await fetch('/api/wlan/nearby-networks');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && Array.isArray(data.networks)) {
+            const scoredResult = rankAndCompareNetworks(data.networks, data.currentConnectedSsid);
+            setNearbyScanResult(scoredResult);
+          } else {
+            setNearbyScanResult(rankAndCompareNetworks([], null));
+          }
+        } else {
+          setNearbyScanResult(rankAndCompareNetworks([], null));
+        }
+      } catch (err) {
+        console.warn('[WaveScope] Live Wi-Fi scan error:', err);
+        setNearbyScanResult(rankAndCompareNetworks([], null));
+      } finally {
+        setIsNearbyLoading(false);
+      }
+    }
+  }, [mode, simulatedActiveSsid]);
+
+  const handleConnectNetwork = useCallback(async (ssid: string, password?: string): Promise<{ success: boolean; message: string }> => {
+    if (mode === 'SIMULATION') {
+      setSimulatedActiveSsid(ssid);
+      const simNetworks = getSimulatedNearbyNetworks(ssid);
+      const chosenNet = simNetworks.find(n => n.ssid === ssid);
+      
+      // Update simulated devices with chosen network's RF characteristics
+      if (chosenNet) {
+        setSimulatedDevices(prev => prev.map(d => ({
+          ...d,
+          apCapabilities: {
+            ...d.apCapabilities,
+            ssid: chosenNet.ssid,
+            bssid: chosenNet.bssid,
+            apModel: chosenNet.vendor || 'Active Simulated AP',
+            channelUtilizationPct: chosenNet.channelUtilizationPct
+          },
+          telemetry: {
+            ...d.telemetry,
+            band: chosenNet.band,
+            channel: chosenNet.channel,
+            rssi_dBm: Math.min(-30, Math.max(-85, chosenNet.rssi_dBm + (d.id === 'device-scenario-a' ? 0 : d.telemetry.rssi_dBm - (-46))))
+          }
+        })));
+        setDevices(prev => prev.map(d => ({
+          ...d,
+          apCapabilities: {
+            ...d.apCapabilities,
+            ssid: chosenNet.ssid,
+            bssid: chosenNet.bssid,
+            apModel: chosenNet.vendor || 'Active Simulated AP',
+            channelUtilizationPct: chosenNet.channelUtilizationPct
+          },
+          telemetry: {
+            ...d.telemetry,
+            band: chosenNet.band,
+            channel: chosenNet.channel,
+            rssi_dBm: Math.min(-30, Math.max(-85, chosenNet.rssi_dBm + (d.id === 'device-scenario-a' ? 0 : d.telemetry.rssi_dBm - (-46))))
+          }
+        })));
+      }
+
+      const scoredResult = rankAndCompareNetworks(simNetworks, ssid);
+      setNearbyScanResult(scoredResult);
+      return {
+        success: true,
+        message: `Successfully connected to "${ssid}"! AP capabilities and RF metrics have updated in real time.`
+      };
+    } else {
+      try {
+        const response = await fetch('/api/wlan/connect-network', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ssid, password })
+        });
+        const data = await response.json();
+        if (data.success) {
+          // Re-load devices after 2 seconds
+          setTimeout(async () => {
+            const result = await loadDevices('REAL');
+            setDevices(result.devices);
+            handleOpenWifiRadar();
+          }, 2000);
+          return {
+            success: true,
+            message: data.message || `Successfully connected to "${ssid}"!`
+          };
+        } else {
+          return {
+            success: false,
+            message: data.message || `Failed to connect to "${ssid}".`
+          };
+        }
+      } catch (err: any) {
+        return {
+          success: false,
+          message: err.message || `Network connection error.`
+        };
+      }
+    }
+  }, [mode, handleOpenWifiRadar]);
+
+  // Menu items for StaggeredMenu
+  const menuItems = useMemo<StaggeredMenuItem[]>(() => [
+    {
+      label: isEasyMode ? 'Device List' : 'Fleet Clients',
+      ariaLabel: 'View connected client fleet workspace',
+      onClick: () => setActiveNav('CLIENTS')
+    },
+    {
+      label: isEasyMode ? 'Overview Table' : 'Telemetry Matrix',
+      ariaLabel: 'Open telemetry and RF matrix table',
+      onClick: () => setActiveNav('OVERVIEW')
+    },
+    {
+      label: isEasyMode ? 'Find Best Wi-Fi' : 'Wi-Fi Radar & Best Network',
+      ariaLabel: 'Analyze surrounding Wi-Fi networks and connect to the best one',
+      onClick: () => handleOpenWifiRadar()
+    },
+    {
+      label: isEasyMode ? 'How It Works' : 'Diagnostic Rules',
+      ariaLabel: 'Inspect Layer 2 deterministic rules specification',
+      onClick: () => setActiveNav('RULES')
+    },
+    {
+      label: isEasyMode ? 'Check Entire Wi-Fi' : 'Network Audit',
+      ariaLabel: 'Execute whole network AI security and RF audit',
+      onClick: () => handleRunNetworkAudit()
+    },
+    {
+      label: 'Gemini API Key',
+      ariaLabel: 'Configure Google Gemini API key',
+      onClick: () => setShowKeyModal(true)
+    }
+  ], [isEasyMode, handleRunNetworkAudit, handleOpenWifiRadar]);
+
+  const socialItems = useMemo<StaggeredMenuSocialItem[]>(() => [
+    { label: isEasyMode ? 'Switch to Expert Mode' : 'Switch to Easy Mode', link: '#toggle-mode', onClick: () => setIsEasyMode(!isEasyMode) },
+    { label: 'Find Best Wi-Fi', link: '#radar', onClick: () => handleOpenWifiRadar() },
+    { label: 'GitHub Repo', link: 'https://github.com/khost-07/WaveScope' },
+    { label: 'Google AI Studio', link: 'https://aistudio.google.com/app/apikey' },
+    { label: 'Simulation Fleet', link: '#simulation', onClick: () => setMode('SIMULATION') },
+    { label: 'Live WLAN Probe', link: '#real', onClick: () => setMode('REAL') }
+  ], [isEasyMode, handleOpenWifiRadar]);
+
   if (!hasCompletedSetup) {
     return <ApiKeySetupScreen initialKey={apiKey} onSaveKey={handleSaveApiKey} />;
   }
@@ -273,99 +434,48 @@ export function App() {
 
   return (
     <div className="bg-[#F4F5F7] text-[#0F1113] font-['Hanken_Grotesk',sans-serif] min-h-screen flex flex-col antialiased relative">
-      {/* Top Navigation Bar */}
-      <header className="bg-white border-b border-[#E2E5E9] fixed top-0 left-0 right-0 z-40 h-14 flex justify-between items-center px-6 shadow-subtle">
-        {/* Brand & Live Status */}
+      {/* Stitch TopNavBar */}
+      <header className="bg-white border-b border-[#E2E5E9] fixed top-0 left-0 right-0 z-40 h-12 flex justify-between items-center px-6 shadow-subtle">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center shadow-xs">
-            <IconRadar size={18} />
-          </div>
-          <div>
-            <span className="text-[17px] font-bold text-black tracking-tight block leading-none">WaveScope</span>
-            <span className="font-mono text-[10px] text-[#6B7280] hidden sm:block mt-0.5">
-              RF Diagnostic Instrument
-            </span>
-          </div>
-          <span className="text-[10.5px] font-mono font-semibold px-2 py-0.5 rounded-md border border-[#E2E5E9] bg-[#F8F9FA] hidden md:inline-flex items-center gap-1.5 ml-2">
-            <span className={`w-2 h-2 rounded-full inline-block ${mode === 'REAL' ? 'bg-[#16A34A] animate-pulse-fast' : 'bg-black'}`}></span>
-            {mode === 'REAL' ? 'Live WLAN Scanner' : 'Simulated RF Fleet'}
+          <IconRadar size={22} className="text-black" />
+          <span className="text-[17px] font-bold text-black tracking-tight">WaveScope</span>
+          <span className="text-[11px] font-mono font-semibold px-2 py-0.5 border border-[#E2E5E9] bg-[#F8F9FA] rounded-md hidden sm:inline-flex items-center gap-1.5 shadow-xs">
+            <span className="w-2 h-2 rounded-full bg-[#16A34A] inline-block"></span>
+            Node 01-A
           </span>
         </div>
 
-        {/* Primary Center Navigation Tabs */}
-        <nav className="flex items-center p-1 bg-[#F0F2F5] border border-[#E2E5E9] rounded-xl shadow-subtle">
-          <button
-            type="button"
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[12px] font-bold font-sans transition-all duration-200 ${
-              activeNav === 'INSPECTOR'
-                ? 'bg-white text-black shadow-card'
-                : 'text-[#6B7280] hover:text-black hover:bg-white/50'
-            }`}
-            onClick={() => setActiveNav('INSPECTOR')}
-          >
-            <IconSignal size={15} />
-            <span>{isEasyMode ? 'Device Status' : 'Device Inspector'}</span>
-          </button>
-
-          <button
-            type="button"
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[12px] font-bold font-sans transition-all duration-200 ${
-              activeNav === 'MATRIX'
-                ? 'bg-white text-black shadow-card'
-                : 'text-[#6B7280] hover:text-black hover:bg-white/50'
-            }`}
-            onClick={() => setActiveNav('MATRIX')}
-          >
-            <IconDashboard size={15} />
-            <span>{isEasyMode ? 'All Devices' : 'Fleet Telemetry Matrix'}</span>
-          </button>
-
-          <button
-            type="button"
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[12px] font-bold font-sans transition-all duration-200 ${
-              activeNav === 'RULES'
-                ? 'bg-white text-black shadow-card'
-                : 'text-[#6B7280] hover:text-black hover:bg-white/50'
-            }`}
-            onClick={() => setActiveNav('RULES')}
-          >
-            <IconRule size={15} />
-            <span>{isEasyMode ? 'How It Works' : 'Diagnostic Rules'}</span>
-          </button>
-        </nav>
-
-        {/* Right Action Controls */}
         <div className="flex items-center gap-2.5">
-          {/* Easy Mode / Technical Mode Toggle */}
-          <div className="flex p-0.5 bg-[#F0F2F5] border border-[#E2E5E9] rounded-lg text-[11px] font-mono font-semibold">
+          {/* Top-Level Easy Mode / Expert Mode Toggle */}
+          <div className="flex border border-[#0F1113] rounded-lg overflow-hidden h-8 text-[11px] font-mono font-semibold shadow-xs">
             <button
               type="button"
-              className={`px-2.5 py-1 rounded-md transition-all ${
-                !isEasyMode ? 'bg-black text-white shadow-xs' : 'text-[#6B7280] hover:text-black'
+              className={`px-3 flex items-center gap-1.5 transition-all ${
+                !isEasyMode ? 'bg-[#0F1113] text-white' : 'text-black hover:bg-[#F8F9FA]'
               }`}
               onClick={() => setIsEasyMode(false)}
-              title="Detailed technical telemetry view"
+              title="Switch to detailed technical instrument mode"
             >
-              TECHNICAL
+              <span>🔬 EXPERT</span>
             </button>
             <button
               type="button"
-              className={`px-2.5 py-1 rounded-md transition-all ${
-                isEasyMode ? 'bg-[#16A34A] text-white shadow-xs' : 'text-[#6B7280] hover:text-black'
+              className={`px-3 flex items-center gap-1.5 border-l border-[#0F1113] transition-all ${
+                isEasyMode ? 'bg-[#16A34A] text-white border-[#16A34A]' : 'text-black hover:bg-[#F8F9FA]'
               }`}
               onClick={() => setIsEasyMode(true)}
-              title="Plain-English summary mode"
+              title="Switch to friendly, jargon-free summary mode"
             >
-              ✨ EASY
+              <span>✨ EASY MODE</span>
             </button>
           </div>
 
-          {/* Data Source Mode Switcher (Simulation vs Live Probe) */}
-          <div className="flex p-0.5 bg-[#F0F2F5] border border-[#E2E5E9] rounded-lg text-[11px] font-mono font-semibold">
+          {/* Data Source Mode Switcher (Simulation vs Live Data) */}
+          <div className="flex border border-[#0F1113] rounded-lg overflow-hidden h-8 text-[11px] font-mono font-semibold shadow-xs">
             <button
               type="button"
-              className={`px-2.5 py-1 rounded-md transition-all ${
-                mode === 'SIMULATION' ? 'bg-black text-white shadow-xs' : 'text-[#6B7280] hover:text-black'
+              className={`px-3 flex items-center justify-center border-r border-[#0F1113] transition-colors ${
+                mode === 'SIMULATION' ? 'bg-[#0F1113] text-white sim-pattern' : 'text-black hover:bg-[#F8F9FA]'
               }`}
               onClick={() => setMode('SIMULATION')}
             >
@@ -373,49 +483,72 @@ export function App() {
             </button>
             <button
               type="button"
-              className={`px-2.5 py-1 rounded-md transition-all ${
-                mode === 'REAL' ? 'bg-black text-white shadow-xs' : 'text-[#6B7280] hover:text-black'
+              className={`px-3 flex items-center justify-center transition-colors ${
+                mode === 'REAL' ? 'bg-[#0F1113] text-white' : 'text-black hover:bg-[#F8F9FA]'
               }`}
               onClick={() => setMode('REAL')}
             >
-              LIVE PROBE
+              LIVE DATA
             </button>
           </div>
 
-          {/* Whole Network AI Audit Action */}
           <button
             type="button"
-            className="btn-instrument-primary hidden lg:inline-flex rounded-lg text-[12px] py-1.5 px-3.5"
-            onClick={handleRunNetworkAudit}
+            className="btn-instrument-secondary hidden md:inline-flex items-center gap-1.5 text-[#16A34A] border-[#16A34A]/40 hover:border-black hover:text-black font-semibold text-[11.5px] py-1.5 px-3 rounded-lg shadow-xs"
+            onClick={handleOpenWifiRadar}
+            title="Scan surrounding airwaves and find optimal Wi-Fi network"
           >
-            <IconSparkles size={14} />
-            <span>{isEasyMode ? 'Check Entire Wi-Fi' : 'Whole-Network Audit'}</span>
+            <IconRfSignalWave size={14} className="text-[#16A34A]" />
+            <span>{isEasyMode ? 'Find Best Wi-Fi' : 'Wi-Fi Radar'}</span>
           </button>
 
-          {/* API Key Modal Button */}
           <button
             type="button"
-            className="btn-instrument-secondary rounded-lg text-[11px] py-1.5 px-2.5"
+            className="btn-instrument-primary hidden md:inline-flex rounded-lg text-[11.5px] py-1.5 px-3 shadow-xs"
+            onClick={handleRunNetworkAudit}
+          >
+            <IconRadar size={14} />
+            <span>{isEasyMode ? 'Check Entire Wi-Fi' : 'Network Audit'}</span>
+          </button>
+
+          <button
+            type="button"
+            className="btn-instrument-secondary hidden sm:inline-flex rounded-lg text-[11.5px] py-1.5 px-3 shadow-xs"
             onClick={() => setShowKeyModal(true)}
             title="Configure Gemini API Key"
           >
             <IconKey size={14} />
-            <span className="hidden sm:inline">API Key</span>
-            {apiKey && <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]"></span>}
+            <span>API Key</span>
           </button>
+
+          {/* StaggeredMenu Trigger in Header */}
+          <div className="inline-flex items-center">
+            <StaggeredMenu
+              position="right"
+              items={menuItems}
+              socialItems={socialItems}
+              displaySocials={true}
+              displayItemNumbering={true}
+              menuButtonColor="#0F1113"
+              openMenuButtonColor="#0F1113"
+              changeMenuColorOnOpen={true}
+              colors={['#0F1113', '#23272B', '#E2E5E9']}
+              accentColor="#16A34A"
+              isFixed={false}
+            />
+          </div>
         </div>
       </header>
 
-      {/* Main Page Container */}
-      <div className="pt-14 min-h-screen">
-        <main className="p-6 space-y-5 max-w-[1600px] w-full mx-auto">
-          {/* Real Mode Probe Error Banner if daemon unreachable */}
+      {/* Main Container */}
+      <div className="flex-1 w-full pt-16">
+        <main className="w-full p-4 md:p-6 max-w-7xl mx-auto space-y-6">
+          {/* Real Mode Connectivity Warning if no adapter active */}
           {mode === 'REAL' && realError && (
-            <div className="p-5 border border-[#DC2626] rounded-xl bg-white flex items-center justify-between gap-4 shadow-card">
-              <div className="space-y-1">
-                <div className="text-[11px] font-bold text-[#DC2626] uppercase tracking-wider">Real WLAN Probe Status</div>
-                <div className="text-[13.5px] text-[#3B4045] font-mono">{realError}</div>
-                <div className="text-[11.5px] text-[#6B7280] font-mono">Launch probe daemon: <code>node server/wlanScanner.cjs</code></div>
+            <div className="p-4 bg-[#FEF2F2] border border-[#DC2626] rounded-xl text-[12.5px] text-[#DC2626] flex items-center justify-between flex-wrap gap-2 shadow-card">
+              <div className="flex items-center gap-2">
+                <span className="font-bold font-mono">⚠️ [REAL MODE NOTICE]:</span>
+                <span>{realError}</span>
               </div>
               <button
                 type="button"
@@ -427,197 +560,160 @@ export function App() {
             </div>
           )}
 
-          {/* SECTION 1: DEVICE INSPECTOR (PRIMARY WORKSPACE) */}
-          {activeNav === 'INSPECTOR' && (
-            <div className="space-y-5">
-              {/* Top Overview & AP Bar */}
-              <NetworkOverviewBar
-                ap={activeAp}
-                stats={stats}
-                activeFilter={activeFilter}
-                onChangeFilter={setActiveFilter}
-                selectedScenarioId={selectedDevice?.scenarioId}
-                onSelectScenario={handleQuickScenario}
-                isSimulation={mode === 'SIMULATION'}
-                onOpenNetworkAudit={handleRunNetworkAudit}
-                singleDeviceStatus={selectedDiagnosis?.status || 'HEALTHY'}
-                singleDeviceHostname={selectedDevice?.hostname || 'Host Wi-Fi Interface'}
-                singleDeviceDiagnosis={selectedDiagnosis?.primary_diagnosis}
-                isEasyMode={isEasyMode}
-              />
+          {/* Overview Metric Bar */}
+          <NetworkOverviewBar
+            ap={activeAp}
+            stats={stats}
+            activeFilter={activeFilter}
+            onChangeFilter={setActiveFilter}
+            selectedScenarioId={selectedDevice?.scenarioId}
+            onSelectScenario={handleQuickScenario}
+            isSimulation={mode === 'SIMULATION'}
+            onOpenNetworkAudit={handleRunNetworkAudit}
+            onOpenWifiRadar={handleOpenWifiRadar}
+            singleDeviceStatus={selectedDiagnosis?.status || 'HEALTHY'}
+            singleDeviceHostname={selectedDevice?.hostname || 'Host Wi-Fi Interface'}
+            singleDeviceDiagnosis={selectedDiagnosis?.primary_diagnosis}
+            isEasyMode={isEasyMode}
+          />
 
-              {/* Master-Detail 2-Column Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-                {/* Left Column: Device Selector List */}
-                <div className="lg:col-span-4 w-full">
-                  <DeviceListPane
-                    devices={visibleDevices}
-                    diagnoses={diagnoses}
-                    selectedDeviceId={selectedDeviceId}
-                    onSelectDevice={handleSelectDevice}
-                    trends={trends}
-                    isEasyMode={isEasyMode}
-                  />
-                </div>
+          {/* SECTION 1: CONNECTED CLIENTS WORKSPACE (MASTER-DETAIL) */}
+          {activeNav === 'CLIENTS' && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+              {/* Left Column: Device List */}
+              <div className="lg:col-span-4 w-full">
+                <DeviceListPane
+                  devices={visibleDevices}
+                  diagnoses={diagnoses}
+                  selectedDeviceId={selectedDevice?.id || null}
+                  onSelectDevice={handleSelectDevice}
+                  trends={trends}
+                  isEasyMode={isEasyMode}
+                />
+              </div>
 
-                {/* Right Column: Device Detail Intelligence Hub OR Easy Mode View */}
-                <div className="lg:col-span-8 w-full">
-                  {selectedDevice && selectedDiagnosis ? (
-                    isEasyMode ? (
-                      <EasyModeView
-                        device={selectedDevice}
-                        allDevices={devices}
-                        diagnosis={selectedDiagnosis}
-                        diagnoses={diagnoses}
-                        trend={trends[selectedDevice.id]}
-                      />
-                    ) : (
-                      <DeviceDetailHub
-                        device={selectedDevice}
-                        allDevices={devices}
-                        diagnosis={selectedDiagnosis}
-                        diagnoses={diagnoses}
-                        explanation={explanations[selectedDevice.id] || null}
-                        isLoading={isLlmLoading}
-                        error={llmErrors[selectedDevice.id]}
-                        onUpdateDeviceTelemetry={handleUpdateDeviceTelemetry}
-                        onTriggerExplanation={() => triggerExplanationForDevice(selectedDevice, selectedDiagnosis)}
-                        onOpenKeyModal={() => setShowKeyModal(true)}
-                        trend={trends[selectedDevice.id]}
-                      />
-                    )
+              {/* Right Column: Device Detail */}
+              <div className="lg:col-span-8 w-full">
+                {selectedDevice && selectedDiagnosis ? (
+                  isEasyMode ? (
+                    <EasyModeView
+                      device={selectedDevice}
+                      allDevices={devices}
+                      diagnosis={selectedDiagnosis}
+                      diagnoses={diagnoses}
+                      trend={trends[selectedDevice.id]}
+                    />
                   ) : (
-                    <div className="p-12 border border-[#E2E5E9] rounded-2xl bg-white text-center text-[#6B7280] shadow-card">
-                      {isEasyMode ? 'Select a device from the list to view its Wi-Fi health.' : 'Select a client endpoint from the list to inspect root cause.'}
-                    </div>
-                  )}
-                </div>
+                    <DeviceDetailHub
+                      device={selectedDevice}
+                      allDevices={devices}
+                      diagnosis={selectedDiagnosis}
+                      diagnoses={diagnoses}
+                      explanation={explanations[selectedDevice.id] || null}
+                      isLoading={isLlmLoading}
+                      error={llmErrors[selectedDevice.id] || null}
+                      onTriggerExplanation={() => triggerExplanationForDevice(selectedDevice, selectedDiagnosis)}
+                      onUpdateDeviceTelemetry={handleUpdateDeviceTelemetry}
+                      onOpenKeyModal={() => setShowKeyModal(true)}
+                      trend={trends[selectedDevice.id]}
+                    />
+                  )
+                ) : (
+                  <div className="bg-white border border-[#E2E5E9] rounded-2xl p-12 text-center text-[#6B7280] font-mono text-[13px] shadow-card">
+                    Select a client device from the fleet list to begin Layer 2 telemetry analysis.
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {/* SECTION 2: FLEET TELEMETRY MATRIX TABLE */}
-          {activeNav === 'MATRIX' && (
+          {/* SECTION 2: FLEET TELEMETRY & RF MATRIX VIEW */}
+          {activeNav === 'OVERVIEW' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-5 bg-white border border-[#E2E5E9] rounded-2xl shadow-card">
+              <div className="bg-white p-4 border border-[#E2E5E9] rounded-xl flex items-center justify-between shadow-card">
                 <div>
-                  <h2 className="text-[20px] font-bold text-black tracking-tight">
-                    {isEasyMode ? 'All Devices Overview' : 'Fleet Telemetry & RF Matrix'}
-                  </h2>
-                  <p className="text-[13px] text-[#6B7280] font-mono mt-0.5">
-                    Real-time link speed, physical RSSI, SNR margins, and retransmission statistics for all {devices.length} endpoints.
+                  <h2 className="text-[16px] font-bold text-black tracking-tight">Full Fleet Telemetry Matrix</h2>
+                  <p className="font-mono text-[11px] text-[#6B7280]">
+                    Real-time physical layer metrics, MCS rates, and deterministic classification
                   </p>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="btn-instrument-primary text-[12px] py-1.5 px-4 rounded-lg"
-                    onClick={handleRunNetworkAudit}
-                  >
-                    <IconSparkles size={14} />
-                    <span>Run AI Network Audit</span>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className="btn-instrument-primary rounded-xl"
+                  onClick={() => setActiveNav('CLIENTS')}
+                >
+                  Inspect Single Device &rarr;
+                </button>
               </div>
 
               <ClientTable
                 devices={visibleDevices}
                 diagnoses={diagnoses}
-                selectedDeviceId={selectedDeviceId}
+                selectedDeviceId={selectedDevice?.id || null}
                 onSelectDevice={(dev) => {
                   handleSelectDevice(dev);
-                  setActiveNav('INSPECTOR');
+                  setActiveNav('CLIENTS');
                 }}
               />
             </div>
           )}
 
-          {/* SECTION 3: INTERACTIVE DIAGNOSTIC RULES SPECIFICATION */}
+          {/* SECTION 3: DETERMINISTIC DIAGNOSTIC RULES SPECIFICATION */}
           {activeNav === 'RULES' && (
-            <div className="border border-[#E2E5E9] rounded-2xl bg-white p-7 space-y-6 shadow-panel">
+            <div className="border border-[#E2E5E9] rounded-2xl bg-white p-6 space-y-6 shadow-panel">
               <div className="border-b border-[#E2E5E9] pb-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-7 h-7 rounded-lg bg-black text-white flex items-center justify-center">
-                    <IconRule size={15} />
-                  </div>
-                  <h2 className="text-[22px] font-bold text-black tracking-tight">
-                    {isEasyMode ? 'How WaveScope Checks Your Wi-Fi' : 'Layer 2 Deterministic Rule System'}
-                  </h2>
-                </div>
-                <p className="text-[14.5px] text-[#3B4045] leading-relaxed font-sans">
+                <h2 className="text-[18px] font-bold text-black tracking-tight">
+                  {isEasyMode ? 'How WaveScope Analyzes Your Wi-Fi' : 'Layer 2 Deterministic Rule System Specification'}
+                </h2>
+                <p className="font-mono text-[11px] text-[#6B7280] mt-1">
                   {isEasyMode
-                    ? 'WaveScope tests your wireless signals using local physics-based diagnostic rules before asking Google Gemini for plain-English explanations:'
-                    : 'WaveScope evaluates four competing physical RF hypotheses using local mathematical point thresholds and signal metrics with zero fallback LLM hallucination:'}
+                    ? 'WaveScope uses transparent, rule-based checks to instantly pinpoint issues without confusing tech jargon.'
+                    : 'Transparent, zero-hallucination inference tree mapping RF physics to root causes.'}
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4.5">
-                {/* Rule 1 */}
-                <div className="p-5 border border-[#E2E5E9] rounded-xl bg-[#F8F9FA] space-y-2 shadow-subtle hover:shadow-card transition-all">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12.5px] font-bold text-black uppercase tracking-wider">
-                      {isEasyMode ? '1. Distance & Walls (Too Far)' : '1. Weak / Attenuated Signal'}
-                    </span>
-                    <span className="badge-status font-mono text-[9px] rounded-md border-[#DC2626] text-[#DC2626]">
-                      PATH LOSS
-                    </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 border border-[#E2E5E9] bg-[#F8F9FA] rounded-xl space-y-1 shadow-subtle">
+                  <div className="text-[12px] font-bold text-black uppercase tracking-wider mb-1">
+                    {isEasyMode ? '1. Weak Signal (Distance / Walls)' : '1. Weak Signal Attenuation'}
                   </div>
-                  <p className="text-[13.5px] text-[#3B4045] leading-relaxed">
+                  <p className="text-[13px] text-[#3B4045] leading-relaxed">
                     {isEasyMode
-                      ? 'Triggered when your device is too far from the router or separated by thick concrete/metal walls, making the signal faint.'
-                      : 'Triggered when RSSI ≤ -75 dBm, SNR ≤ 15 dB, or Retries ≥ 15%. Confirms physical path attenuation and low link rates.'}
+                      ? 'Detects if the device is simply too far from the router or separated by thick walls.'
+                      : 'Triggered when RSSI < -75 dBm and SNR < 15 dB while negotiated modulation drops to MCS 0–3.'}
                   </p>
                 </div>
 
-                {/* Rule 2 */}
-                <div className="p-5 border border-[#E2E5E9] rounded-xl bg-[#F8F9FA] space-y-2 shadow-subtle hover:shadow-card transition-all">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12.5px] font-bold text-black uppercase tracking-wider">
-                      {isEasyMode ? '2. Crowded Airwaves (Interference)' : '2. Possible RF Interference'}
-                    </span>
-                    <span className="badge-status font-mono text-[9px] rounded-md border-[#D97706] text-[#D97706]">
-                      RF JAMMING
-                    </span>
+                <div className="p-4 border border-[#E2E5E9] bg-[#F8F9FA] rounded-xl space-y-1 shadow-subtle">
+                  <div className="text-[12px] font-bold text-black uppercase tracking-wider mb-1">
+                    {isEasyMode ? '2. Radio Interference (Airwave Noise)' : '2. RF Interference & Airwave Jams'}
                   </div>
-                  <p className="text-[13.5px] text-[#3B4045] leading-relaxed">
+                  <p className="text-[13px] text-[#3B4045] leading-relaxed">
                     {isEasyMode
-                      ? 'Triggered when the signal appears strong, but background electronics, microwaves, or neighboring routers crowd the channel.'
-                      : 'Triggered when RSSI ≥ -65 dBm but SNR ≤ 12 dB or Noise Floor ≥ -70 dBm. Indicates high noise floor disrupting frame delivery.'}
+                      ? 'Detects if nearby devices or crowded channels are jamming and dropping Wi-Fi packets.'
+                      : 'Triggered when retry rate > 15% and noise floor > -82 dBm despite reasonable raw RSSI.'}
                   </p>
                 </div>
 
-                {/* Rule 3 */}
-                <div className="p-5 border border-[#E2E5E9] rounded-xl bg-[#F8F9FA] space-y-2 shadow-subtle hover:shadow-card transition-all">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12.5px] font-bold text-black uppercase tracking-wider">
-                      {isEasyMode ? '3. Hardware Age (Older Device)' : '3. Hardware / Capability Limited'}
-                    </span>
-                    <span className="badge-status font-mono text-[9px] rounded-md border-black text-black">
-                      PHY CAPABILITY
-                    </span>
+                <div className="p-4 border border-[#E2E5E9] bg-[#F8F9FA] rounded-xl space-y-1 shadow-subtle">
+                  <div className="text-[12px] font-bold text-black uppercase tracking-wider mb-1">
+                    {isEasyMode ? '3. Device Capability (Older Hardware)' : '3. Hardware / Capability Limited'}
                   </div>
-                  <p className="text-[13.5px] text-[#3B4045] leading-relaxed">
+                  <p className="text-[13px] text-[#3B4045] leading-relaxed">
                     {isEasyMode
-                      ? 'Triggered when an older device (like legacy smart plugs) is limited by its own antenna and can never reach gigabit speeds.'
-                      : 'Triggered when client hardware is 802.11n/legacy, 20MHz width, or 1x1 SISO while RF link is otherwise pristine.'}
+                      ? 'Detects if the device is older and naturally cannot reach top modern Wi-Fi speeds.'
+                      : 'Triggered when device standard is 802.11n/legacy, 20MHz width, or 1x1 SISO while RF link is stable.'}
                   </p>
                 </div>
 
-                {/* Rule 4 */}
-                <div className="p-5 border border-[#E2E5E9] rounded-xl bg-[#F8F9FA] space-y-2 shadow-subtle hover:shadow-card transition-all">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12.5px] font-bold text-black uppercase tracking-wider">
-                      {isEasyMode ? '4. Setting Tweak (Wrong Band)' : '4. Potential Band Selection Issue'}
-                    </span>
-                    <span className="badge-status font-mono text-[9px] rounded-md border-[#16A34A] text-[#16A34A]">
-                      BAND STEERING
-                    </span>
+                <div className="p-4 border border-[#E2E5E9] bg-[#F8F9FA] rounded-xl space-y-1 shadow-subtle">
+                  <div className="text-[12px] font-bold text-black uppercase tracking-wider mb-1">
+                    {isEasyMode ? '4. Setting Adjustment (Slow Band)' : '4. Potential Band Selection Issue'}
                   </div>
-                  <p className="text-[13.5px] text-[#3B4045] leading-relaxed">
+                  <p className="text-[13px] text-[#3B4045] leading-relaxed">
                     {isEasyMode
-                      ? 'Triggered when a modern fast phone or laptop is stuck on the slow 2.4 GHz channel when faster 5 GHz / 6 GHz is available.'
-                      : 'Triggered when a dual-band/tri-band device is associated on congested 2.4GHz despite strong SNR and 5GHz availability.'}
+                      ? 'Detects if your fast device accidentally connected to a slow 2.4 GHz channel instead of 5 GHz.'
+                      : 'Triggered when a dual-band/tri-band device is associated on congested 2.4GHz despite strong signal.'}
                   </p>
                 </div>
               </div>
@@ -626,7 +722,18 @@ export function App() {
         </main>
       </div>
 
-      {/* Whole-Network Diagnostic Audit Modal */}
+      {/* Surrounding Wi-Fi Radar & Best Network Finder Modal */}
+      <NearbyWifiRadarModal
+        isOpen={showWifiRadarModal}
+        onClose={() => setShowWifiRadarModal(false)}
+        scanResult={nearbyScanResult}
+        isLoading={isNearbyLoading}
+        onRescan={handleOpenWifiRadar}
+        onConnectNetwork={handleConnectNetwork}
+        isSimulation={mode === 'SIMULATION'}
+      />
+
+      {/* Whole-Network Audit Modal */}
       <NetworkReportModal
         isOpen={showReportModal}
         onClose={() => setShowReportModal(false)}
@@ -637,26 +744,23 @@ export function App() {
         onRescan={handleRunNetworkAudit}
       />
 
-      {/* API Key Configuration Modal */}
+      {/* API Key Modal */}
       {showKeyModal && (
-        <div className="modal-overlay animate-fade-in">
+        <div className="modal-overlay">
           <div className="modal-instrument max-w-md rounded-2xl shadow-float overflow-hidden">
-            <div className="modal-header bg-[#F8F9FA] p-5 border-b border-[#E2E5E9]">
-              <div className="flex items-center gap-2">
-                <IconKey size={18} className="text-black" />
-                <span className="text-[15px] font-bold text-black">Google Gemini API Configuration</span>
-              </div>
-              <button type="button" className="font-bold text-[#6B7280] hover:text-black" onClick={() => setShowKeyModal(false)}>
+            <div className="modal-header bg-[#F8F9FA] p-4 border-b border-[#E2E5E9]">
+              <span className="text-[15px] font-bold text-black tracking-tight">Google Gemini API Configuration</span>
+              <button type="button" className="font-bold text-[#6B7280] hover:text-black text-[16px]" onClick={() => setShowKeyModal(false)}>
                 ✕
               </button>
             </div>
             <div className="modal-body p-6 space-y-4">
-              <p className="text-[13.5px] text-[#3B4045] leading-relaxed">
+              <p className="text-[13.5px] text-[#3B4045]">
                 Connected Model: <strong className="text-black">gemini-3.1-flash-lite</strong>. Zero fallback cache.
               </p>
 
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-[#3B4045]">Gemini API Key</label>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-[#6B7280]">Gemini API Key</label>
                 <input
                   type="password"
                   className="w-full bg-[#F8F9FA] border border-[#E2E5E9] rounded-xl p-3 font-mono text-[13px] text-black outline-none focus:border-black shadow-subtle transition-colors"
@@ -667,17 +771,17 @@ export function App() {
                 />
               </div>
 
-              <div className="flex justify-between pt-3 border-t border-[#E2E5E9]">
+              <div className="flex justify-between items-center pt-3 border-t border-[#E2E5E9]">
                 <button
                   type="button"
-                  className="btn-instrument-secondary text-[#DC2626] border-[#DC2626] text-[11px] rounded-lg"
+                  className="btn-instrument-secondary text-[#DC2626] border-[#DC2626]/40 hover:border-[#DC2626] text-[11px] rounded-xl"
                   onClick={handleClearApiKey}
                 >
                   Clear Key & Log Out
                 </button>
                 <button
                   type="button"
-                  className="btn-instrument-primary text-[11px] py-1.5 px-4 rounded-lg"
+                  className="btn-instrument-primary text-[11.5px] rounded-xl shadow-card"
                   onClick={() => handleSaveApiKey(apiKey, true)}
                   disabled={!apiKey.trim()}
                 >
@@ -691,4 +795,3 @@ export function App() {
     </div>
   );
 }
-

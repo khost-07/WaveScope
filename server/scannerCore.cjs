@@ -352,9 +352,190 @@ function scanWholeNetwork() {
   };
 }
 
+function getSavedWlanProfiles() {
+  try {
+    const out = execSync('netsh wlan show profiles', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] });
+    const lines = out.split('\n');
+    const profiles = new Set();
+    for (const l of lines) {
+      const idx = l.indexOf(':');
+      if (idx !== -1 && l.includes('All User Profile')) {
+        profiles.add(l.substring(idx + 1).trim());
+      }
+    }
+    return profiles;
+  } catch {
+    return new Set();
+  }
+}
+
+function parseNearbyWlanNetworks() {
+  const currentInterface = parseNetshWlanInterfaces();
+  const currentConnectedSsid = currentInterface?.raw?.ssid || null;
+  const savedProfiles = getSavedWlanProfiles();
+
+  try {
+    const output = execSync('netsh wlan show networks mode=bssid', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] });
+    const lines = output.split('\n').map(l => l.trim());
+
+    const networks = [];
+    let currentSsid = '';
+    let currentAuth = 'WPA2-Personal';
+    let currentEnc = 'CCMP';
+    let currentNet = null;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.startsWith('SSID ')) {
+        const idx = line.indexOf(':');
+        currentSsid = idx !== -1 ? line.substring(idx + 1).trim() : '';
+        currentAuth = 'WPA2-Personal';
+        currentEnc = 'CCMP';
+        continue;
+      }
+      if (line.startsWith('Authentication')) {
+        const idx = line.indexOf(':');
+        if (idx !== -1) currentAuth = line.substring(idx + 1).trim();
+        continue;
+      }
+      if (line.startsWith('Encryption')) {
+        const idx = line.indexOf(':');
+        if (idx !== -1) currentEnc = line.substring(idx + 1).trim();
+        continue;
+      }
+      if (line.startsWith('BSSID ')) {
+        const idx = line.indexOf(':');
+        const bssid = idx !== -1 ? line.substring(idx + 1).trim().toUpperCase() : '';
+        
+        currentNet = {
+          ssid: currentSsid || 'Hidden Network',
+          bssid: bssid,
+          signalPct: 80,
+          rssi_dBm: -55,
+          band: '5GHz',
+          channel: 36,
+          radioType: '802.11ax',
+          authentication: currentAuth,
+          encryption: currentEnc,
+          channelUtilizationPct: 25,
+          connectedStationsCount: 1,
+          isSavedProfile: savedProfiles.has(currentSsid),
+          isConnected: Boolean(currentConnectedSsid && currentSsid && currentSsid.toLowerCase() === currentConnectedSsid.toLowerCase()),
+          vendor: getVendorFromMac(bssid)
+        };
+        networks.push(currentNet);
+        continue;
+      }
+      if (currentNet) {
+        if (line.startsWith('Signal')) {
+          const idx = line.indexOf(':');
+          if (idx !== -1) {
+            const sig = parseInt(line.substring(idx + 1).replace('%', '').trim() || '50', 10);
+            currentNet.signalPct = sig;
+            currentNet.rssi_dBm = Math.round((sig / 2) - 100);
+          }
+        } else if (line.startsWith('Radio type')) {
+          const idx = line.indexOf(':');
+          if (idx !== -1) currentNet.radioType = line.substring(idx + 1).trim();
+        } else if (line.startsWith('Band')) {
+          const idx = line.indexOf(':');
+          if (idx !== -1) {
+            const val = line.substring(idx + 1).trim();
+            currentNet.band = val.includes('2.4') ? '2.4GHz' : val.includes('6') ? '6GHz' : '5GHz';
+          }
+        } else if (line.startsWith('Channel')) {
+          const idx = line.indexOf(':');
+          if (idx !== -1) currentNet.channel = parseInt(line.substring(idx + 1).trim() || '0', 10);
+        } else if (line.startsWith('Channel Utilization')) {
+          const match = line.match(/\((\d+)\s*%\)/);
+          if (match) currentNet.channelUtilizationPct = parseInt(match[1], 10);
+        } else if (line.startsWith('Connected Stations')) {
+          const idx = line.indexOf(':');
+          if (idx !== -1) currentNet.connectedStationsCount = parseInt(line.substring(idx + 1).trim() || '0', 10);
+        }
+      }
+    }
+
+    return {
+      success: true,
+      currentConnectedSsid,
+      networks
+    };
+  } catch (err) {
+    return {
+      success: false,
+      currentConnectedSsid,
+      networks: []
+    };
+  }
+}
+
+function connectToWlanNetwork({ ssid, password }) {
+  if (!ssid) return { success: false, message: 'SSID is required' };
+  const fs = require('fs');
+  const path = require('path');
+  const os = require('os');
+
+  try {
+    // If password provided and not saved or updating profile, create a temporary profile xml
+    if (password && password.trim().length > 0) {
+      const cleanPass = password.trim();
+      const profileXml = `<?xml version="1.0"?>
+<WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
+    <name>${ssid}</name>
+    <SSIDConfig>
+        <SSID>
+            <name>${ssid}</name>
+        </SSID>
+    </SSIDConfig>
+    <connectionType>ESS</connectionType>
+    <connectionMode>auto</connectionMode>
+    <MSM>
+        <security>
+            <authEncryption>
+                <authentication>WPA2PSK</authentication>
+                <encryption>AES</encryption>
+                <useOneX>false</useOneX>
+            </authEncryption>
+            <sharedKey>
+                <keyType>passPhrase</keyType>
+                <protected>false</protected>
+                <keyMaterial>${cleanPass}</keyMaterial>
+            </sharedKey>
+        </security>
+    </MSM>
+</WLANProfile>`;
+
+      const tempFile = path.join(os.tmpdir(), `wavescope_${Date.now()}_profile.xml`);
+      fs.writeFileSync(tempFile, profileXml, 'utf-8');
+      try {
+        execSync(`netsh wlan add profile filename="${tempFile}" user=all`, { stdio: ['pipe', 'pipe', 'ignore'] });
+      } finally {
+        try { fs.unlinkSync(tempFile); } catch {}
+      }
+    }
+
+    // Trigger connect
+    const result = execSync(`netsh wlan connect name="${ssid}"`, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] });
+    return {
+      success: true,
+      message: `Connection initiated to "${ssid}". Result: ${result.trim()}`,
+      connectedSsid: ssid
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: `Failed to connect to "${ssid}": ${err.message}`
+    };
+  }
+}
+
 module.exports = {
   parseNetshWlanInterfaces,
   parseIpconfig,
   parseArpTable,
-  scanWholeNetwork
+  scanWholeNetwork,
+  parseNearbyWlanNetworks,
+  connectToWlanNetwork
 };
+
