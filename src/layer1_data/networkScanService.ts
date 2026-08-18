@@ -5,7 +5,10 @@
 
 import { NetworkScanResult } from './networkScannerTypes';
 
-const REAL_SCAN_ENDPOINT = 'http://localhost:5174/api/scan-network';
+const REAL_SCAN_ENDPOINTS = [
+  '/api/scan-network',
+  'http://localhost:5174/api/scan-network'
+];
 
 export const SIMULATED_NETWORK_SCAN: NetworkScanResult = {
   timestamp: Date.now(),
@@ -151,22 +154,26 @@ export const SIMULATED_NETWORK_SCAN: NetworkScanResult = {
   ]
 };
 
-export async function scanLocalNetwork(mode: 'SIMULATION' | 'REAL'): Promise<NetworkScanResult> {
-  if (mode === 'REAL') {
+export async function scanLocalNetwork(_mode?: 'SIMULATION' | 'REAL'): Promise<NetworkScanResult> {
+  // Always attempt real probe first to give genuine live hardware data
+  for (const endpoint of REAL_SCAN_ENDPOINTS) {
     try {
-      const resp = await fetch(REAL_SCAN_ENDPOINT, { signal: AbortSignal.timeout(4000) });
+      const resp = await fetch(endpoint, { signal: AbortSignal.timeout(3500) });
       if (resp.ok) {
         const data = await resp.json();
         if (data.status === 'SUCCESS' && data.result) {
-          return data.result;
+          return {
+            ...data.result,
+            isReal: true
+          };
         }
       }
-    } catch (err) {
-      console.warn('Real network probe unavailable, falling back to simulated scan topology:', err);
+    } catch {
+      // Continue to next endpoint fallback
     }
   }
 
-  // Artificial delay for high-fidelity scanning experience
+  // If real probe is not reachable, fallback to simulation testbed
   await new Promise(resolve => setTimeout(resolve, 600));
   return {
     ...SIMULATED_NETWORK_SCAN,

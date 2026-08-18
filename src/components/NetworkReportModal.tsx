@@ -28,7 +28,10 @@ export const NetworkReportModal: React.FC<NetworkReportModalProps> = ({
   const handleCopy = () => {
     if (!report || !scanResult) return;
     const text = `=== WaveScope Whole-Network Diagnostic Audit ===
+Source: ${scanResult.isReal ? 'LIVE HARDWARE SCAN (Native WLAN + ARP Table)' : 'SIMULATED TESTBED'}
 Network: ${scanResult.router.ssid} (${scanResult.subnet})
+Gateway IP: ${scanResult.router.ip} (BSSID: ${scanResult.router.bssid})
+Channel: ${scanResult.router.channel} (${scanResult.router.band}) | Signal: ${scanResult.router.rssi_dBm} dBm (${scanResult.router.signalPct}%)
 Overall Health Score: ${report.overallHealthScore}/100 (Grade ${report.healthGrade})
 
 Executive Summary:
@@ -37,10 +40,10 @@ ${report.executiveSummary}
 Router Assessment:
 - Channel Congestion: ${report.routerAssessment.channelCongestionVerdict}
 - Band Efficiency: ${report.routerAssessment.bandEfficiencyVerdict}
-- Gateway Latency: ${report.routerAssessment.gatewayLatencyVerdict}
+- Gateway Latency: ${report.routerAssessment.gatewayLatencyVerdict} (Ping: ${scanResult.router.gatewayPingMs}ms)
 
 Discovered Devices (${report.deviceBreakdown.totalActive} active):
-${scanResult.devices.map(d => `- ${d.hostname} (${d.ip}) | ${d.vendor} | Ping: ${d.pingMs}ms`).join('\n')}
+${scanResult.devices.map(d => `- ${d.hostname} (${d.ip}) | MAC: ${d.mac} | ${d.vendor} | Ping: ${d.pingMs}ms`).join('\n')}
 
 Actionable Optimization Plan:
 ${report.actionablePlan.map((p, i) => `${i + 1}. [${p.priority}] ${p.action} — Why: ${p.simpleWhy}`).join('\n')}
@@ -80,7 +83,7 @@ ${report.actionablePlan.map((p, i) => `${i + 1}. [${p.priority}] ${p.action} —
                 <IconRefresh size={32} />
               </div>
               <h3 className="text-[16px] font-bold text-black mb-1">Probing Subnet & Synthesizing AI Audit...</h3>
-              <p className="font-mono text-[12px] text-[#6B7280]">Auditing router latency and classifying device fleet.</p>
+              <p className="font-mono text-[12px] text-[#6B7280]">Auditing router latency and classifying real-time device fleet.</p>
             </div>
           )}
 
@@ -96,6 +99,35 @@ ${report.actionablePlan.map((p, i) => `${i + 1}. [${p.priority}] ${p.action} —
 
           {!isLoading && !error && report && scanResult && (
             <>
+              {/* Provenance Banner */}
+              {scanResult.isReal ? (
+                <div className="flex items-center justify-between p-3 bg-[#F0FDF4] border border-[#16A34A] text-[12px] text-[#16A34A] flex-wrap gap-2">
+                  <div className="flex items-center gap-2 font-bold">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#16A34A] inline-block animate-pulse-fast"></span>
+                    <span>LIVE WI-FI NETWORK PROBE</span>
+                    <span className="font-mono font-normal text-black text-[11px]">
+                      (SSID: <strong>{scanResult.router.ssid}</strong> &bull; Gateway: <strong>{scanResult.router.ip}</strong> &bull; Subnet: {scanResult.subnet})
+                    </span>
+                  </div>
+                  <span className="badge-status font-mono text-[10px] bg-white border-[#16A34A] text-[#16A34A]">
+                    REAL OS TELEMETRY
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-3 bg-[#F8F9FA] border border-[#E2E5E9] text-[12px] text-[#6B7280] flex-wrap gap-2">
+                  <div className="flex items-center gap-2 font-bold">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#6B7280] inline-block"></span>
+                    <span>SIMULATED TESTBED SCAN</span>
+                    <span className="font-mono font-normal text-[#3B4045] text-[11px]">
+                      (SSID: {scanResult.router.ssid} &bull; Subnet: {scanResult.subnet})
+                    </span>
+                  </div>
+                  <span className="badge-status font-mono text-[10px]">
+                    SIMULATION TESTBED
+                  </span>
+                </div>
+              )}
+
               {/* Executive Health Strip */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="telemetry-cell">
@@ -139,16 +171,19 @@ ${report.actionablePlan.map((p, i) => `${i + 1}. [${p.priority}] ${p.action} —
                   <div className="p-3 bg-[#F8F9FA] border border-[#E2E5E9]">
                     <div className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mb-1.5">Channel Congestion</div>
                     <div className="text-black font-semibold">{report.routerAssessment.channelCongestionVerdict}</div>
+                    <div className="text-[10px] text-[#6B7280] mt-1">Channel {scanResult.router.channel} ({scanResult.router.band})</div>
                   </div>
 
                   <div className="p-3 bg-[#F8F9FA] border border-[#E2E5E9]">
                     <div className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mb-1.5">Band Efficiency</div>
                     <div className="text-black font-semibold">{report.routerAssessment.bandEfficiencyVerdict}</div>
+                    <div className="text-[10px] text-[#6B7280] mt-1">{scanResult.router.standard} &bull; {scanResult.router.channelWidthMHz}MHz</div>
                   </div>
 
                   <div className="p-3 bg-[#F8F9FA] border border-[#E2E5E9]">
                     <div className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mb-1.5">Gateway Responsiveness</div>
                     <div className="text-black font-semibold">{report.routerAssessment.gatewayLatencyVerdict}</div>
+                    <div className="text-[10px] text-[#6B7280] mt-1">Ping: {scanResult.router.gatewayPingMs}ms &bull; DNS: {scanResult.router.dnsLatencyMs}ms</div>
                   </div>
                 </div>
               </div>
@@ -167,14 +202,17 @@ ${report.actionablePlan.map((p, i) => `${i + 1}. [${p.priority}] ${p.action} —
                         <th>Host Identifier</th>
                         <th>IP Address</th>
                         <th>MAC Address</th>
-                        <th>Vendor</th>
+                        <th>Vendor / Manufacturer</th>
                         <th style={{ textAlign: 'right' }}>Ping Latency</th>
                       </tr>
                     </thead>
                     <tbody>
                       {scanResult.devices.map((dev, idx) => (
                         <tr key={idx}>
-                          <td className="font-semibold text-black">{dev.hostname}</td>
+                          <td className="font-semibold text-black">
+                            {dev.hostname}
+                            {dev.isGateway && <span className="ml-1.5 badge-status text-[9px] py-0.5 px-1 bg-black text-white">GATEWAY</span>}
+                          </td>
                           <td className="font-mono text-[12px]">{dev.ip}</td>
                           <td className="font-mono text-[12px] text-[#6B7280]">{dev.mac}</td>
                           <td className="font-mono text-[12px]">{dev.vendor}</td>

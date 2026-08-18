@@ -13,58 +13,65 @@ export interface RealDataResult {
   errorMessage?: string;
 }
 
+const REAL_TELEMETRY_ENDPOINTS = [
+  '/api/wlan/real-telemetry',
+  'http://localhost:5174/api/wlan/real-telemetry'
+];
+
 export async function fetchRealTelemetry(): Promise<RealDataResult> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+  for (const endpoint of REAL_TELEMETRY_ENDPOINTS) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
 
-    const response = await fetch('http://localhost:5174/api/wlan/real-telemetry', {
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
+      const response = await fetch(endpoint, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      throw new Error(`Endpoint HTTP ${response.status}`);
+      if (!response.ok) continue;
+
+      const data = await response.json();
+
+      if (data.status === 'SUCCESS' && data.device) {
+        return {
+          isAvailable: true,
+          provenance: {
+            mode: 'REAL',
+            sourceIdentifier: data.provenance || 'Windows Native WLAN API (netsh wlan show interfaces)',
+            adapterName: data.device.vendor || 'Host Wi-Fi Interface',
+            lastUpdated: Date.now(),
+            isDeterministic: false
+          },
+          devices: [data.device]
+        };
+      } else if (data.status === 'NO_ACTIVE_INTERFACE') {
+        return {
+          isAvailable: false,
+          provenance: {
+            mode: 'REAL',
+            sourceIdentifier: 'Windows Native WLAN API (netsh wlan show interfaces)',
+            lastUpdated: Date.now(),
+            isDeterministic: false
+          },
+          devices: [],
+          errorMessage: 'WLAN interface is currently disconnected or not associated with any BSS.'
+        };
+      }
+    } catch {
+      // Try next endpoint
     }
-
-    const data = await response.json();
-
-    if (data.status === 'SUCCESS' && data.device) {
-      return {
-        isAvailable: true,
-        provenance: {
-          mode: 'REAL',
-          sourceIdentifier: data.provenance || 'Windows Native WLAN API (netsh wlan show interfaces)',
-          adapterName: data.device.vendor || 'Host Wi-Fi Interface',
-          lastUpdated: Date.now(),
-          isDeterministic: false
-        },
-        devices: [data.device]
-      };
-    } else {
-      return {
-        isAvailable: false,
-        provenance: {
-          mode: 'REAL',
-          sourceIdentifier: 'Windows Native WLAN API (netsh wlan show interfaces)',
-          lastUpdated: Date.now(),
-          isDeterministic: false
-        },
-        devices: [],
-        errorMessage: 'WLAN interface is currently disconnected or not associated with any BSS.'
-      };
-    }
-  } catch (err: any) {
-    return {
-      isAvailable: false,
-      provenance: {
-        mode: 'REAL',
-        sourceIdentifier: 'Windows Native WLAN API (netsh wlan show interfaces)',
-        lastUpdated: Date.now(),
-        isDeterministic: false
-      },
-      devices: [],
-      errorMessage: 'Local telemetry daemon (server/wlanScanner.cjs) is not currently running on port 5174.'
-    };
   }
+
+  return {
+    isAvailable: false,
+    provenance: {
+      mode: 'REAL',
+      sourceIdentifier: 'Windows Native WLAN API (netsh wlan show interfaces)',
+      lastUpdated: Date.now(),
+      isDeterministic: false
+    },
+    devices: [],
+    errorMessage: 'Local WLAN scanner is not reachable. Ensure the dev server is active.'
+  };
 }
